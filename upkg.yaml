@@ -1,0 +1,6 @@
+repos:
+  - url: https://github.com/tk-aria/tsrc-rs.git
+    dest: upkg
+
+  - url: https://github.com/tk-aria/unity3d-cli.git
+    dest: u3d
