@@ -48,6 +48,8 @@ url = "2.5"
 
 # Parallel processing
 rayon = "1.8"
+futures = "0.3"
+num_cpus = "1.16"
 
 # Configuration validation
 validator = { version = "0.18", features = ["derive"] }
@@ -79,3 +81,11 @@ debug = true
 [[example]]
 name = "manifest_service_usage"
 path = "examples/manifest_service_usage.rs"
+
+[[example]]
+name = "manifest_store_usage"
+path = "examples/manifest_store_usage.rs"
+
+[[example]]
+name = "command_executor_usage"
+path = "examples/command_executor_usage.rs"

@@ -1,2 +1,2 @@
-// pub mod config_store;
-// pub mod manifest_store;
+pub mod config_store;
+pub mod manifest_store;

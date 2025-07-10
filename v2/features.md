@@ -52,21 +52,26 @@
 
 ## インフラストラクチャ層実装
 
-- [ ] `infrastructure/git/repository.rs` - Gitリポジトリ操作の実装
-  - [ ] `git2`クレートを使用したGit操作のラッパー
-  - [ ] clone、fetch、checkout、reset等の実装
-- [ ] `infrastructure/git/remote.rs` - Gitリモート操作の実装
-  - [ ] リモートの追加、更新、削除
-  - [ ] URLの検証と正規化
-- [ ] `infrastructure/filesystem/config_store.rs` - 設定ファイル管理
-  - [ ] YAML形式の設定ファイルの読み書き
-  - [ ] スキーマ検証
-- [ ] `infrastructure/filesystem/manifest_store.rs` - マニフェストファイル管理
-  - [ ] manifest.yml の読み込みと解析
-  - [ ] ファイルシステム操作（copy、symlink）
-- [ ] `infrastructure/process/command_executor.rs` - 外部コマンド実行
-  - [ ] プロセス生成と管理
-  - [ ] 並列実行のサポート
+- [x] `infrastructure/git/repository.rs` - Gitリポジトリ操作の実装
+  - [x] `git2`クレートを使用したGit操作のラッパー
+  - [x] clone、fetch、checkout、reset等の実装
+- [x] `infrastructure/git/remote.rs` - Gitリモート操作の実装
+  - [x] リモートの追加、更新、削除
+  - [x] URLの検証と正規化
+- [x] `infrastructure/git/mod.rs` - Git module definition
+- [x] `infrastructure/filesystem/config_store.rs` - 設定ファイル管理
+  - [x] YAML形式の設定ファイルの読み書き
+  - [x] スキーマ検証
+- [x] `infrastructure/filesystem/manifest_store.rs` - マニフェストファイル管理
+  - [x] manifest.yml の読み込みと解析
+  - [x] ファイルシステム操作（copy、symlink）
+- [x] `infrastructure/process/command_executor.rs` - 外部コマンド実行
+  - [x] プロセス生成と管理
+  - [x] 並列実行のサポート
+  - [x] 環境変数ハンドリング
+  - [x] タイムアウトサポート
+  - [x] 出力キャプチャ
+- [x] `infrastructure/process/mod.rs` - Process module definition
 
 ## プレゼンテーション層実装
 
