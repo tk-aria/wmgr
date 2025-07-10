@@ -41,8 +41,8 @@
 - [x] `application/use_cases/sync_repositories.rs` - リポジトリ同期ユースケース
   - [x] ワークスペース読み込み処理（ローカルファイルベース）
   - [x] ワークスペース初期化状態の正しい検証
-  - [ ] マニフェスト更新処理
-  - [ ] 不足リポジトリのクローン
+  - [x] マニフェスト更新処理
+  - [x] 不足リポジトリのクローン
   - [ ] リモート設定の更新
   - [ ] ブランチの同期（fast-forward merge）
 - [x] `application/use_cases/status_check.rs` - ステータス確認ユースケース

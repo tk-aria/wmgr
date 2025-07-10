@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 use crate::domain::entities::{
     workspace::{Workspace, WorkspaceStatus}, 
-    manifest::{Manifest, ManifestRepo}
+    manifest::ManifestRepo
 };
 use crate::domain::value_objects::branch_name::BranchName;
 
@@ -155,58 +155,49 @@ impl SyncRepositoriesUseCase {
     
     /// マニフェストの更新
     async fn update_manifest(&self, workspace: &mut Workspace) -> Result<(), SyncRepositoriesError> {
-        // マニフェストリポジトリのパス
-        let manifest_dir = workspace.manifest_dir();
-        
-        if !manifest_dir.exists() {
-            return Err(SyncRepositoriesError::ManifestUpdateFailed(
-                "Manifest directory not found".to_string()
-            ));
-        }
-        
-        // Git pull実行（実際のGit操作は別途実装予定）
-        self.perform_manifest_git_pull(&manifest_dir).await?;
-        
-        // マニフェストファイルの再読み込み
-        let manifest = self.reload_manifest(&manifest_dir).await?;
-        workspace.manifest = Some(manifest);
-        
-        Ok(())
-    }
-    
-    /// マニフェストリポジトリでGit pullを実行（疑似実装）
-    async fn perform_manifest_git_pull(&self, _manifest_dir: &PathBuf) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        // ここでは疑似的な実装
-        if self.config.verbose {
-            println!("Updating manifest repository...");
-        }
-        Ok(())
-    }
-    
-    /// マニフェストファイルの再読み込み
-    async fn reload_manifest(&self, manifest_dir: &PathBuf) -> Result<Manifest, SyncRepositoriesError> {
-        let manifest_file = manifest_dir.join("manifest.yml");
+        // ローカルファーストアプローチ: マニフェストファイルの再読み込みのみ
+        let manifest_file = workspace.manifest_file_path();
         
         if !manifest_file.exists() {
             return Err(SyncRepositoriesError::ManifestUpdateFailed(
-                "manifest.yml not found".to_string()
+                format!("Manifest file not found: {}", manifest_file.display())
             ));
         }
         
-        let content = std::fs::read_to_string(&manifest_file)?;
+        if self.config.verbose {
+            println!("Reloading manifest from: {}", manifest_file.display());
+        }
         
-        // YAMLパースは別途実装予定
-        let manifest = self.parse_manifest_yaml(&content)?;
+        // ManifestStoreを使ってマニフェストファイルを再読み込み
+        let manifest = self.reload_manifest_from_file(&manifest_file).await?;
+        workspace.manifest = Some(manifest);
         
-        Ok(manifest)
+        if self.config.verbose {
+            println!("Manifest reloaded successfully");
+        }
+        
+        Ok(())
     }
     
-    /// YAML文字列をManifestエンティティにパース（簡易実装）
-    fn parse_manifest_yaml(&self, _content: &str) -> Result<Manifest, SyncRepositoriesError> {
-        // TODO: 実際のYAMLパース処理を実装
-        Ok(Manifest::new(vec![]))
+    /// マニフェストファイルから再読み込み（ローカルファーストアプローチ）
+    async fn reload_manifest_from_file(&self, manifest_file: &std::path::Path) -> Result<crate::domain::entities::manifest::Manifest, SyncRepositoriesError> {
+        use crate::infrastructure::filesystem::manifest_store::{ManifestStore, ManifestStoreError};
+        
+        let mut manifest_store = ManifestStore::new();
+        let processed_manifest = manifest_store.read_manifest(manifest_file).await
+            .map_err(|e| match e {
+                ManifestStoreError::ManifestFileNotFound(path) => {
+                    SyncRepositoriesError::ManifestUpdateFailed(format!("Manifest file not found: {}", path))
+                }
+                ManifestStoreError::YamlParsingFailed(err) => {
+                    SyncRepositoriesError::ManifestUpdateFailed(format!("YAML parsing failed: {}", err))
+                }
+                _ => SyncRepositoriesError::ManifestUpdateFailed(format!("Failed to read manifest: {}", e))
+            })?;
+        
+        Ok(processed_manifest.manifest)
     }
+    
     
     /// 同期対象リポジトリの決定
     fn determine_target_repositories(&self, workspace: &Workspace) -> Result<Vec<ManifestRepo>, SyncRepositoriesError> {
@@ -293,25 +284,42 @@ impl SyncRepositoriesUseCase {
         Ok(())
     }
     
-    /// Git clone実行（疑似実装）
+    /// Git clone実行（実際のGit操作）
     async fn perform_git_clone(
         &self, 
         url: &str, 
         target_path: &PathBuf, 
         branch: Option<&str>
     ) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        // ここでは疑似的にディレクトリを作成
-        std::fs::create_dir_all(target_path)?;
+        use crate::infrastructure::git::repository::{GitRepository, CloneConfig};
+        use crate::domain::value_objects::{git_url::GitUrl, file_path::FilePath};
         
-        // 仮のREADMEファイルを作成（本来はGitからクローン）
-        let readme_file = target_path.join("README.md");
-        let readme_content = format!(
-            "# Repository cloned from {}\nBranch: {}\n", 
-            url, 
-            branch.unwrap_or("main")
-        );
-        std::fs::write(readme_file, readme_content)?;
+        if self.config.verbose {
+            println!("Starting Git clone: {} -> {}", url, target_path.display());
+        }
+        
+        // URLとパスの検証・変換
+        let git_url = GitUrl::new(url)?;
+        let file_path = FilePath::new(target_path.to_string_lossy().as_ref())?;
+        
+        // クローン設定
+        let clone_config = CloneConfig {
+            branch: branch.map(|b| b.to_string()),
+            shallow: false,
+            depth: None,
+            recursive: false,
+            progress_callback: None,
+        };
+        
+        // Git クローン実行
+        let _repo = GitRepository::clone(&git_url, &file_path, clone_config).await
+            .map_err(|e| SyncRepositoriesError::RepositoryCloneFailed(
+                format!("Failed to clone {}: {}", url, e)
+            ))?;
+        
+        if self.config.verbose {
+            println!("Successfully cloned: {} -> {}", url, target_path.display());
+        }
         
         Ok(())
     }
