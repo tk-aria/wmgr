@@ -1,10 +1,10 @@
 repos:
-- url: https://github.com/octocat/Hello-World.git
-  dest: example-repo-1
+- url: https://github.com/granizm/meteorn-run-infra.git
+  dest: infra
   branch: main
   shallow: false
-- url: https://github.com/octocat/Spoon-Knife.git
-  dest: example-repo-2
+- url: https://github.com/granizm/peta-engine.git
+  dest: engine
   branch: main
   shallow: false
 - url: https://github.com/octocat/git-consortium.git

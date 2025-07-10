@@ -142,13 +142,14 @@ impl Workspace {
     }
     
     /// マニフェストディレクトリのパスを取得
+    /// Note: For local-first implementation, this points to .tsrc directory
     pub fn manifest_dir(&self) -> PathBuf {
-        self.tsrc_dir().join("manifest")
+        self.tsrc_dir()
     }
     
     /// マニフェストファイル（manifest.yml）のパスを取得
     pub fn manifest_file_path(&self) -> PathBuf {
-        self.manifest_dir().join("manifest.yml")
+        self.tsrc_dir().join("manifest.yml")
     }
     
     /// 特定のリポジトリのパスを取得

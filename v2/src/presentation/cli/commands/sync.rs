@@ -96,7 +96,7 @@ impl SyncCommand {
         // Check if .tsrc directory exists
         let tsrc_dir = current_dir.join(".tsrc");
         if !tsrc_dir.exists() {
-            return Err(anyhow::anyhow!("Workspace not initialized. Run 'tsrc init' first."));
+            return Err(anyhow::anyhow!("Workspace not initialized at: {}\nRun 'tsrc init' first", current_dir.display()));
         }
         
         // Load configuration
@@ -105,13 +105,15 @@ impl SyncCommand {
             return Err(anyhow::anyhow!("Workspace configuration not found. Run 'tsrc init' first."));
         }
         
-        // For now, create a basic workspace - in a real implementation, this would load from config
-        let workspace_config = crate::domain::entities::workspace::WorkspaceConfig::new(
-            "https://example.com/manifest.git", // This would be loaded from config
-            "main"
-        );
+        // Read the actual workspace configuration from file
+        use crate::infrastructure::filesystem::config_store::ConfigStore;
+        use crate::domain::entities::workspace::WorkspaceStatus;
+        let config_store = ConfigStore::new();
+        let workspace_config = config_store.read_workspace_config(&config_file)
+            .map_err(|e| anyhow::anyhow!("Failed to load workspace configuration: {}", e))?;
         
-        let workspace = Workspace::new(current_dir, workspace_config);
+        let workspace = Workspace::new(current_dir, workspace_config)
+            .with_status(WorkspaceStatus::Initialized);
         Ok(workspace)
     }
 }

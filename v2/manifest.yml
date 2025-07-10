@@ -1,11 +1,11 @@
 repos:
-  - dest: "example-repo-1"
-    url: "https://github.com/octocat/Hello-World.git"
+  - dest: "infra"
+    url: "https://github.com/granizm/meteorn-run-infra.git"
     branch: "main"
     groups: ["core"]
   
-  - dest: "example-repo-2"
-    url: "https://github.com/octocat/Spoon-Knife.git"
+  - dest: "engine"
+    url: "https://github.com/granizm/peta-engine.git"
     branch: "main"
     groups: ["tools"]
   
