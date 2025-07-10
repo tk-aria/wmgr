@@ -56,6 +56,9 @@ rayon = "1.8"
 futures = "0.3"
 num_cpus = "1.16"
 
+# Async utilities
+async-trait = "0.1"
+
 # Configuration validation
 validator = { version = "0.18", features = ["derive"] }
 
