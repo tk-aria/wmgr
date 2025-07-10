@@ -12,9 +12,9 @@
 
 ## ドメインモデル実装
 
-- [ ] `domain/entities/repository.rs` - リポジトリエンティティの実装
-  - [ ] `Repository` 構造体（dest、remotes、branch、sha1、tag等のフィールド）
-  - [ ] `Remote` 構造体（name、url）
+- [x] `domain/entities/repository.rs` - リポジトリエンティティの実装
+  - [x] `Repository` 構造体（dest、remotes、branch、sha1、tag等のフィールド）
+  - [x] `Remote` 構造体（name、url）
 - [ ] `domain/entities/manifest.rs` - マニフェストエンティティの実装
   - [ ] `Manifest` 構造体
   - [ ] `ManifestRepo` 構造体
