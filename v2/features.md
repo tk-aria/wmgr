@@ -33,7 +33,7 @@
   - [ ] マニフェストURLからのクローン処理
   - [ ] .tsrc/config.yml の作成
   - [ ] グループ指定のサポート
-- [ ] `application/use_cases/sync_repositories.rs` - リポジトリ同期ユースケース
+- [x] `application/use_cases/sync_repositories.rs` - リポジトリ同期ユースケース
   - [ ] マニフェスト更新処理
   - [ ] 不足リポジトリのクローン
   - [ ] リモート設定の更新
