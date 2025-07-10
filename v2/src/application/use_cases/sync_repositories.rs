@@ -346,27 +346,53 @@ impl SyncRepositoriesUseCase {
     
     /// リモート設定の更新
     async fn update_remotes(&self, repo: &ManifestRepo, repo_path: &PathBuf) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit remoteコマンドの実行
+        use crate::infrastructure::git::repository::GitRepository;
+        use crate::infrastructure::git::remote::GitRemoteManager;
+        use crate::domain::value_objects::git_url::GitUrl;
+        
         if self.config.verbose {
             println!("Updating remotes for {}", repo_path.display());
         }
         
-        // originリモートのURL更新（疑似実装）
-        self.perform_git_remote_set_url(repo_path, "origin", &repo.url).await?;
+        // 既存リポジトリを開く
+        let git_repo = GitRepository::open(repo_path)
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to open repository at {}: {}", repo_path.display(), e)
+            ))?;
+        
+        // リモート管理オブジェクトを作成
+        let remote_manager = GitRemoteManager::new(git_repo.git2_repo());
+        
+        // URLを検証・変換
+        let git_url = GitUrl::new(&repo.url)?;
+        
+        // originリモートのURL更新
+        if remote_manager.remote_exists("origin") {
+            remote_manager.set_remote_url("origin", &git_url)
+                .map_err(|e| SyncRepositoriesError::RemoteUpdateFailed {
+                    repo: repo.dest.clone(),
+                    error: format!("Failed to update origin remote URL: {}", e),
+                })?;
+            
+            if self.config.verbose {
+                println!("Updated origin remote URL to: {}", repo.url);
+            }
+        } else {
+            // originリモートが存在しない場合は追加
+            remote_manager.add_remote("origin", &git_url)
+                .map_err(|e| SyncRepositoriesError::RemoteUpdateFailed {
+                    repo: repo.dest.clone(),
+                    error: format!("Failed to add origin remote: {}", e),
+                })?;
+            
+            if self.config.verbose {
+                println!("Added origin remote with URL: {}", repo.url);
+            }
+        }
         
         Ok(())
     }
     
-    /// Git remote set-url実行（疑似実装）
-    async fn perform_git_remote_set_url(
-        &self, 
-        _repo_path: &PathBuf, 
-        _remote_name: &str, 
-        _url: &str
-    ) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        Ok(())
-    }
     
     /// Git fetchの実行
     async fn perform_git_fetch(&self, _repo_path: &PathBuf) -> Result<(), SyncRepositoriesError> {
