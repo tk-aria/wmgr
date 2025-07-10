@@ -7,6 +7,10 @@ authors = ["tsrc-rust contributors"]
 description = "Manage groups of git repositories"
 repository = "https://github.com/tk-aria/wmgr"
 license = "BSD-3-Clause"
+documentation = "https://docs.rs/tsrc"
+readme = "README.md"
+keywords = ["git", "repository", "management", "cli", "tools"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 # CLI framework
