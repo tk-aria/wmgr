@@ -1,0 +1,5 @@
+
+# claude-code config files.
+#.claude/
+.claude/settings.local.json
+.claude/mcp.json
