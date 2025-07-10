@@ -85,13 +85,13 @@
   - [x] 引数: --branch、--compact等
 - [x] `presentation/cli/commands/foreach.rs` - foreachコマンドの実装
   - [x] 引数: command、--group、--parallel等
-- [ ] `presentation/cli/commands/log.rs` - logコマンドの実装
-- [ ] `presentation/cli/commands/dump_manifest.rs` - dump-manifestコマンドの実装
-- [ ] `presentation/cli/commands/apply_manifest.rs` - apply-manifestコマンドの実装
-- [ ] `presentation/ui/display.rs` - UI表示ヘルパー
-  - [ ] カラー出力サポート
-  - [ ] プログレス表示
-  - [ ] エラーメッセージフォーマット
+- [x] `presentation/cli/commands/log.rs` - logコマンドの実装
+- [x] `presentation/cli/commands/dump_manifest.rs` - dump-manifestコマンドの実装
+- [x] `presentation/cli/commands/apply_manifest.rs` - apply-manifestコマンドの実装
+- [x] `presentation/ui/display.rs` - UI表示ヘルパー
+  - [x] カラー出力サポート
+  - [x] プログレス表示
+  - [x] エラーメッセージフォーマット
 
 ## 共通機能実装
 
