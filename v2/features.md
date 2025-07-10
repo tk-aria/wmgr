@@ -38,7 +38,7 @@
   - [ ] 不足リポジトリのクローン
   - [ ] リモート設定の更新
   - [ ] ブランチの同期（fast-forward merge）
-- [ ] `application/use_cases/status_check.rs` - ステータス確認ユースケース
+- [x] `application/use_cases/status_check.rs` - ステータス確認ユースケース
   - [ ] 各リポジトリのGitステータス取得
   - [ ] ダーティ状態の検出
   - [ ] ブランチ差分の確認
