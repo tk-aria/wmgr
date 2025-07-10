@@ -44,7 +44,7 @@
   - [x] マニフェスト更新処理
   - [x] 不足リポジトリのクローン
   - [x] リモート設定の更新
-  - [ ] ブランチの同期（fast-forward merge）
+  - [x] ブランチの同期（fast-forward merge）
 - [x] `application/use_cases/status_check.rs` - ステータス確認ユースケース
   - [ ] 各リポジトリのGitステータス取得
   - [ ] ダーティ状態の検出

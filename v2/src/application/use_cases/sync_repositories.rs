@@ -395,11 +395,36 @@ impl SyncRepositoriesUseCase {
     
     
     /// Git fetchの実行
-    async fn perform_git_fetch(&self, _repo_path: &PathBuf) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
+    async fn perform_git_fetch(&self, repo_path: &PathBuf) -> Result<(), SyncRepositoriesError> {
+        use crate::infrastructure::git::repository::{GitRepository, FetchConfig};
+        
         if self.config.verbose {
-            println!("Fetching latest changes...");
+            println!("Fetching latest changes from origin...");
         }
+        
+        // 既存リポジトリを開く
+        let git_repo = GitRepository::open(repo_path)
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to open repository at {}: {}", repo_path.display(), e)
+            ))?;
+        
+        // フェッチ設定
+        let fetch_config = FetchConfig {
+            remote_name: "origin".to_string(),
+            refs: None, // すべてのリファレンスをフェッチ
+            progress_callback: None,
+        };
+        
+        // Git fetch実行
+        git_repo.fetch(fetch_config).await
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to fetch from origin: {}", e)
+            ))?;
+        
+        if self.config.verbose {
+            println!("Successfully fetched latest changes");
+        }
+        
         Ok(())
     }
     
@@ -439,27 +464,96 @@ impl SyncRepositoriesUseCase {
         Ok(())
     }
     
-    /// 現在のブランチを取得（疑似実装）
-    async fn get_current_branch(&self, _repo_path: &PathBuf) -> Result<String, SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        Ok("main".to_string())
+    /// 現在のブランチを取得
+    async fn get_current_branch(&self, repo_path: &PathBuf) -> Result<String, SyncRepositoriesError> {
+        use crate::infrastructure::git::repository::GitRepository;
+        
+        // 既存リポジトリを開く
+        let git_repo = GitRepository::open(repo_path)
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to open repository at {}: {}", repo_path.display(), e)
+            ))?;
+        
+        // 現在のブランチを取得
+        git_repo.get_current_branch()
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to get current branch: {}", e)
+            ))
     }
     
-    /// Git checkoutの実行（疑似実装）
-    async fn perform_git_checkout(&self, _repo_path: &PathBuf, _branch: &str) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
+    /// Git checkoutの実行
+    async fn perform_git_checkout(&self, repo_path: &PathBuf, branch: &str) -> Result<(), SyncRepositoriesError> {
+        use crate::infrastructure::git::repository::GitRepository;
+        
+        if self.config.verbose {
+            println!("Checking out branch '{}' in {}", branch, repo_path.display());
+        }
+        
+        // 既存リポジトリを開く
+        let git_repo = GitRepository::open(repo_path)
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to open repository at {}: {}", repo_path.display(), e)
+            ))?;
+        
+        // ブランチチェックアウト実行
+        git_repo.checkout(branch)
+            .map_err(|e| SyncRepositoriesError::BranchSyncFailed {
+                repo: repo_path.display().to_string(),
+                error: format!("Failed to checkout branch '{}': {}", branch, e),
+            })?;
+        
+        if self.config.verbose {
+            println!("Successfully checked out branch '{}'", branch);
+        }
+        
         Ok(())
     }
     
-    /// ローカル変更の有無をチェック（疑似実装）
-    async fn check_local_changes(&self, _repo_path: &PathBuf) -> Result<bool, SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        Ok(false)
+    /// ローカル変更の有無をチェック
+    async fn check_local_changes(&self, repo_path: &PathBuf) -> Result<bool, SyncRepositoriesError> {
+        use crate::infrastructure::git::repository::GitRepository;
+        
+        // 既存リポジトリを開く
+        let git_repo = GitRepository::open(repo_path)
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to open repository at {}: {}", repo_path.display(), e)
+            ))?;
+        
+        // ワーキングディレクトリのクリーン状態をチェック
+        let is_clean = git_repo.is_working_directory_clean()
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to check working directory status: {}", e)
+            ))?;
+        
+        // クリーンでない場合は変更があることを示す
+        Ok(!is_clean)
     }
     
-    /// Fast-forward mergeの実行（疑似実装）
-    async fn perform_git_merge_ff(&self, _repo_path: &PathBuf, _branch: &str) -> Result<(), SyncRepositoriesError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
+    /// Fast-forward mergeの実行
+    async fn perform_git_merge_ff(&self, repo_path: &PathBuf, branch: &str) -> Result<(), SyncRepositoriesError> {
+        use crate::infrastructure::git::repository::GitRepository;
+        
+        if self.config.verbose {
+            println!("Performing fast-forward merge for branch '{}' in {}", branch, repo_path.display());
+        }
+        
+        // 既存リポジトリを開く
+        let git_repo = GitRepository::open(repo_path)
+            .map_err(|e| SyncRepositoriesError::GitOperationFailed(
+                format!("Failed to open repository at {}: {}", repo_path.display(), e)
+            ))?;
+        
+        // Fast-forward merge実行
+        git_repo.fast_forward_merge(branch)
+            .map_err(|e| SyncRepositoriesError::BranchSyncFailed {
+                repo: repo_path.display().to_string(),
+                error: format!("Failed to fast-forward merge branch '{}': {}", branch, e),
+            })?;
+        
+        if self.config.verbose {
+            println!("Successfully performed fast-forward merge for branch '{}'", branch);
+        }
+        
         Ok(())
     }
 }
