@@ -147,6 +147,21 @@ pub enum Commands {
         #[arg(long)]
         until: Option<String>,
     },
+    
+    /// Dump the workspace manifest
+    DumpManifest {
+        /// Output format (yaml or json)
+        #[arg(short, long, default_value = "yaml")]
+        format: String,
+        
+        /// Output file path (if not specified, prints to stdout)
+        #[arg(short, long)]
+        output: Option<String>,
+        
+        /// Pretty print JSON output
+        #[arg(long)]
+        pretty: bool,
+    },
 }
 
 /// CLI application runner
@@ -228,6 +243,13 @@ impl CliApp {
                 until,
             } => {
                 self.handle_log_command(group, *oneline, *max_count, since, until).await
+            }
+            Commands::DumpManifest {
+                format,
+                output,
+                pretty,
+            } => {
+                self.handle_dump_manifest_command(format, output, *pretty).await
             }
         }
     }
@@ -486,6 +508,27 @@ impl CliApp {
             max_count,
             since.clone(),
             until.clone(),
+            self.cli.verbose,
+        );
+        
+        command.execute().await
+    }
+    
+    async fn handle_dump_manifest_command(
+        &self,
+        format: &str,
+        output_file: &Option<String>,
+        pretty: bool,
+    ) -> anyhow::Result<()> {
+        use crate::presentation::cli::commands::dump_manifest::{DumpManifestCommand, OutputFormat};
+        
+        let output_format: OutputFormat = format.parse()
+            .map_err(|e| anyhow::anyhow!("Invalid format: {}", e))?;
+        
+        let command = DumpManifestCommand::new(
+            output_format,
+            output_file.clone(),
+            pretty,
             self.cli.verbose,
         );
         
