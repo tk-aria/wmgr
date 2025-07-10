@@ -42,13 +42,13 @@
   - [ ] 各リポジトリのGitステータス取得
   - [ ] ダーティ状態の検出
   - [ ] ブランチ差分の確認
-- [ ] `application/use_cases/foreach_command.rs` - foreach実行ユースケース
-  - [ ] 環境変数の設定
-  - [ ] 並列実行のサポート
-- [ ] `application/services/manifest_service.rs` - マニフェスト管理サービス
-  - [ ] マニフェストのパースと検証
-  - [ ] グループのフィルタリング
-  - [ ] Deep Manifest/Future Manifestのサポート
+- [x] `application/use_cases/foreach_command.rs` - foreach実行ユースケース
+  - [x] 環境変数の設定
+  - [x] 並列実行のサポート
+- [x] `application/services/manifest_service.rs` - マニフェスト管理サービス
+  - [x] マニフェストのパースと検証
+  - [x] グループのフィルタリング
+  - [x] Deep Manifest/Future Manifestのサポート
 
 ## インフラストラクチャ層実装
 

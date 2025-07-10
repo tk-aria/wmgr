@@ -308,7 +308,7 @@ mod tests {
         };
         
         let use_case = InitWorkspaceUseCase::new(config);
-        let manifest = Manifest::new(vec![], None, None);
+        let manifest = Manifest::new(vec![]);
         
         let yaml_content = use_case.generate_config_yaml(&manifest).unwrap();
         

@@ -75,3 +75,7 @@ strip = true
 [profile.dev]
 opt-level = 0
 debug = true
+
+[[example]]
+name = "manifest_service_usage"
+path = "examples/manifest_service_usage.rs"
