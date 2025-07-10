@@ -9,6 +9,10 @@
   - [x] `src/infrastructure/` - 外部システムとの連携（Git、ファイルシステム等）
   - [x] `src/presentation/` - CLI インターフェース
   - [x] `src/main.rs` - エントリーポイント
+- [x] ローカル開発環境対応
+  - [x] manifest.yml サンプルファイルの作成
+  - [x] ローカルファイルベースのワークフロー実装
+  - [x] .gitignore設定（target/ディレクトリ除外）
 
 ## ドメインモデル実装
 
@@ -30,9 +34,10 @@
 ## アプリケーション層実装
 
 - [x] `application/use_cases/init_workspace.rs` - ワークスペース初期化ユースケース
-  - [ ] マニフェストURLからのクローン処理
-  - [ ] .tsrc/config.yml の作成
-  - [ ] グループ指定のサポート
+  - [x] ローカルマニフェストファイルからの初期化（URLクローン処理を削除）
+  - [x] .tsrc/config.yml の作成
+  - [x] グループ指定のサポート
+  - [x] ローカルファイルベースのワークスペース設定
 - [x] `application/use_cases/sync_repositories.rs` - リポジトリ同期ユースケース
   - [ ] マニフェスト更新処理
   - [ ] 不足リポジトリのクローン
@@ -62,6 +67,7 @@
 - [x] `infrastructure/filesystem/config_store.rs` - 設定ファイル管理
   - [x] YAML形式の設定ファイルの読み書き
   - [x] スキーマ検証
+  - [x] ローカルファイルパス検証対応（URL検証の削除）
 - [x] `infrastructure/filesystem/manifest_store.rs` - マニフェストファイル管理
   - [x] manifest.yml の読み込みと解析
   - [x] ファイルシステム操作（copy、symlink）
@@ -78,7 +84,9 @@
 - [x] `presentation/cli/mod.rs` - CLIメインモジュール
   - [x] `clap`クレートを使用したコマンドライン引数パーサー
 - [x] `presentation/cli/commands/init.rs` - initコマンドの実装
-  - [x] 引数: manifest_url、--branch、--group、--shallow等
+  - [x] 引数: manifest_path、--group、--force等（ローカルマニフェスト対応）
+  - [x] ローカルファイルからのマニフェスト読み込み
+  - [x] リモートダウンロード処理の削除
 - [x] `presentation/cli/commands/sync.rs` - syncコマンドの実装
   - [x] 引数: --group、--force、--no-correct-branch等
 - [x] `presentation/cli/commands/status.rs` - statusコマンドの実装
