@@ -75,16 +75,16 @@
 
 ## プレゼンテーション層実装
 
-- [ ] `presentation/cli/mod.rs` - CLIメインモジュール
-  - [ ] `clap`クレートを使用したコマンドライン引数パーサー
-- [ ] `presentation/cli/commands/init.rs` - initコマンドの実装
-  - [ ] 引数: manifest_url、--branch、--group、--shallow等
-- [ ] `presentation/cli/commands/sync.rs` - syncコマンドの実装
-  - [ ] 引数: --group、--force、--no-correct-branch等
-- [ ] `presentation/cli/commands/status.rs` - statusコマンドの実装
-  - [ ] 引数: --branch、--compact等
-- [ ] `presentation/cli/commands/foreach.rs` - foreachコマンドの実装
-  - [ ] 引数: command、--group、--parallel等
+- [x] `presentation/cli/mod.rs` - CLIメインモジュール
+  - [x] `clap`クレートを使用したコマンドライン引数パーサー
+- [x] `presentation/cli/commands/init.rs` - initコマンドの実装
+  - [x] 引数: manifest_url、--branch、--group、--shallow等
+- [x] `presentation/cli/commands/sync.rs` - syncコマンドの実装
+  - [x] 引数: --group、--force、--no-correct-branch等
+- [x] `presentation/cli/commands/status.rs` - statusコマンドの実装
+  - [x] 引数: --branch、--compact等
+- [x] `presentation/cli/commands/foreach.rs` - foreachコマンドの実装
+  - [x] 引数: command、--group、--parallel等
 - [ ] `presentation/cli/commands/log.rs` - logコマンドの実装
 - [ ] `presentation/cli/commands/dump_manifest.rs` - dump-manifestコマンドの実装
 - [ ] `presentation/cli/commands/apply_manifest.rs` - apply-manifestコマンドの実装
