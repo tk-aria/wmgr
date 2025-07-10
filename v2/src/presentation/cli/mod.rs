@@ -162,6 +162,20 @@ pub enum Commands {
         #[arg(long)]
         pretty: bool,
     },
+    
+    /// Apply a new manifest to the workspace
+    ApplyManifest {
+        /// Path to the new manifest file
+        manifest_file: String,
+        
+        /// Force apply changes without confirmation
+        #[arg(short, long)]
+        force: bool,
+        
+        /// Show what would be changed without applying
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 /// CLI application runner
@@ -250,6 +264,13 @@ impl CliApp {
                 pretty,
             } => {
                 self.handle_dump_manifest_command(format, output, *pretty).await
+            }
+            Commands::ApplyManifest {
+                manifest_file,
+                force,
+                dry_run,
+            } => {
+                self.handle_apply_manifest_command(manifest_file, *force, *dry_run).await
             }
         }
     }
@@ -529,6 +550,24 @@ impl CliApp {
             output_format,
             output_file.clone(),
             pretty,
+            self.cli.verbose,
+        );
+        
+        command.execute().await
+    }
+    
+    async fn handle_apply_manifest_command(
+        &self,
+        manifest_file: &str,
+        force: bool,
+        dry_run: bool,
+    ) -> anyhow::Result<()> {
+        use crate::presentation::cli::commands::apply_manifest::ApplyManifestCommand;
+        
+        let command = ApplyManifestCommand::new(
+            manifest_file.to_string(),
+            force,
+            dry_run,
             self.cli.verbose,
         );
         
