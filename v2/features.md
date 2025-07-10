@@ -22,14 +22,14 @@
 - [x] `domain/entities/workspace.rs` - ワークスペースエンティティの実装
   - [x] `Workspace` 構造体
   - [x] `WorkspaceConfig` 構造体
-- [ ] `domain/value_objects/` - 値オブジェクトの実装
-  - [ ] `GitUrl` - Git URLの検証と正規化
-  - [ ] `BranchName` - ブランチ名の検証
-  - [ ] `FilePath` - ファイルパスの検証と操作
+- [x] `domain/value_objects/` - 値オブジェクトの実装
+  - [x] `GitUrl` - Git URLの検証と正規化
+  - [x] `BranchName` - ブランチ名の検証
+  - [x] `FilePath` - ファイルパスの検証と操作
 
 ## アプリケーション層実装
 
-- [ ] `application/use_cases/init_workspace.rs` - ワークスペース初期化ユースケース
+- [x] `application/use_cases/init_workspace.rs` - ワークスペース初期化ユースケース
   - [ ] マニフェストURLからのクローン処理
   - [ ] .tsrc/config.yml の作成
   - [ ] グループ指定のサポート
