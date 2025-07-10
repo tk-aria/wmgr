@@ -15,10 +15,10 @@
 - [x] `domain/entities/repository.rs` - リポジトリエンティティの実装
   - [x] `Repository` 構造体（dest、remotes、branch、sha1、tag等のフィールド）
   - [x] `Remote` 構造体（name、url）
-- [ ] `domain/entities/manifest.rs` - マニフェストエンティティの実装
-  - [ ] `Manifest` 構造体
-  - [ ] `ManifestRepo` 構造体
-  - [ ] `Group` 構造体
+- [x] `domain/entities/manifest.rs` - マニフェストエンティティの実装
+  - [x] `Manifest` 構造体
+  - [x] `ManifestRepo` 構造体
+  - [x] `Group` 構造体
 - [ ] `domain/entities/workspace.rs` - ワークスペースエンティティの実装
   - [ ] `Workspace` 構造体
   - [ ] `WorkspaceConfig` 構造体
