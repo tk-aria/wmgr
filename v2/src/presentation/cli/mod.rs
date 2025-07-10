@@ -46,20 +46,12 @@ pub struct Cli {
 pub enum Commands {
     /// Initialize a new workspace
     Init {
-        /// Manifest repository URL
-        manifest_url: String,
-        
-        /// Branch to use for the manifest repository
-        #[arg(short, long)]
-        branch: Option<String>,
+        /// Path to local manifest file
+        manifest_path: String,
         
         /// Groups to clone (if not specified, all groups will be cloned)
         #[arg(short, long)]
         group: Vec<String>,
-        
-        /// Use shallow clones
-        #[arg(long)]
-        shallow: bool,
         
         /// Force initialization even if workspace already exists
         #[arg(short, long)]
@@ -216,13 +208,11 @@ impl CliApp {
     async fn handle_command(&self) -> anyhow::Result<()> {
         match &self.cli.command {
             Commands::Init { 
-                manifest_url, 
-                branch, 
+                manifest_path, 
                 group, 
-                shallow, 
                 force 
             } => {
-                self.handle_init_command(manifest_url, branch, group, *shallow, *force).await
+                self.handle_init_command(manifest_path, group, *force).await
             }
             Commands::Sync { 
                 group, 
@@ -277,60 +267,20 @@ impl CliApp {
     
     async fn handle_init_command(
         &self,
-        manifest_url: &str,
-        branch: &Option<String>,
+        manifest_path: &str,
         groups: &[String],
-        shallow: bool,
         force: bool,
     ) -> anyhow::Result<()> {
-        let current_dir = env::current_dir()?;
+        use crate::presentation::cli::commands::init::InitCommand;
         
-        // Parse and validate the manifest URL
-        let git_url = GitUrl::new(manifest_url)
-            .map_err(|e| anyhow::anyhow!("Invalid manifest URL: {}", e))?;
-        
-        // Create workspace path
-        let workspace_path = FilePath::new_absolute(current_dir.to_str().unwrap())
-            .map_err(|e| anyhow::anyhow!("Invalid workspace path: {}", e))?;
-        
-        // Prepare groups list
-        let groups_list = if groups.is_empty() {
-            None
-        } else {
-            Some(groups.to_vec())
-        };
-        
-        // Create configuration
-        let config = InitWorkspaceConfig {
-            manifest_url: git_url,
-            workspace_path,
-            branch: branch.clone(),
-            groups: groups_list,
-            shallow,
+        let command = InitCommand::new(
+            manifest_path.to_string(),
+            groups.to_vec(),
             force,
-        };
+            self.cli.verbose,
+        );
         
-        // Execute the use case
-        let use_case = InitWorkspaceUseCase::new(config);
-        
-        println!("{} Initializing workspace...", "::".blue().bold());
-        
-        match use_case.execute().await {
-            Ok(workspace) => {
-                println!("{} Workspace initialized successfully!", "✓".green().bold());
-                if self.cli.verbose {
-                    println!("  Manifest URL: {}", manifest_url);
-                    println!("  Workspace path: {}", workspace.root_path.display());
-                }
-                Ok(())
-            }
-            Err(InitWorkspaceError::WorkspaceAlreadyExists(path)) => {
-                Err(anyhow::anyhow!("Workspace already exists at: {}\nUse --force to overwrite", path))
-            }
-            Err(e) => {
-                Err(anyhow::anyhow!("Failed to initialize workspace: {}", e))
-            }
-        }
+        command.execute().await
     }
     
     async fn handle_sync_command(

@@ -107,7 +107,7 @@ impl Default for ValidationConfig {
 /// Extended workspace configuration with validation
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ValidatedWorkspaceConfig {
-    #[validate(url)]
+    #[validate(length(min = 1))]
     pub manifest_url: String,
     
     #[validate(length(min = 1, max = 255))]

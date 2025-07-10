@@ -1,0 +1,15 @@
+repos:
+  - dest: "example-repo-1"
+    url: "https://github.com/octocat/Hello-World.git"
+    branch: "main"
+    groups: ["core"]
+  
+  - dest: "example-repo-2"
+    url: "https://github.com/octocat/Spoon-Knife.git"
+    branch: "main"
+    groups: ["tools"]
+  
+  - dest: "example-repo-3"
+    url: "https://github.com/octocat/git-consortium.git"
+    branch: "master"
+    groups: ["core", "advanced"]
