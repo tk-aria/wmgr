@@ -108,7 +108,7 @@
 - [x] `common/error.rs` - エラー型の定義
   - [x] `thiserror`クレートを使用したエラー型定義
   - [x] Git操作エラー、ファイルシステムエラー、設定エラー等
-- [ ] `common/result.rs` - Result型のエイリアス定義
+- [x] `common/result.rs` - Result型のエイリアス定義
 - [ ] `common/executor.rs` - タスク実行フレームワーク
   - [ ] 並列実行サポート
   - [ ] プログレス表示
