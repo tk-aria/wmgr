@@ -19,9 +19,9 @@
   - [x] `Manifest` 構造体
   - [x] `ManifestRepo` 構造体
   - [x] `Group` 構造体
-- [ ] `domain/entities/workspace.rs` - ワークスペースエンティティの実装
-  - [ ] `Workspace` 構造体
-  - [ ] `WorkspaceConfig` 構造体
+- [x] `domain/entities/workspace.rs` - ワークスペースエンティティの実装
+  - [x] `Workspace` 構造体
+  - [x] `WorkspaceConfig` 構造体
 - [ ] `domain/value_objects/` - 値オブジェクトの実装
   - [ ] `GitUrl` - Git URLの検証と正規化
   - [ ] `BranchName` - ブランチ名の検証
