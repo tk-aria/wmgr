@@ -83,7 +83,7 @@ pub enum WorkspaceStatus {
 }
 
 /// tsrcワークスペースのエンティティ
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Workspace {
     /// ワークスペースのルートパス
     pub root_path: PathBuf,

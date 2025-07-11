@@ -2,6 +2,9 @@ use std::path::PathBuf;
 use std::collections::HashMap;
 use thiserror::Error;
 use serde::{Deserialize, Serialize};
+use futures::future::join_all;
+use tokio::sync::Semaphore;
+use std::sync::Arc;
 use crate::domain::entities::{
     workspace::Workspace, 
     manifest::ManifestRepo,
@@ -442,24 +445,69 @@ impl ForeachCommandUseCase {
             println!("Executing commands in {} repositories in parallel", target_repos.len());
         }
         
-        // TODO: 実際の並列実行はインフラストラクチャ層で実装
-        // ここでは疑似的に順次実行（並列実行のシミュレーション）
         let start_time = std::time::Instant::now();
         
-        for repo in target_repos {
-            let command_result = self.execute_command_in_repo(repo, workspace, env_vars).await;
+        // 並列度を制限するためのセマフォ
+        let max_parallel = self.config.max_parallel.unwrap_or_else(|| {
+            std::cmp::min(target_repos.len(), num_cpus::get())
+        });
+        let semaphore = Arc::new(Semaphore::new(max_parallel));
+        
+        // 各リポジトリのタスクを作成
+        let tasks: Vec<_> = target_repos.iter().map(|repo| {
+            let repo = repo.clone();
+            let workspace = workspace.clone();
+            let env_vars = env_vars.clone();
+            let semaphore = semaphore.clone();
+            let config = self.config.clone();
             
-            match command_result {
-                Ok(cmd_result) => {
-                    result.add_result(cmd_result);
+            tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.map_err(|e| {
+                    ForeachCommandError::ParallelExecutionFailed(format!("Failed to acquire semaphore: {}", e))
+                })?;
+                
+                let use_case = ForeachCommandUseCase { config };
+                use_case.execute_command_in_repo(&repo, &workspace, &env_vars).await
+            })
+        }).collect();
+        
+        // すべてのタスクを並列実行
+        let results = join_all(tasks).await;
+        
+        // 結果をまとめる
+        for (i, join_result) in results.into_iter().enumerate() {
+            match join_result {
+                Ok(task_result) => {
+                    match task_result {
+                        Ok(cmd_result) => {
+                            result.add_result(cmd_result);
+                        }
+                        Err(e) => {
+                            let repo_name = target_repos.get(i)
+                                .map(|r| r.dest.clone())
+                                .unwrap_or_else(|| "unknown".to_string());
+                            let failed_result = CommandResult::new(repo_name)
+                                .with_failure(None, e.to_string(), 0);
+                            result.add_result(failed_result);
+                            
+                            if !self.config.continue_on_error {
+                                return Err(e);
+                            }
+                        }
+                    }
                 }
-                Err(e) => {
-                    let failed_result = CommandResult::new(repo.dest.clone())
-                        .with_failure(None, e.to_string(), 0);
+                Err(join_err) => {
+                    let repo_name = target_repos.get(i)
+                        .map(|r| r.dest.clone())
+                        .unwrap_or_else(|| "unknown".to_string());
+                    let failed_result = CommandResult::new(repo_name)
+                        .with_failure(None, format!("Task join error: {}", join_err), 0);
                     result.add_result(failed_result);
                     
                     if !self.config.continue_on_error {
-                        return Err(e);
+                        return Err(ForeachCommandError::ParallelExecutionFailed(
+                            format!("Task join error: {}", join_err)
+                        ));
                     }
                 }
             }
