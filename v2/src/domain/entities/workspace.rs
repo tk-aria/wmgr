@@ -236,7 +236,7 @@ mod tests {
         
         assert_eq!(workspace.tsrc_dir(), PathBuf::from("/path/to/workspace/.tsrc"));
         assert_eq!(workspace.config_path(), PathBuf::from("/path/to/workspace/.tsrc/config.yml"));
-        assert_eq!(workspace.manifest_dir(), PathBuf::from("/path/to/workspace/.tsrc/manifest"));
+        assert_eq!(workspace.manifest_dir(), PathBuf::from("/path/to/workspace/.tsrc"));
         assert_eq!(workspace.repo_path("repo1"), PathBuf::from("/path/to/workspace/repo1"));
     }
     

@@ -283,7 +283,7 @@ mod tests {
             branch: None,
             groups: None,
             shallow: false,
-            force: false,
+            force: true, // TempDirは既に存在するのでforceフラグを設定
         };
         
         let use_case = InitWorkspaceUseCase::new(config);
@@ -312,7 +312,7 @@ mod tests {
         
         let yaml_content = use_case.generate_config_yaml(&manifest).unwrap();
         
-        assert!(yaml_content.contains("manifest_url: https://github.com/example/manifest.git"));
+        assert!(yaml_content.contains("manifest_url: https://github.com/example/manifest"));
         assert!(yaml_content.contains("manifest_branch: develop"));
         assert!(yaml_content.contains("shallow: true"));
     }

@@ -1,0 +1,38 @@
+# Cargo configuration for better build performance and optimization
+
+[build]
+# Use all available CPU cores for parallel compilation (0 means use all cores)
+# jobs = 0
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[target.x86_64-unknown-linux-musl]
+linker = "rust-lld"
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
+
+# Registry configuration
+[registries.crates-io]
+protocol = "sparse"
+
+[net]
+# Use git CLI for git dependencies to leverage system configuration
+git-fetch-with-cli = true
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+strip = false
+
+[profile.bench]
+inherits = "release"
+debug = true

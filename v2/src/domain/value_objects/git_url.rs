@@ -239,4 +239,122 @@ mod tests {
         assert!(GitUrl::new("ftp://example.com/repo").is_err());
         assert!(GitUrl::new("https://github.com/").is_err());
     }
+
+    #[test]
+    fn test_repo_name_extraction() {
+        let git_url = GitUrl::new("https://github.com/owner/my-repo").unwrap();
+        assert_eq!(git_url.repo_name(), Some("my-repo"));
+        
+        let git_url_deep = GitUrl::new("https://gitlab.com/group/subgroup/project").unwrap();
+        assert_eq!(git_url_deep.repo_name(), Some("project"));
+        
+        let git_url_single = GitUrl::new("https://github.com/standalone").unwrap();
+        assert_eq!(git_url_single.repo_name(), Some("standalone"));
+        
+        let git_url_empty = GitUrl::new("https://github.com/owner/").unwrap();
+        assert_eq!(git_url_empty.repo_name(), Some(""));
+    }
+
+    #[test]
+    fn test_organization_extraction() {
+        let git_url = GitUrl::new("https://github.com/my-org/repo").unwrap();
+        assert_eq!(git_url.organization(), Some("my-org"));
+        
+        let git_url_deep = GitUrl::new("https://gitlab.com/group/subgroup/project").unwrap();
+        assert_eq!(git_url_deep.organization(), Some("group"));
+        
+        let git_url_single = GitUrl::new("https://github.com/standalone").unwrap();
+        assert_eq!(git_url_single.organization(), None);
+    }
+
+    #[test]
+    fn test_same_repo_comparison() {
+        let ssh_url = GitUrl::new("git@github.com:owner/repo.git").unwrap();
+        let https_url = GitUrl::new("https://github.com/owner/repo").unwrap();
+        let https_git_url = GitUrl::new("https://github.com/owner/repo.git").unwrap();
+        let different_repo = GitUrl::new("https://github.com/owner/other-repo").unwrap();
+        let different_host = GitUrl::new("https://gitlab.com/owner/repo").unwrap();
+        
+        assert!(ssh_url.is_same_repo(&https_url));
+        assert!(https_url.is_same_repo(&https_git_url));
+        assert!(ssh_url.is_same_repo(&https_git_url));
+        assert!(!ssh_url.is_same_repo(&different_repo));
+        assert!(!https_url.is_same_repo(&different_host));
+    }
+
+    #[test]
+    fn test_http_url_support() {
+        let git_url = GitUrl::new("http://github.com/owner/repo").unwrap();
+        assert_eq!(git_url.as_str(), "http://github.com/owner/repo");
+        assert_eq!(git_url.scheme(), "http");
+        assert_eq!(git_url.host(), "github.com");
+        assert_eq!(git_url.repo_path(), "owner/repo");
+    }
+
+    #[test]
+    fn test_edge_cases() {
+        // URLにポート番号が含まれる場合
+        let git_url_with_port = GitUrl::new("https://github.com:443/owner/repo").unwrap();
+        assert_eq!(git_url_with_port.host(), "github.com");
+        
+        // パスに複数のスラッシュが含まれる場合
+        let git_url_nested = GitUrl::new("https://gitlab.example.com/group/subgroup/project").unwrap();
+        assert_eq!(git_url_nested.repo_path(), "group/subgroup/project");
+        assert_eq!(git_url_nested.organization(), Some("group"));
+        assert_eq!(git_url_nested.repo_name(), Some("project"));
+    }
+
+    #[test]
+    fn test_display_trait() {
+        let git_url = GitUrl::new("https://github.com/owner/repo").unwrap();
+        assert_eq!(format!("{}", git_url), "https://github.com/owner/repo");
+    }
+
+    #[test]
+    fn test_try_from_str() {
+        let git_url: Result<GitUrl, _> = "git@github.com:owner/repo.git".try_into();
+        assert!(git_url.is_ok());
+        assert_eq!(git_url.unwrap().as_str(), "https://github.com/owner/repo");
+    }
+
+    #[test]
+    fn test_try_from_string() {
+        let url_string = String::from("https://github.com/owner/repo.git");
+        let git_url: Result<GitUrl, _> = url_string.try_into();
+        assert!(git_url.is_ok());
+        assert_eq!(git_url.unwrap().as_str(), "https://github.com/owner/repo");
+    }
+
+    #[test]
+    fn test_whitespace_handling() {
+        let git_url = GitUrl::new("  https://github.com/owner/repo.git  ").unwrap();
+        assert_eq!(git_url.as_str(), "https://github.com/owner/repo");
+    }
+
+    #[test]
+    fn test_error_types() {
+        // Invalid format
+        let invalid_result = GitUrl::new("not-a-url");
+        assert!(matches!(invalid_result, Err(GitUrlError::InvalidFormat(_))));
+        
+        // FTP URL returns InvalidFormat since it doesn't match normalization patterns
+        let ftp_result = GitUrl::new("ftp://example.com/repo");
+        assert!(matches!(ftp_result, Err(GitUrlError::InvalidFormat(_))));
+        
+        // Missing repo path
+        let missing_path_result = GitUrl::new("https://github.com/");
+        assert!(matches!(missing_path_result, Err(GitUrlError::MissingRepoPath)));
+    }
+
+    #[test]
+    fn test_unsupported_scheme_error() {
+        // To test UnsupportedScheme error, we need to create a URL that passes normalization
+        // but has an unsupported scheme. We can temporarily modify the parse_url logic or
+        // use a URL structure that bypasses normalization checks.
+        // Since the current implementation normalizes most schemes to https, 
+        // the UnsupportedScheme error is rarely reached in practice.
+        // For now, we'll test that the error type exists and can be created.
+        let error = GitUrlError::UnsupportedScheme("ftp".to_string());
+        assert_eq!(error.to_string(), "Unsupported URL scheme: ftp");
+    }
 }

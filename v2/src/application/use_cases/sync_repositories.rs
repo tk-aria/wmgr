@@ -71,6 +71,33 @@ impl Default for SyncRepositoriesConfig {
     }
 }
 
+impl SyncRepositoriesConfig {
+    pub fn with_groups(mut self, groups: Vec<String>) -> Self {
+        self.groups = Some(groups);
+        self
+    }
+    
+    pub fn with_force(mut self, force: bool) -> Self {
+        self.force = force;
+        self
+    }
+    
+    pub fn with_no_correct_branch(mut self, no_correct_branch: bool) -> Self {
+        self.no_correct_branch = no_correct_branch;
+        self
+    }
+    
+    pub fn with_parallel_jobs(mut self, parallel_jobs: usize) -> Self {
+        self.parallel_jobs = Some(parallel_jobs);
+        self
+    }
+    
+    pub fn with_verbose(mut self, verbose: bool) -> Self {
+        self.verbose = verbose;
+        self
+    }
+}
+
 /// 同期操作の結果
 #[derive(Debug, Clone)]
 pub struct SyncResult {
@@ -107,6 +134,10 @@ impl SyncResult {
     
     pub fn is_success(&self) -> bool {
         self.errors.is_empty()
+    }
+    
+    pub fn total_count(&self) -> usize {
+        self.cloned_count + self.updated_count + self.skipped_count
     }
 }
 
@@ -574,6 +605,7 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
     use crate::domain::entities::workspace::WorkspaceConfig;
+    use crate::domain::entities::manifest::Manifest;
     
     #[test]
     fn test_sync_config_default() {
@@ -631,5 +663,97 @@ mod tests {
         
         let result = use_case.determine_target_repositories(&workspace);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_sync_config_with_options() {
+        let config = SyncRepositoriesConfig::default()
+            .with_groups(vec!["group1".to_string(), "group2".to_string()])
+            .with_force(true)
+            .with_no_correct_branch(true)
+            .with_parallel_jobs(4)
+            .with_verbose(true);
+        
+        assert_eq!(config.groups, Some(vec!["group1".to_string(), "group2".to_string()]));
+        assert!(config.force);
+        assert!(config.no_correct_branch);
+        assert_eq!(config.parallel_jobs, Some(4));
+        assert!(config.verbose);
+    }
+
+    #[test]
+    fn test_sync_result_statistics() {
+        let mut result = SyncResult::new();
+        
+        // Add some statistics
+        result.synced_count = 5;
+        result.cloned_count = 2;
+        result.updated_count = 3;
+        result.skipped_count = 1;
+        
+        assert_eq!(result.total_count(), 6); // cloned + updated + skipped = 6, not synced_count
+        assert_eq!(result.cloned_count, 2);
+        assert_eq!(result.updated_count, 3);
+        assert_eq!(result.skipped_count, 1);
+        assert!(result.is_success()); // No errors yet
+    }
+
+    #[test]
+    fn test_sync_result_with_errors() {
+        let mut result = SyncResult::new();
+        
+        result.add_error("Repository clone failed".to_string());
+        result.add_error("Network timeout".to_string());
+        
+        assert!(!result.is_success());
+        assert_eq!(result.errors.len(), 2);
+        assert!(result.errors.contains(&"Repository clone failed".to_string()));
+        assert!(result.errors.contains(&"Network timeout".to_string()));
+    }
+
+    #[test]
+    fn test_sync_operation_enum() {
+        let cloned = SyncOperation::Cloned;
+        let updated = SyncOperation::Updated;
+        let skipped = SyncOperation::Skipped;
+        
+        assert_eq!(cloned, SyncOperation::Cloned);
+        assert_ne!(cloned, updated);
+        assert_ne!(updated, skipped);
+        
+        // Test debug formatting
+        assert!(format!("{:?}", cloned).contains("Cloned"));
+        assert!(format!("{:?}", updated).contains("Updated"));
+        assert!(format!("{:?}", skipped).contains("Skipped"));
+    }
+
+    #[test]
+    fn test_sync_repositories_error_types() {
+        // Test error creation and formatting
+        let workspace_error = SyncRepositoriesError::WorkspaceNotInitialized("/tmp/workspace".to_string());
+        assert!(workspace_error.to_string().contains("not initialized"));
+        
+        let clone_error = SyncRepositoriesError::RepositoryCloneFailed("Network error".to_string());
+        assert!(clone_error.to_string().contains("Repository clone failed"));
+        
+        let remote_update_error = SyncRepositoriesError::RemoteUpdateFailed {
+            repo: "example/repo".to_string(),
+            error: "Merge conflict".to_string(),
+        };
+        assert!(remote_update_error.to_string().contains("Remote update failed"));
+        assert!(remote_update_error.to_string().contains("example/repo"));
+        
+        let branch_sync_error = SyncRepositoriesError::BranchSyncFailed {
+            repo: "example/repo".to_string(),
+            error: "Fast-forward failed".to_string(),
+        };
+        assert!(branch_sync_error.to_string().contains("Branch sync failed"));
+        assert!(branch_sync_error.to_string().contains("example/repo"));
+        
+        let git_op_error = SyncRepositoriesError::GitOperationFailed("Git error".to_string());
+        assert!(git_op_error.to_string().contains("Git operation failed"));
+        
+        let manifest_error = SyncRepositoriesError::ManifestUpdateFailed("YAML parse error".to_string());
+        assert!(manifest_error.to_string().contains("Manifest update failed"));
     }
 }

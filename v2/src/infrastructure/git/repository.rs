@@ -89,6 +89,9 @@ pub struct RepositoryStatus {
     
     /// List of untracked files
     pub untracked_files: Vec<String>,
+    
+    /// List of staged files
+    pub staged_files: Vec<String>,
 }
 
 /// Clone options for repository cloning
@@ -419,18 +422,22 @@ impl GitRepository {
         let statuses = self.repo.statuses(None)?;
         let is_clean = statuses.is_empty();
         
-        // Get modified and untracked files
+        // Get modified, untracked, and staged files
         let mut modified_files = Vec::new();
         let mut untracked_files = Vec::new();
+        let mut staged_files = Vec::new();
         
         for status in statuses.iter() {
             if let Some(path) = status.path() {
                 let flags = status.status();
-                if flags.is_wt_modified() || flags.is_index_modified() {
+                if flags.is_wt_modified() {
                     modified_files.push(path.to_string());
                 }
                 if flags.is_wt_new() {
                     untracked_files.push(path.to_string());
+                }
+                if flags.is_index_modified() || flags.is_index_new() || flags.is_index_deleted() {
+                    staged_files.push(path.to_string());
                 }
             }
         }
@@ -446,6 +453,7 @@ impl GitRepository {
             behind,
             modified_files,
             untracked_files,
+            staged_files,
         })
     }
     

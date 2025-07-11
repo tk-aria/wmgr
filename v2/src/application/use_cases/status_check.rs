@@ -5,6 +5,7 @@ use crate::domain::entities::{
     workspace::Workspace, 
     manifest::ManifestRepo
 };
+use crate::infrastructure::git::repository::{GitRepository, GitRepositoryError};
 
 /// StatusCheck関連のエラー
 #[derive(Debug, Error)]
@@ -26,6 +27,9 @@ pub enum StatusCheckError {
     
     #[error("Branch name error: {0}")]
     BranchNameError(#[from] crate::domain::value_objects::branch_name::BranchNameError),
+    
+    #[error("Git repository error: {0}")]
+    GitRepositoryError(#[from] GitRepositoryError),
 }
 
 /// ステータス確認の設定
@@ -324,7 +328,7 @@ impl StatusCheckUseCase {
         Ok(status)
     }
     
-    /// Git status情報を取得（疑似実装）
+    /// Git status情報を取得
     async fn perform_git_status_check(
         &self, 
         repo_path: &PathBuf, 
@@ -334,40 +338,17 @@ impl StatusCheckUseCase {
             println!("Checking status for {}", repo_path.display());
         }
         
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        // ここでは疑似的な実装
-        let current_branch = self.get_current_branch(repo_path).await?;
-        let file_counts = self.get_file_change_counts(repo_path).await?;
-        let remote_diff = self.get_remote_diff(repo_path).await?;
+        let git_repo = GitRepository::open(repo_path)?;
+        let repo_status = git_repo.status()?;
         
         Ok(GitStatusInfo {
-            current_branch: Some(current_branch),
-            untracked_files: file_counts.0,
-            modified_files: file_counts.1,
-            staged_files: file_counts.2,
-            commits_ahead: remote_diff.0,
-            commits_behind: remote_diff.1,
+            current_branch: repo_status.current_branch,
+            untracked_files: repo_status.untracked_files.len(),
+            modified_files: repo_status.modified_files.len(),
+            staged_files: repo_status.staged_files.len(),
+            commits_ahead: repo_status.ahead,
+            commits_behind: repo_status.behind,
         })
-    }
-    
-    /// 現在のブランチを取得（疑似実装）
-    async fn get_current_branch(&self, _repo_path: &PathBuf) -> Result<String, StatusCheckError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        Ok("main".to_string())
-    }
-    
-    /// ファイル変更数を取得（疑似実装）
-    async fn get_file_change_counts(&self, _repo_path: &PathBuf) -> Result<(usize, usize, usize), StatusCheckError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        // (untracked, modified, staged)
-        Ok((0, 0, 0))
-    }
-    
-    /// リモートとの差分を取得（疑似実装）
-    async fn get_remote_diff(&self, _repo_path: &PathBuf) -> Result<(usize, usize), StatusCheckError> {
-        // TODO: 実際のGit操作はインフラストラクチャ層で実装
-        // (ahead, behind)
-        Ok((0, 0))
     }
 }
 
@@ -404,7 +385,7 @@ mod tests {
         assert_eq!(status.dest, "test/repo");
         assert_eq!(status.state, RepositoryState::Missing);
         assert!(status.current_branch.is_none());
-        assert!(!status.has_issues()); // Missing状態は has_issues = true になるはず
+        assert!(status.has_issues()); // Missing状態は has_issues = true
     }
     
     #[test]
