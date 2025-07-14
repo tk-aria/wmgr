@@ -1,7 +1,7 @@
 repos:
   - dest: "infra"
     url: "https://github.com/granizm/meteorn-run-infra.git"
-    branch: "main"
+    branch: "release"
     groups: ["core"]
   
   - dest: "engine"
@@ -9,7 +9,3 @@ repos:
     branch: "main"
     groups: ["tools"]
   
-  - dest: "example-repo-3"
-    url: "https://github.com/octocat/git-consortium.git"
-    branch: "master"
-    groups: ["core", "advanced"]

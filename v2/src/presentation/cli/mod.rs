@@ -117,6 +117,25 @@ pub enum Commands {
         continue_on_error: bool,
     },
     
+    /// Security audit for dependencies
+    Audit {
+        /// Groups to audit (if not specified, all groups will be audited)
+        #[arg(short, long)]
+        group: Vec<String>,
+        
+        /// Run audit in parallel
+        #[arg(short, long, default_value = "true")]
+        parallel: bool,
+        
+        /// Maximum number of parallel audits
+        #[arg(short, long)]
+        jobs: Option<usize>,
+        
+        /// Continue on vulnerabilities instead of failing
+        #[arg(short, long)]
+        continue_on_vulnerabilities: bool,
+    },
+    
     /// Show commit log for repositories
     Log {
         /// Groups to show log for (if not specified, all groups will be used)
@@ -238,6 +257,14 @@ impl CliApp {
                 continue_on_error 
             } => {
                 self.handle_foreach_command(command, args, group, *parallel, *jobs, *continue_on_error).await
+            }
+            Commands::Audit {
+                group,
+                parallel,
+                jobs,
+                continue_on_vulnerabilities,
+            } => {
+                self.handle_audit_command(group, *parallel, *jobs, *continue_on_vulnerabilities).await
             }
             Commands::Log {
                 group,
@@ -461,6 +488,29 @@ impl CliApp {
                 Err(anyhow::anyhow!("Failed to execute command: {}", e))
             }
         }
+    }
+    
+    async fn handle_audit_command(
+        &self,
+        groups: &[String],
+        parallel: bool,
+        jobs: Option<usize>,
+        continue_on_vulnerabilities: bool,
+    ) -> anyhow::Result<()> {
+        use crate::presentation::cli::commands::audit::{AuditCommand, AuditArgs};
+        use std::path::PathBuf;
+        
+        let args = AuditArgs {
+            groups: if groups.is_empty() { None } else { Some(groups.to_vec()) },
+            parallel,
+            max_parallel: jobs,
+            continue_on_vulnerabilities,
+            verbose: self.cli.verbose,
+            workspace_dir: None, // Use current directory
+        };
+        
+        let command = AuditCommand::new();
+        command.execute(args).await.map_err(|e| anyhow::anyhow!("{}", e))
     }
     
     async fn handle_log_command(

@@ -23,6 +23,15 @@ pub enum FilePathError {
     
     #[error("Path too long: {0} characters")]
     TooLong(usize),
+    
+    #[error("Dangerous path pattern detected: {0}")]
+    DangerousPattern(String),
+    
+    #[error("System path access blocked: {0}")]
+    SystemPathBlocked(String),
+    
+    #[error("Hidden file/directory not allowed: {0}")]
+    HiddenFileBlocked(String),
 }
 
 /// ファイルパスの値オブジェクト
@@ -84,6 +93,11 @@ impl FilePath {
         // プラットフォーム固有の不正文字チェック
         Self::check_invalid_characters(path)?;
         
+        // 高度なセキュリティチェック
+        Self::check_security_patterns(path)?;
+        Self::check_system_paths(path)?;
+        Self::check_hidden_files(path)?;
+        
         // パスを正規化
         let normalized = Self::normalize_path(&path_buf);
         
@@ -138,6 +152,115 @@ impl FilePath {
                         if reserved_names.contains(&name_upper.as_str()) {
                             return Err(FilePathError::InvalidCharacters(name.to_string()));
                         }
+                    }
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// セキュリティパターンのチェック
+    fn check_security_patterns(path: &str) -> Result<(), FilePathError> {
+        let dangerous_patterns = [
+            // コマンドインジェクションパターン
+            "|", "&", ";", "$", "`", "$(", "${",
+            // スクリプトインジェクション
+            "<script", "javascript:", "data:",
+            // エンコードされたパストラバーサル
+            "%2e%2e", "%2e%2e%2f", "%2e%2e%5c",
+            "..%2f", "..%5c", "%252e%252e",
+            // Unicode トリック（単体の . は通常のパス要素なので除外）
+            "\u{2024}", "\u{ff0e}",
+            // 二重エンコーディング
+            "%252e", "%255c", "%252f",
+        ];
+        
+        let lower_path = path.to_lowercase();
+        for pattern in &dangerous_patterns {
+            if lower_path.contains(pattern) {
+                return Err(FilePathError::DangerousPattern(format!(
+                    "Detected dangerous pattern: {}", pattern
+                )));
+            }
+        }
+        
+        // 連続するドット、スラッシュのチェック
+        if path.contains("...") || path.contains("///") || path.contains("\\\\\\") {
+            return Err(FilePathError::DangerousPattern(
+                "Multiple consecutive special characters".to_string()
+            ));
+        }
+        
+        Ok(())
+    }
+    
+    /// システムパスのアクセス制限
+    fn check_system_paths(path: &str) -> Result<(), FilePathError> {
+        let blocked_system_paths = [
+            // Unix/Linux システムパス
+            "/etc/", "/proc/", "/sys/", "/dev/", "/boot/", 
+            "/var/log/", "/root/", "/tmp/", "/var/tmp/",
+            // Windows システムパス
+            "C:\\Windows\\", "C:\\System32\\", "C:\\SysWOW64\\",
+            "C:\\Program Files\\", "C:\\Users\\Default\\",
+            "\\Windows\\", "\\System32\\", "\\SysWOW64\\",
+            // 環境変数パス
+            "${HOME}", "$HOME", "%USERPROFILE%", "%TEMP%",
+            "%SYSTEMROOT%", "%PROGRAMFILES%",
+        ];
+        
+        let lower_path = path.to_lowercase();
+        for blocked_path in &blocked_system_paths {
+            if lower_path.starts_with(&blocked_path.to_lowercase()) {
+                return Err(FilePathError::SystemPathBlocked(format!(
+                    "Access to system path blocked: {}", blocked_path
+                )));
+            }
+        }
+        
+        // デバイスファイルのチェック (Unix)
+        if lower_path.starts_with("/dev/") {
+            return Err(FilePathError::SystemPathBlocked(
+                "Device file access blocked".to_string()
+            ));
+        }
+        
+        Ok(())
+    }
+    
+    /// 隠しファイル・ディレクトリのチェック
+    fn check_hidden_files(path: &str) -> Result<(), FilePathError> {
+        let path_obj = Path::new(path);
+        
+        for component in path_obj.components() {
+            if let Component::Normal(os_str) = component {
+                if let Some(name) = os_str.to_str() {
+                    // Unix隠しファイル (.で始まる)
+                    if name.starts_with('.') && name.len() > 1 {
+                        // 特定の許可された隠しファイルは除外
+                        let allowed_hidden = [
+                            ".git", ".gitignore", ".gitmodules", ".github",
+                            ".tsrc", ".cargo", ".rustfmt.toml", ".clippy.toml",
+                        ];
+                        
+                        if !allowed_hidden.iter().any(|&allowed| name == allowed) {
+                            return Err(FilePathError::HiddenFileBlocked(format!(
+                                "Hidden file/directory not allowed: {}", name
+                            )));
+                        }
+                    }
+                    
+                    // Windows隠し属性をシミュレート（名前ベース）
+                    let windows_hidden = [
+                        "desktop.ini", "thumbs.db", "hiberfil.sys",
+                        "pagefile.sys", "swapfile.sys",
+                    ];
+                    
+                    if windows_hidden.iter().any(|&hidden| name.eq_ignore_ascii_case(hidden)) {
+                        return Err(FilePathError::HiddenFileBlocked(format!(
+                            "System hidden file not allowed: {}", name
+                        )));
                     }
                 }
             }
@@ -380,6 +503,149 @@ mod tests {
         for name in reserved_names {
             let result = FilePath::new(name);
             assert!(result.is_err(), "Should reject reserved name: {}", name);
+        }
+    }
+    
+    // セキュリティ関連のテスト
+    #[test]
+    fn test_dangerous_pattern_detection() {
+        let dangerous_paths = [
+            "file|rm -rf /",
+            "file & evil_command",
+            "file; rm /etc/passwd",
+            "file$(whoami)",
+            "file`ls -la`",
+            "<script>alert('xss')</script>",
+            "javascript:alert('xss')",
+            "file%2e%2e%2fpasswd",
+            "file..%2f%2e%2e%2froot",
+            "file%252e%252e",
+        ];
+        
+        for path in dangerous_paths {
+            let result = FilePath::new(path);
+            assert!(matches!(result, Err(FilePathError::DangerousPattern(_))), 
+                "Should detect dangerous pattern in: {}", path);
+        }
+    }
+    
+    #[test]
+    fn test_system_path_blocking() {
+        let system_paths = [
+            "/etc/passwd",
+            "/proc/meminfo",
+            "/sys/kernel",
+            "/dev/null",
+            "/root/secret",
+            "/var/log/auth.log",
+            "C:\\Windows\\System32\\config",
+            "C:\\System32\\drivers",
+            "${HOME}/secrets",
+            "%USERPROFILE%\\Desktop",
+        ];
+        
+        for path in system_paths {
+            let result = FilePath::new(path);
+            assert!(matches!(result, Err(FilePathError::SystemPathBlocked(_))), 
+                "Should block system path: {}", path);
+        }
+    }
+    
+    #[test]
+    fn test_hidden_file_handling() {
+        // 許可された隠しファイル
+        let allowed_hidden = [
+            ".git/config",
+            ".gitignore",
+            ".tsrc/manifest.yml",
+            ".cargo/config",
+        ];
+        
+        for path in allowed_hidden {
+            let result = FilePath::new_relative(path);
+            assert!(result.is_ok(), "Should allow hidden file: {}", path);
+        }
+        
+        // 許可されない隠しファイル
+        let blocked_hidden = [
+            ".secret",
+            ".ssh/id_rsa",
+            ".password",
+            "desktop.ini",
+            "thumbs.db",
+        ];
+        
+        for path in blocked_hidden {
+            let result = FilePath::new_relative(path);
+            assert!(matches!(result, Err(FilePathError::HiddenFileBlocked(_))), 
+                "Should block hidden file: {}", path);
+        }
+    }
+    
+    #[test]
+    fn test_multiple_consecutive_characters() {
+        let dangerous_patterns = [
+            "file...",
+            "path///to///file",
+            "path\\\\\\to\\\\\\file",
+        ];
+        
+        for path in dangerous_patterns {
+            let result = FilePath::new(path);
+            assert!(matches!(result, Err(FilePathError::DangerousPattern(_))), 
+                "Should detect multiple consecutive characters in: {}", path);
+        }
+    }
+    
+    #[test]
+    fn test_unicode_attack_patterns() {
+        let unicode_attacks = [
+            "file\u{2024}passwd",  // Unicode bullet point
+            "file\u{ff0e}\u{ff0e}/etc",  // Fullwidth dots
+        ];
+        
+        for path in unicode_attacks {
+            let result = FilePath::new(path);
+            assert!(matches!(result, Err(FilePathError::DangerousPattern(_))), 
+                "Should detect Unicode attack in: {:?}", path);
+        }
+    }
+    
+    #[test]
+    fn test_valid_paths_pass_security() {
+        let valid_paths = [
+            "src/main.rs",
+            "docs/README.md",
+            "tests/integration.rs",
+            "Cargo.toml",
+            "LICENSE",
+            ".git/HEAD",  // Git files are allowed
+            ".tsrc/config.yml",  // Tsrc files are allowed
+            "project-name/file.txt",
+            "my_file.txt",
+        ];
+        
+        for path in valid_paths {
+            let result = FilePath::new_relative(path);
+            assert!(result.is_ok(), "Should allow valid path: {}", path);
+        }
+    }
+    
+    #[test]
+    fn test_security_error_messages() {
+        let result = FilePath::new("file|evil");
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Dangerous pattern"));
+        }
+        
+        let result = FilePath::new("/etc/passwd");
+        if let Err(e) = result {
+            assert!(e.to_string().contains("System path"));
+        }
+        
+        let result = FilePath::new(".secret");
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Hidden file"));
         }
     }
 }

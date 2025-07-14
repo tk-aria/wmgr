@@ -18,6 +18,18 @@ pub enum GitUrlError {
     
     #[error("Missing repository path")]
     MissingRepoPath,
+    
+    #[error("Malicious URL detected: {0}")]
+    MaliciousUrl(String),
+    
+    #[error("URL injection attempt detected: {0}")]
+    UrlInjectionAttempt(String),
+    
+    #[error("Blocked domain: {0}")]
+    BlockedDomain(String),
+    
+    #[error("Invalid characters in URL: {0}")]
+    InvalidCharacters(String),
 }
 
 /// Git URLの値オブジェクト
@@ -39,8 +51,16 @@ pub struct GitUrl {
 impl GitUrl {
     /// 新しいGitUrlインスタンスを作成
     pub fn new(url: &str) -> Result<Self, GitUrlError> {
+        // セキュリティ検証を最初に実行
+        Self::validate_security(url)?;
+        
         let normalized = Self::normalize_url(url)?;
         let (scheme, host, repo_path) = Self::parse_url(&normalized)?;
+        
+        // 正規化後もセキュリティ検証を実行
+        Self::validate_security(&normalized)?;
+        Self::validate_host_security(&host)?;
+        Self::validate_path_security(&repo_path)?;
         
         Ok(Self {
             url: normalized,
@@ -48,6 +68,167 @@ impl GitUrl {
             host,
             repo_path,
         })
+    }
+    
+    /// URLのセキュリティ検証
+    fn validate_security(url: &str) -> Result<(), GitUrlError> {
+        let trimmed = url.trim();
+        
+        // 空のURLをチェック
+        if trimmed.is_empty() {
+            return Err(GitUrlError::InvalidFormat("Empty URL".to_string()));
+        }
+        
+        // 異常に長いURLをチェック（最大2048文字）
+        if trimmed.len() > 2048 {
+            return Err(GitUrlError::MaliciousUrl("URL too long".to_string()));
+        }
+        
+        // URLインジェクション攻撃パターンをチェック
+        let injection_patterns = [
+            "javascript:", "data:", "vbscript:", "file:", "about:",
+            "chrome:", "resource:", "moz-extension:", "chrome-extension:",
+            "\\x", "\\u", "%00", "\0", "\r", "\n",
+            "../", "..\\", "\\\\",
+            "<", ">", "\"", "'", "`", "{", "}",
+            "eval(", "javascript:", "onload=", "onerror=",
+        ];
+        
+        let lower_url = trimmed.to_lowercase();
+        for pattern in &injection_patterns {
+            if lower_url.contains(pattern) {
+                return Err(GitUrlError::UrlInjectionAttempt(format!(
+                    "Detected suspicious pattern: {}", pattern
+                )));
+            }
+        }
+        
+        // URLスキーマ部分以外での不正な // をチェック
+        if let Some(scheme_end) = lower_url.find("://") {
+            let after_scheme = &lower_url[scheme_end + 3..];
+            if after_scheme.contains("//") {
+                return Err(GitUrlError::UrlInjectionAttempt(
+                    "Detected suspicious pattern: // outside of scheme".to_string()
+                ));
+            }
+        }
+        
+        // 制御文字をチェック
+        for ch in trimmed.chars() {
+            if ch.is_control() && ch != '\t' {
+                return Err(GitUrlError::InvalidCharacters(format!(
+                    "Control character detected: {:?}", ch
+                )));
+            }
+        }
+        
+        // Unicode正規化攻撃をチェック
+        let normalized = trimmed.chars().collect::<String>();
+        if normalized != trimmed {
+            return Err(GitUrlError::MaliciousUrl(
+                "Unicode normalization attack detected".to_string()
+            ));
+        }
+        
+        Ok(())
+    }
+    
+    /// ホスト名のセキュリティ検証
+    fn validate_host_security(host: &str) -> Result<(), GitUrlError> {
+        // IPアドレスの私設レンジをチェック
+        if Self::is_private_ip(host) {
+            return Err(GitUrlError::BlockedDomain(format!(
+                "Private IP address not allowed: {}", host
+            )));
+        }
+        
+        // ローカルホストをチェック
+        if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+            return Err(GitUrlError::BlockedDomain(format!(
+                "Localhost not allowed: {}", host
+            )));
+        }
+        
+        // 既知の悪意のあるドメインをチェック
+        let blocked_domains = [
+            "0.0.0.0", "127.0.0.1", "localhost",
+            "169.254.169.254", // AWS metadata service
+            "metadata.google.internal", // Google Cloud metadata
+            "metadata", "169.254.169.254",
+        ];
+        
+        for blocked in &blocked_domains {
+            if host.eq_ignore_ascii_case(blocked) {
+                return Err(GitUrlError::BlockedDomain(format!(
+                    "Blocked domain: {}", host
+                )));
+            }
+        }
+        
+        // ホスト名に無効な文字が含まれていないかチェック
+        for ch in host.chars() {
+            if !ch.is_alphanumeric() && ch != '.' && ch != '-' && ch != ':' {
+                return Err(GitUrlError::InvalidCharacters(format!(
+                    "Invalid character in hostname: {}", ch
+                )));
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// パスのセキュリティ検証
+    fn validate_path_security(repo_path: &str) -> Result<(), GitUrlError> {
+        // パストラバーサル攻撃をチェック
+        if repo_path.contains("../") || repo_path.contains("..\\") {
+            return Err(GitUrlError::UrlInjectionAttempt(
+                "Path traversal attempt detected".to_string()
+            ));
+        }
+        
+        // 絶対パスをチェック
+        if repo_path.starts_with('/') || repo_path.starts_with('\\') {
+            return Err(GitUrlError::UrlInjectionAttempt(
+                "Absolute path not allowed".to_string()
+            ));
+        }
+        
+        // パスに無効な文字が含まれていないかチェック
+        for ch in repo_path.chars() {
+            if ch.is_control() || ch == '<' || ch == '>' || ch == '"' || ch == '|' || ch == '?' || ch == '*' {
+                return Err(GitUrlError::InvalidCharacters(format!(
+                    "Invalid character in path: {}", ch
+                )));
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// 私設IPアドレスかどうかをチェック
+    fn is_private_ip(host: &str) -> bool {
+        use std::net::IpAddr;
+        
+        if let Ok(ip) = host.parse::<IpAddr>() {
+            match ip {
+                IpAddr::V4(ipv4) => {
+                    let octets = ipv4.octets();
+                    // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+                    octets[0] == 10
+                        || (octets[0] == 172 && (octets[1] & 0xF0) == 16)
+                        || (octets[0] == 192 && octets[1] == 168)
+                        || octets[0] == 127 // ループバック
+                        || octets[0] == 169 && octets[1] == 254 // リンクローカル
+                }
+                IpAddr::V6(ipv6) => {
+                    ipv6.is_loopback() || ipv6.is_unspecified() || 
+                    // プライベートアドレス (fc00::/7)
+                    (ipv6.segments()[0] & 0xfe00) == 0xfc00
+                }
+            }
+        } else {
+            false
+        }
     }
     
     /// URLを正規化
@@ -356,5 +537,156 @@ mod tests {
         // For now, we'll test that the error type exists and can be created.
         let error = GitUrlError::UnsupportedScheme("ftp".to_string());
         assert_eq!(error.to_string(), "Unsupported URL scheme: ftp");
+    }
+
+    // セキュリティ関連のテスト
+    #[test]
+    fn test_url_injection_detection() {
+        // JavaScript injection
+        let result = GitUrl::new("javascript:alert('xss')");
+        assert!(matches!(result, Err(GitUrlError::UrlInjectionAttempt(_))));
+        
+        // Data URL injection
+        let result = GitUrl::new("data:text/html,<script>alert('xss')</script>");
+        assert!(matches!(result, Err(GitUrlError::UrlInjectionAttempt(_))));
+        
+        // Path traversal
+        let result = GitUrl::new("https://github.com/../../../etc/passwd");
+        assert!(matches!(result, Err(GitUrlError::UrlInjectionAttempt(_))));
+        
+        // Control characters
+        let result = GitUrl::new("https://github.com/owner/repo\x00");
+        assert!(matches!(result, Err(GitUrlError::InvalidCharacters(_))));
+        
+        // HTML injection
+        let result = GitUrl::new("https://github.com/owner/repo<script>");
+        assert!(matches!(result, Err(GitUrlError::UrlInjectionAttempt(_))));
+    }
+    
+    #[test]
+    fn test_blocked_domains() {
+        // Localhost
+        let result = GitUrl::new("https://localhost/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        // 127.0.0.1
+        let result = GitUrl::new("https://127.0.0.1/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        // AWS metadata service
+        let result = GitUrl::new("https://169.254.169.254/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        // Google Cloud metadata
+        let result = GitUrl::new("https://metadata.google.internal/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+    }
+    
+    #[test]
+    fn test_private_ip_detection() {
+        // Private IPv4 ranges
+        let result = GitUrl::new("https://10.0.0.1/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        let result = GitUrl::new("https://172.16.0.1/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        let result = GitUrl::new("https://192.168.1.1/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        let result = GitUrl::new("https://169.254.1.1/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+    }
+    
+    #[test]
+    fn test_url_length_validation() {
+        // 異常に長いURL
+        let long_url = format!("https://github.com/{}", "a".repeat(2050));
+        let result = GitUrl::new(&long_url);
+        assert!(matches!(result, Err(GitUrlError::MaliciousUrl(_))));
+    }
+    
+    #[test]
+    fn test_empty_url_validation() {
+        let result = GitUrl::new("");
+        assert!(matches!(result, Err(GitUrlError::InvalidFormat(_))));
+        
+        let result = GitUrl::new("   ");
+        assert!(matches!(result, Err(GitUrlError::InvalidFormat(_))));
+    }
+    
+    #[test]
+    fn test_valid_urls_pass_security() {
+        // 正常なGitHubのURL
+        let result = GitUrl::new("https://github.com/owner/repo");
+        assert!(result.is_ok());
+        
+        // 正常なGitLabのURL
+        let result = GitUrl::new("https://gitlab.com/owner/repo");
+        assert!(result.is_ok());
+        
+        // 正常なSSH URL
+        let result = GitUrl::new("git@github.com:owner/repo.git");
+        assert!(result.is_ok());
+    }
+    
+    #[test]
+    fn test_path_security_validation() {
+        // パストラバーサル攻撃
+        let result = GitUrl::new("https://github.com/owner/../../../etc/passwd");
+        assert!(matches!(result, Err(GitUrlError::UrlInjectionAttempt(_))));
+        
+        // Windows形式のパストラバーサル
+        let result = GitUrl::new("https://github.com/owner/..\\..\\windows\\system32");
+        assert!(matches!(result, Err(GitUrlError::UrlInjectionAttempt(_))));
+        
+        // 無効な文字
+        let result = GitUrl::new("https://github.com/owner/repo|evil");
+        assert!(matches!(result, Err(GitUrlError::InvalidCharacters(_))));
+        
+        let result = GitUrl::new("https://github.com/owner/repo?query");
+        assert!(matches!(result, Err(GitUrlError::InvalidCharacters(_))));
+        
+        let result = GitUrl::new("https://github.com/owner/repo*");
+        assert!(matches!(result, Err(GitUrlError::InvalidCharacters(_))));
+    }
+    
+    #[test]
+    fn test_hostname_character_validation() {
+        // 無効な文字を含むホスト名
+        let result = GitUrl::new("https://github|evil.com/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::InvalidCharacters(_))));
+        
+        let result = GitUrl::new("https://github<evil>.com/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::InvalidCharacters(_))));
+    }
+    
+    #[test]
+    fn test_ipv6_security() {
+        // ループバックIPv6
+        let result = GitUrl::new("https://[::1]/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+        
+        // プライベートIPv6
+        let result = GitUrl::new("https://[fc00::1]/owner/repo");
+        assert!(matches!(result, Err(GitUrlError::BlockedDomain(_))));
+    }
+    
+    #[test]
+    fn test_error_messages() {
+        let result = GitUrl::new("javascript:alert('xss')");
+        if let Err(e) = result {
+            assert!(e.to_string().contains("URL injection attempt detected"));
+        }
+        
+        let result = GitUrl::new("https://localhost/owner/repo");
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Blocked domain"));
+        }
+        
+        let result = GitUrl::new("https://10.0.0.1/owner/repo");
+        if let Err(e) = result {
+            assert!(e.to_string().contains("Private IP address not allowed"));
+        }
     }
 }
