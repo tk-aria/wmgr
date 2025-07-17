@@ -1,6 +1,0 @@
-manifest_url: manifest.yml
-manifest_branch: main
-shallow_clones: false
-repo_groups:
-- default
-clone_all_repos: false

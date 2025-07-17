@@ -241,7 +241,7 @@ impl FilePath {
                         // 特定の許可された隠しファイルは除外
                         let allowed_hidden = [
                             ".git", ".gitignore", ".gitmodules", ".github",
-                            ".tsrc", ".cargo", ".rustfmt.toml", ".clippy.toml",
+                            ".tsrc", ".wmgr", ".cargo", ".rustfmt.toml", ".clippy.toml",
                         ];
                         
                         if !allowed_hidden.iter().any(|&allowed| name == allowed) {
@@ -558,6 +558,7 @@ mod tests {
             ".git/config",
             ".gitignore",
             ".tsrc/manifest.yml",
+            ".wmgr/manifest.yml",
             ".cargo/config",
         ];
         

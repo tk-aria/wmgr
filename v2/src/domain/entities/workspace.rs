@@ -148,7 +148,24 @@ impl Workspace {
     }
     
     /// マニフェストファイル（manifest.yml）のパスを取得
+    /// 優先順位: カレントディレクトリのmanifest.yml → .wmgr/manifest.yml
     pub fn manifest_file_path(&self) -> PathBuf {
+        let current_manifest = self.root_path.join("manifest.yml");
+        let wmgr_manifest = self.root_path.join(".wmgr").join("manifest.yml");
+        
+        if current_manifest.exists() {
+            current_manifest
+        } else if wmgr_manifest.exists() {
+            wmgr_manifest
+        } else {
+            // デフォルトはカレントディレクトリのmanifest.yml
+            current_manifest
+        }
+    }
+    
+    /// 旧マニフェストファイル（.tsrc/manifest.yml）のパスを取得
+    /// レガシーサポート用
+    pub fn legacy_manifest_file_path(&self) -> PathBuf {
         self.tsrc_dir().join("manifest.yml")
     }
     
