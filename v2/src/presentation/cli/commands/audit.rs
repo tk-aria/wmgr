@@ -1,8 +1,7 @@
 use clap::Args;
 use std::path::PathBuf;
 use crate::application::use_cases::security_audit::{SecurityAuditUseCase, SecurityAuditConfig, SecurityAuditError};
-use crate::domain::entities::workspace::{Workspace, WorkspaceConfig, WorkspaceStatus};
-use crate::infrastructure::filesystem::config_store::ConfigStore;
+use crate::domain::entities::workspace::Workspace;
 use crate::presentation::ui::display::DisplayHelper;
 
 /// Security audit command arguments
@@ -92,30 +91,34 @@ impl AuditCommand {
     
     /// Load workspace from directory
     async fn load_workspace(&self, workspace_dir: &PathBuf) -> Result<Workspace, Box<dyn std::error::Error>> {
-        let config_store = ConfigStore::new();
-        let config_path = workspace_dir.join(".tsrc").join("config.yml");
+        // Try to find manifest.yml in current directory first, then .wmgr/
+        let manifest_file = if workspace_dir.join("manifest.yml").exists() {
+            workspace_dir.join("manifest.yml")
+        } else if workspace_dir.join(".wmgr").join("manifest.yml").exists() {
+            workspace_dir.join(".wmgr").join("manifest.yml")
+        } else {
+            return Err(format!("Manifest file not found at: {} or {}", 
+                workspace_dir.join("manifest.yml").display(),
+                workspace_dir.join(".wmgr").join("manifest.yml").display()).into());
+        };
         
-        // Check if workspace is initialized
-        if !config_store.config_exists(&config_path) {
-            return Err("Workspace not initialized. Run 'tsrc init' first.".into());
-        }
+        // Load manifest file
+        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use crate::domain::entities::workspace::{WorkspaceStatus, WorkspaceConfig};
+        let mut manifest_store = ManifestStore::new();
         
-        // Load configuration
-        let workspace_config = config_store.read_workspace_config(&config_path)?;
+        let processed_manifest = manifest_store.read_manifest(&manifest_file).await
+            .map_err(|e| format!("Failed to read manifest: {}", e))?;
         
-        // Create workspace
-        let mut workspace = Workspace::new(workspace_dir.clone(), workspace_config)
-            .with_status(WorkspaceStatus::Initialized);
+        // Create workspace config from manifest
+        let workspace_config = WorkspaceConfig::new(
+            "file://".to_string() + &manifest_file.to_string_lossy(),
+            processed_manifest.manifest.default_branch.clone().unwrap_or_else(|| "main".to_string())
+        );
         
-        // Load manifest if available
-        let manifest_path = workspace_dir.join(".tsrc").join("manifest.yml");
-        if manifest_path.exists() {
-            use crate::infrastructure::filesystem::manifest_store::ManifestStore;
-            let mut manifest_store = ManifestStore::new();
-            if let Ok(processed_manifest) = manifest_store.read_manifest(&manifest_path).await {
-                workspace = workspace.with_manifest(processed_manifest.manifest);
-            }
-        }
+        let workspace = Workspace::new(workspace_dir.clone(), workspace_config)
+            .with_status(WorkspaceStatus::Initialized)
+            .with_manifest(processed_manifest.manifest);
         
         Ok(workspace)
     }
@@ -268,24 +271,20 @@ mod tests {
         
         let result = command.load_workspace(&temp_dir.path().to_path_buf()).await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not initialized"));
+        assert!(result.unwrap_err().to_string().contains("Manifest file not found"));
     }
     
     #[tokio::test]
     async fn test_load_workspace_initialized() {
         let temp_dir = TempDir::new().unwrap();
-        let tsrc_dir = temp_dir.path().join(".tsrc");
-        fs::create_dir_all(&tsrc_dir).unwrap();
         
-        // Create minimal config file
-        let config_content = r#"
-manifest_url: "file:///tmp/manifest.yml"
-manifest_branch: "main"
-shallow_clones: false
-repo_groups: ["default"]
-clone_all_repos: false
+        // Create minimal manifest file
+        let manifest_content = r#"
+repos:
+  - url: https://github.com/example/repo.git
+    dest: repo
 "#;
-        fs::write(tsrc_dir.join("config.yml"), config_content).unwrap();
+        fs::write(temp_dir.path().join("manifest.yml"), manifest_content).unwrap();
         
         let command = AuditCommand::new();
         let result = command.load_workspace(&temp_dir.path().to_path_buf()).await;

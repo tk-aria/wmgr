@@ -3,8 +3,6 @@ use colored::Colorize;
 use anyhow::Result;
 
 use crate::domain::entities::workspace::Workspace;
-use crate::infrastructure::git::repository::GitRepository;
-use crate::domain::value_objects::git_url::GitUrl;
 
 /// Handler for the log command
 pub struct LogCommand {
@@ -195,25 +193,35 @@ impl LogCommand {
     async fn load_workspace(&self) -> Result<Workspace> {
         let current_dir = env::current_dir()?;
         
-        // Check if .tsrc directory exists
-        let tsrc_dir = current_dir.join(".tsrc");
-        if !tsrc_dir.exists() {
-            return Err(anyhow::anyhow!("Workspace not initialized. Run 'tsrc init' first."));
-        }
+        // Try to find manifest.yml in current directory first, then .wmgr/
+        let manifest_file = if current_dir.join("manifest.yml").exists() {
+            current_dir.join("manifest.yml")
+        } else if current_dir.join(".wmgr").join("manifest.yml").exists() {
+            current_dir.join(".wmgr").join("manifest.yml")
+        } else {
+            return Err(anyhow::anyhow!("Manifest file not found at: {} or {}", 
+                current_dir.join("manifest.yml").display(),
+                current_dir.join(".wmgr").join("manifest.yml").display()));
+        };
         
-        // Load configuration
-        let config_file = tsrc_dir.join("config.yml");
-        if !config_file.exists() {
-            return Err(anyhow::anyhow!("Workspace configuration not found. Run 'tsrc init' first."));
-        }
+        // Load manifest file
+        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use crate::domain::entities::workspace::{WorkspaceStatus, WorkspaceConfig};
+        let mut manifest_store = ManifestStore::new();
         
-        // For now, create a basic workspace - in a real implementation, this would load from config
-        let workspace_config = crate::domain::entities::workspace::WorkspaceConfig::new(
-            "https://example.com/manifest.git", // This would be loaded from config
-            "main"
+        let processed_manifest = manifest_store.read_manifest(&manifest_file).await
+            .map_err(|e| anyhow::anyhow!("Failed to read manifest: {}", e))?;
+        
+        // Create workspace config from manifest
+        let workspace_config = WorkspaceConfig::new(
+            "file://".to_string() + &manifest_file.to_string_lossy(),
+            processed_manifest.manifest.default_branch.clone().unwrap_or_else(|| "main".to_string())
         );
         
-        let workspace = Workspace::new(current_dir, workspace_config);
+        let workspace = Workspace::new(current_dir, workspace_config)
+            .with_status(WorkspaceStatus::Initialized)
+            .with_manifest(processed_manifest.manifest);
+        
         Ok(workspace)
     }
 }
