@@ -10,6 +10,7 @@ on:
         description: 'Tag to release (e.g., v1.0.0)'
         required: true
         type: string
+        default: 'v0.1.0'
 
 env:
   CARGO_TERM_COLOR: always
@@ -18,6 +19,8 @@ jobs:
   build:
     name: Build for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name || 'v0.1.0' }}
     strategy:
       matrix:
         include:
@@ -95,32 +98,34 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cp target/${{ matrix.target }}/release/wmgr wmgr
-          tar -czf wmgr-${{ github.event.inputs.tag || github.ref_name }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz wmgr
+          tar -czf wmgr-${{ env.RELEASE_TAG }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz wmgr
 
       - name: Create archive (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           copy target\${{ matrix.target }}\release\wmgr.exe wmgr.exe
-          tar -czf wmgr-${{ github.event.inputs.tag || github.ref_name }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz wmgr.exe
+          tar -czf wmgr-${{ env.RELEASE_TAG }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz wmgr.exe
 
       - name: Upload artifact (Unix)
         if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: wmgr-${{ github.event.inputs.tag || github.ref_name }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
-          path: wmgr-${{ github.event.inputs.tag || github.ref_name }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
+          name: wmgr-${{ env.RELEASE_TAG }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
+          path: wmgr-${{ env.RELEASE_TAG }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
 
       - name: Upload artifact (Windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: wmgr-${{ github.event.inputs.tag || github.ref_name }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
-          path: wmgr-${{ github.event.inputs.tag || github.ref_name }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
+          name: wmgr-${{ env.RELEASE_TAG }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
+          path: wmgr-${{ env.RELEASE_TAG }}-${{ matrix.os_name }}-${{ matrix.arch_name }}.tar.gz
 
   release:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name || 'v0.1.0' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -136,16 +141,16 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ github.event.inputs.tag || github.ref_name }}
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Release ${{ env.RELEASE_TAG }}
+          tag_name: ${{ env.RELEASE_TAG }}
           draft: false
           prerelease: false
           generate_release_notes: true
           files: |
-            artifacts/wmgr-${{ github.event.inputs.tag || github.ref_name }}-linux-x86_64.tar.gz/wmgr-${{ github.event.inputs.tag || github.ref_name }}-linux-x86_64.tar.gz
-            artifacts/wmgr-${{ github.event.inputs.tag || github.ref_name }}-linux-aarch64.tar.gz/wmgr-${{ github.event.inputs.tag || github.ref_name }}-linux-aarch64.tar.gz
-            artifacts/wmgr-${{ github.event.inputs.tag || github.ref_name }}-darwin-x86_64.tar.gz/wmgr-${{ github.event.inputs.tag || github.ref_name }}-darwin-x86_64.tar.gz
-            artifacts/wmgr-${{ github.event.inputs.tag || github.ref_name }}-darwin-aarch64.tar.gz/wmgr-${{ github.event.inputs.tag || github.ref_name }}-darwin-aarch64.tar.gz
-            artifacts/wmgr-${{ github.event.inputs.tag || github.ref_name }}-windows-x86_64.tar.gz/wmgr-${{ github.event.inputs.tag || github.ref_name }}-windows-x86_64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-linux-aarch64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-linux-aarch64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
