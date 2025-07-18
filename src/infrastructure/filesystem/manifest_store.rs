@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
 use std::os::unix::fs as unix_fs;
 use thiserror::Error;
 use tokio::fs as async_fs;
@@ -586,7 +587,16 @@ impl ManifestStore {
         }
         
         // Perform the symlink operation
-        match unix_fs::symlink(target_path, &source_path) {
+        #[cfg(unix)]
+        let symlink_result = unix_fs::symlink(target_path, &source_path);
+        
+        #[cfg(windows)]
+        let symlink_result = {
+            use std::os::windows::fs::symlink_file;
+            symlink_file(target_path, &source_path)
+        };
+        
+        match symlink_result {
             Ok(_) => {
                 result.success = true;
             }

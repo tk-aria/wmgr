@@ -2,7 +2,7 @@
 name = "wmgr"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.85.0"
+rust-version = "1.70.0"
 authors = ["wmgr contributors"]
 description = "Manage groups of git repositories"
 repository = "https://github.com/tk-aria/wmgr"
@@ -24,7 +24,7 @@ clap = { version = "4.5", features = ["derive", "env"] }
 tokio = { version = "1.36", features = ["full"] }
 
 # Git operations
-git2 = { version = "0.18", default-features = false, features = ["https"] }
+git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -50,7 +50,7 @@ pathdiff = "0.2"
 walkdir = "2.4"
 
 # HTTP client (for downloading manifests)
-reqwest = { version = "0.11", features = ["blocking", "json", "native-tls"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "native-tls"], default-features = false }
 
 # URL parsing
 url = "2.5"
@@ -71,6 +71,10 @@ regex = "1.10"
 
 # Date/time handling
 chrono = { version = "0.4", features = ["serde"] }
+
+# Windows-specific dependencies
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winbase", "winnt", "processthreadsapi"] }
 
 [dev-dependencies]
 # Testing
