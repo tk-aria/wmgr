@@ -169,3 +169,181 @@
 - [x] 入力検証の強化
   - [x] URLインジェクション対策
   - [x] ファイルパストラバーサル対策
+
+## GitHub Actions CI/CD自動リリース
+
+- [x] GitHub Actionsワークフローでマルチプラットフォーム対応リリースビルドの作成
+  - [x] `.github/workflows/release.yml` の作成
+    - [x] Windows用ビルド（x86_64-pc-windows-gnu）
+    - [x] macOS用ビルド（x86_64-apple-darwin, aarch64-apple-darwin）
+    - [x] Linux用ビルド（x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu）
+    - [x] クロスコンパイル環境設定
+    - [x] バイナリの圧縮・アーカイブ化
+    - [x] GitHub Releasesへの自動アップロード
+    - [x] リリースタグ（v*）のプッシュでワークフロー実行
+- [x] actコマンドを使用したローカルワークフローテスト
+  - [x] act環境のセットアップ
+  - [x] ローカルでのワークフロー実行確認
+
+## インストールスクリプトの作成
+
+- [ ] wmgr用の公式インストールスクリプトの作成
+  - [ ] `scripts/install.sh` - メインインストールスクリプト
+    - [ ] OS検出機能（Linux、macOS、Windows対応）
+    - [ ] アーキテクチャ検出機能（amd64、arm64、arm対応）  
+    - [ ] 最新バージョン自動取得機能
+    - [ ] GitHub Releasesからのバイナリダウンロード
+    - [ ] バイナリの実行権限設定
+    - [ ] インストールパスの設定（/usr/local/bin）
+    - [ ] バージョン指定インストール対応
+  - [ ] 使用方法のドキュメント化
+    - [ ] `curl -sSLf https://get.wmgr.sh | sh` でのインストール
+    - [ ] `curl -sSLf https://get.wmgr.sh | WMGR_VERSION=v1.0.0 sh` でのバージョン指定
+  - [ ] エラーハンドリングの実装
+    - [ ] サポートされていないOS/アーキテクチャの適切な検出
+    - [ ] ダウンロード失敗時の適切なエラーメッセージ
+    - [ ] 権限不足時の適切な案内
+
+### サンプルコード: `scripts/install.sh`
+
+```bash
+#!/bin/sh
+
+set -e
+
+if [ -n "${DEBUG}" ]; then
+  set -x
+fi
+
+# デフォルト設定
+DEFAULT_INSTALL_PATH="/usr/local/bin"
+WMGR_REPO="tk-aria/wmgr"
+
+# 最新バージョンを取得
+_wmgr_latest() {
+  curl -sSLf "https://api.github.com/repos/${WMGR_REPO}/releases/latest" | \
+    grep '"tag_name":' | \
+    sed -E 's/.*"([^"]+)".*/\1/'
+}
+
+# OS検出
+_detect_os() {
+  os="$(uname -s)"
+  case "$os" in
+    Linux) echo "linux" ;;
+    Darwin) echo "darwin" ;;
+    CYGWIN*|MINGW*|MSYS*) echo "windows" ;;
+    *) echo "Unsupported operating system: $os" 1>&2; return 1 ;;
+  esac
+  unset os
+}
+
+# アーキテクチャ検出
+_detect_arch() {
+  arch="$(uname -m)"
+  case "$arch" in
+    amd64|x86_64) echo "x86_64" ;;
+    arm64|aarch64) echo "aarch64" ;;
+    armv7l|armv8l|arm) echo "armv7" ;;
+    *) echo "Unsupported processor architecture: $arch" 1>&2; return 1 ;;
+  esac
+  unset arch
+}
+
+# バイナリ名を決定
+_get_binary_name() {
+  os="$1"
+  case "$os" in
+    windows) echo "wmgr.exe" ;;
+    *) echo "wmgr" ;;
+  esac
+}
+
+# ダウンロードURL生成
+_download_url() {
+  local version="$1"
+  local os="$2"
+  local arch="$3"
+  
+  # バイナリファイル名: wmgr-{version}-{os}-{arch}.tar.gz
+  local archive_name="wmgr-${version}-${os}-${arch}.tar.gz"
+  echo "https://github.com/${WMGR_REPO}/releases/download/${version}/${archive_name}"
+}
+
+# インストール実行
+main() {
+  # バージョン決定
+  if [ -z "${WMGR_VERSION}" ]; then
+    WMGR_VERSION=$(_wmgr_latest)
+    if [ -z "${WMGR_VERSION}" ]; then
+      echo "Failed to get latest version" 1>&2
+      return 1
+    fi
+  fi
+
+  # インストールパス決定
+  wmgr_install_path="${WMGR_INSTALL_PATH:-$DEFAULT_INSTALL_PATH}"
+  
+  # プラットフォーム検出
+  wmgr_os="$(_detect_os)"
+  wmgr_arch="$(_detect_arch)"
+  wmgr_binary="$(_get_binary_name "$wmgr_os")"
+  
+  # ダウンロードURL生成
+  wmgr_download_url="$(_download_url "$WMGR_VERSION" "$wmgr_os" "$wmgr_arch")"
+
+  echo "Installing wmgr ${WMGR_VERSION} for ${wmgr_os}/${wmgr_arch}..."
+  echo "Download URL: $wmgr_download_url"
+
+  # インストールディレクトリ作成
+  if [ ! -d "$wmgr_install_path" ]; then
+    echo "Creating install directory: $wmgr_install_path"
+    mkdir -p -- "$wmgr_install_path"
+  fi
+
+  # 一時ディレクトリ作成
+  tmp_dir=$(mktemp -d)
+  trap 'rm -rf "$tmp_dir"' EXIT
+
+  # アーカイブダウンロード
+  echo "Downloading wmgr archive..."
+  curl -sSLf "$wmgr_download_url" -o "$tmp_dir/wmgr.tar.gz"
+
+  # アーカイブ展開
+  echo "Extracting wmgr archive..."
+  tar -xzf "$tmp_dir/wmgr.tar.gz" -C "$tmp_dir"
+
+  # バイナリ配置
+  echo "Installing wmgr to $wmgr_install_path/$wmgr_binary"
+  cp "$tmp_dir/$wmgr_binary" "$wmgr_install_path/$wmgr_binary"
+  chmod 755 -- "$wmgr_install_path/$wmgr_binary"
+
+  echo ""
+  echo "✅ wmgr ${WMGR_VERSION} has been successfully installed!"
+  echo ""
+  echo "The wmgr binary is installed at: $wmgr_install_path/$wmgr_binary"
+  echo ""
+  echo "To get started, run:"
+  echo "  wmgr --help"
+  echo ""
+  echo "For more information, visit: https://github.com/${WMGR_REPO}"
+}
+
+main "$@"
+```
+
+### 使用例:
+
+```bash
+# 最新バージョンをインストール
+curl -sSLf https://get.wmgr.sh | sh
+
+# 特定バージョンをインストール  
+curl -sSLf https://get.wmgr.sh | WMGR_VERSION=v1.0.0 sh
+
+# カスタムインストールパスを指定
+curl -sSLf https://get.wmgr.sh | WMGR_INSTALL_PATH=/usr/bin sh
+
+# デバッグモードで実行
+curl -sSLf https://get.wmgr.sh | DEBUG=1 sh
+```
