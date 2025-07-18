@@ -132,27 +132,6 @@ jobs:
           ls -la artifacts/ || echo "No artifacts directory found"
           find artifacts/ -name "*.tar.gz" -type f 2>/dev/null || echo "No tar.gz files found"
 
-      - name: Prepare release files
-        id: prepare_files
-        run: |
-          FILES=""
-          if [ -f "artifacts/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz" ]; then
-            FILES="$FILES artifacts/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz"
-          fi
-          if [ -f "artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz" ]; then
-            FILES="$FILES artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz"
-          fi
-          if [ -f "artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz" ]; then
-            FILES="$FILES artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz"
-          fi
-          if [ -f "artifacts/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz" ]; then
-            FILES="$FILES artifacts/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz"
-          fi
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          echo "$FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "Available files: $FILES"
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -161,6 +140,10 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          files: ${{ steps.prepare_files.outputs.files }}
+          files: |
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-linux-x86_64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-x86_64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-darwin-aarch64.tar.gz
+            artifacts/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz/wmgr-${{ env.RELEASE_TAG }}-windows-x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
