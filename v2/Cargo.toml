@@ -1,13 +1,13 @@
 [package]
-name = "tsrc"
+name = "wmgr"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.85.0"
-authors = ["tsrc-rust contributors"]
+authors = ["wmgr contributors"]
 description = "Manage groups of git repositories"
 repository = "https://github.com/tk-aria/wmgr"
 license = "BSD-3-Clause"
-documentation = "https://docs.rs/tsrc"
+documentation = "https://docs.rs/wmgr"
 readme = "README.md"
 keywords = ["git", "repository", "management", "cli", "tools"]
 categories = ["command-line-utilities", "development-tools"]

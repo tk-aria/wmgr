@@ -18,9 +18,9 @@ use crate::domain::value_objects::{
     file_path::FilePath,
 };
 
-/// tsrc - A tool for managing multiple git repositories
+/// wmgr - A tool for managing multiple git repositories
 #[derive(Parser)]
-#[command(name = "tsrc")]
+#[command(name = "wmgr")]
 #[command(about = "A tool for managing multiple git repositories")]
 #[command(version)]
 #[command(propagate_version = true)]

@@ -1963,42 +1963,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
-name = "tsrc"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "async-trait",
- "atty",
- "chrono",
- "clap",
- "colored",
- "console",
- "futures",
- "git2",
- "indicatif",
- "mockall",
- "num_cpus",
- "pathdiff",
- "predicates",
- "pretty_assertions",
- "rayon",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "thiserror",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "url",
- "validator",
- "walkdir",
-]
-
-[[package]]
 name = "unicode-bidi"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2564,6 +2528,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
  "bitflags 2.9.1",
+]
+
+[[package]]
+name = "wmgr"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "async-trait",
+ "atty",
+ "chrono",
+ "clap",
+ "colored",
+ "console",
+ "futures",
+ "git2",
+ "indicatif",
+ "mockall",
+ "num_cpus",
+ "pathdiff",
+ "predicates",
+ "pretty_assertions",
+ "rayon",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "validator",
+ "walkdir",
 ]
 
 [[package]]

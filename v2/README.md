@@ -1,10 +1,10 @@
-# tsrc
+# wmgr
 
 Manage groups of git repositories with ease.
 
 ## Overview
 
-`tsrc` is a command-line tool that helps you manage multiple git repositories organized in groups. It provides a clean, efficient way to synchronize, check status, and run commands across collections of repositories.
+`wmgr` is a command-line tool that helps you manage multiple git repositories organized in groups. It provides a clean, efficient way to synchronize, check status, and run commands across collections of repositories.
 
 ## Features
 
@@ -25,9 +25,9 @@ Download the latest binary from the [releases page](https://github.com/tk-aria/w
 curl -L https://github.com/tk-aria/wmgr/releases/latest/download/install.sh | bash
 
 # Or manually download and install
-wget https://github.com/tk-aria/wmgr/releases/latest/download/tsrc-linux-x86_64.tar.gz
-tar xzf tsrc-linux-x86_64.tar.gz
-sudo mv tsrc /usr/local/bin/
+wget https://github.com/tk-aria/wmgr/releases/latest/download/wmgr-linux-x86_64.tar.gz
+tar xzf wmgr-linux-x86_64.tar.gz
+sudo mv wmgr /usr/local/bin/
 ```
 
 ### From Source
@@ -36,13 +36,13 @@ sudo mv tsrc /usr/local/bin/
 git clone https://github.com/tk-aria/wmgr.git
 cd wmgr/v2
 cargo build --release
-sudo cp target/release/tsrc /usr/local/bin/
+sudo cp target/release/wmgr /usr/local/bin/
 ```
 
 ### Using Cargo
 
 ```bash
-cargo install --git https://github.com/tk-aria/wmgr.git tsrc
+cargo install --git https://github.com/tk-aria/wmgr.git wmgr
 ```
 
 ### Prerequisites
@@ -75,24 +75,24 @@ repos:
 2. **Initialize your workspace**:
 
 ```bash
-tsrc init manifest.yml
+wmgr init manifest.yml
 ```
 
 3. **Sync all repositories**:
 
 ```bash
-tsrc sync
+wmgr sync
 ```
 
 4. **Check status**:
 
 ```bash
-tsrc status
+wmgr status
 ```
 
 ## Commands
 
-### `tsrc init <manifest_path>`
+### `wmgr init <manifest_path>`
 
 Initialize a new workspace from a manifest file.
 
@@ -102,10 +102,10 @@ Initialize a new workspace from a manifest file.
 
 **Example:**
 ```bash
-tsrc init manifest.yml --group web
+wmgr init manifest.yml --group web
 ```
 
-### `tsrc sync`
+### `wmgr sync`
 
 Synchronize all repositories in the workspace.
 
@@ -116,10 +116,10 @@ Synchronize all repositories in the workspace.
 
 **Example:**
 ```bash
-tsrc sync --group api --force
+wmgr sync --group api --force
 ```
 
-### `tsrc status`
+### `wmgr status`
 
 Show the status of all repositories in the workspace.
 
@@ -129,10 +129,10 @@ Show the status of all repositories in the workspace.
 
 **Example:**
 ```bash
-tsrc status --branch
+wmgr status --branch
 ```
 
-### `tsrc foreach <command>`
+### `wmgr foreach <command>`
 
 Execute a command in each repository.
 
@@ -142,25 +142,25 @@ Execute a command in each repository.
 
 **Example:**
 ```bash
-tsrc foreach "git pull" --parallel
-tsrc foreach "npm install" --group web
+wmgr foreach "git pull" --parallel
+wmgr foreach "npm install" --group web
 ```
 
-### `tsrc log`
+### `wmgr log`
 
 Show commit logs across repositories.
 
-### `tsrc dump-manifest`
+### `wmgr dump-manifest`
 
 Output the current workspace manifest.
 
-### `tsrc apply-manifest <manifest_path>`
+### `wmgr apply-manifest <manifest_path>`
 
 Apply a new manifest to the current workspace.
 
 ## Configuration
 
-The workspace configuration is stored in `.tsrc/config.yml` in your workspace root.
+The workspace configuration is stored in `.wmgr/config.yml` in your workspace root.
 
 ### Example Configuration
 
@@ -203,13 +203,13 @@ Groups allow you to organize repositories logically and operate on subsets:
 
 ```bash
 # Initialize only web repositories
-tsrc init manifest.yml --group web
+wmgr init manifest.yml --group web
 
 # Sync only API repositories
-tsrc sync --group api
+wmgr sync --group api
 
 # Run tests only in core repositories
-tsrc foreach "npm test" --group core
+wmgr foreach "npm test" --group core
 ```
 
 ## Advanced Usage
@@ -220,10 +220,10 @@ Most commands support parallel execution for better performance:
 
 ```bash
 # Sync all repositories in parallel
-tsrc sync --parallel
+wmgr sync --parallel
 
 # Run commands in parallel across repositories
-tsrc foreach "git pull" --parallel
+wmgr foreach "git pull" --parallel
 ```
 
 ### Environment Variables
@@ -238,22 +238,22 @@ The `foreach` command sets helpful environment variables:
 
 ```bash
 # Clone and set up workspace
-tsrc init manifest.yml
+wmgr init manifest.yml
 
 # Check what needs to be done
-tsrc status
+wmgr status
 
 # Sync everything
-tsrc sync
+wmgr sync
 
 # Run tests across all repositories
-tsrc foreach "make test" --parallel
+wmgr foreach "make test" --parallel
 
 # Update only web components
-tsrc sync --group web
+wmgr sync --group web
 
 # Check status with branch info
-tsrc status --branch
+wmgr status --branch
 ```
 
 ## Troubleshooting
@@ -373,11 +373,11 @@ cargo bench
 - Use `--parallel` flag for operations on multiple repositories
 - Configure appropriate `parallel_jobs` in your configuration
 - Use groups to operate on subsets of repositories
-- Enable logging only when debugging: `RUST_LOG=debug tsrc sync`
+- Enable logging only when debugging: `RUST_LOG=debug wmgr sync`
 
 ## Configuration Reference
 
-### Workspace Configuration (`.tsrc/config.yml`)
+### Workspace Configuration (`.wmgr/config.yml`)
 
 ```yaml
 # Path to the manifest file (relative to workspace root)
@@ -479,13 +479,13 @@ During `foreach` execution, these variables are available:
 
 ```bash
 # Enable debug logging
-TSRC_LOG=debug tsrc sync
+TSRC_LOG=debug wmgr sync
 
 # Limit parallel jobs
-TSRC_PARALLEL_JOBS=2 tsrc sync --parallel
+TSRC_PARALLEL_JOBS=2 wmgr sync --parallel
 
 # Use custom config
-TSRC_CONFIG_PATH=/custom/config.yml tsrc status
+TSRC_CONFIG_PATH=/custom/config.yml wmgr status
 ```
 
 ## CI/CD Integration
@@ -510,13 +510,13 @@ jobs:
         sudo mv tsrc /usr/local/bin/
     
     - name: Initialize workspace
-      run: tsrc init manifest.yml
+      run: wmgr init manifest.yml
     
     - name: Run tests
-      run: tsrc foreach "make test" --parallel
+      run: wmgr foreach "make test" --parallel
     
     - name: Check status
-      run: tsrc status
+      run: wmgr status
 ```
 
 ### Docker
@@ -552,7 +552,7 @@ ENTRYPOINT ["tsrc"]
 3. **Merge conflicts during sync**
    - Use `--force` flag to discard local changes (destructive)
    - Resolve conflicts manually before syncing
-   - Use `tsrc status` to identify repositories with conflicts
+   - Use `wmgr status` to identify repositories with conflicts
 
 4. **Performance issues**
    - Use `--parallel` flag for faster operations
@@ -569,8 +569,8 @@ ENTRYPOINT ["tsrc"]
 Enable verbose logging to troubleshoot issues:
 
 ```bash
-RUST_LOG=debug tsrc sync
-RUST_LOG=trace tsrc init manifest.yml  # Very verbose
+RUST_LOG=debug wmgr sync
+RUST_LOG=trace wmgr init manifest.yml  # Very verbose
 ```
 
 ### Getting Help

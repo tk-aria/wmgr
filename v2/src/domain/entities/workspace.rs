@@ -82,7 +82,7 @@ pub enum WorkspaceStatus {
     Corrupted,
 }
 
-/// tsrcワークスペースのエンティティ
+/// wmgrワークスペースのエンティティ
 #[derive(Debug, Clone)]
 pub struct Workspace {
     /// ワークスペースのルートパス

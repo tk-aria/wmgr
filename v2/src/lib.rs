@@ -1,6 +1,6 @@
-//! # tsrc - Git Repository Manager
+//! # wmgr - Git Repository Manager
 //! 
-//! `tsrc` is a command-line tool for managing multiple git repositories organized in workspaces.
+//! `wmgr` is a command-line tool for managing multiple git repositories organized in workspaces.
 //! It provides a clean, efficient way to synchronize, check status, and run commands across
 //! collections of repositories.
 //! 
@@ -29,13 +29,13 @@
 //! 2. Initialize your workspace:
 //! 
 //! ```bash
-//! tsrc init manifest.yml
+//! wmgr init manifest.yml
 //! ```
 //! 
 //! 3. Sync all repositories:
 //! 
 //! ```bash
-//! tsrc sync
+//! wmgr sync
 //! ```
 //! 
 //! ## Architecture
@@ -87,12 +87,12 @@
 //! ### Using the Library
 //! 
 //! ```rust,no_run
-//! use tsrc::application::use_cases::sync_repositories::{
+//! use wmgr::application::use_cases::sync_repositories::{
 //!     SyncRepositoriesUseCase, SyncRepositoriesConfig
 //! };
-//! use tsrc::domain::entities::workspace::Workspace;
+//! use wmgr::domain::entities::workspace::Workspace;
 //! 
-//! # async fn example() -> tsrc::Result<()> {
+//! # async fn example() -> wmgr::Result<()> {
 //! // Load workspace
 //! let workspace = Workspace::load_from_path(".")?;
 //! 
@@ -113,10 +113,10 @@
 //! ### Working with Manifests
 //! 
 //! ```rust,no_run
-//! use tsrc::application::services::manifest_service::ManifestService;
+//! use wmgr::application::services::manifest_service::ManifestService;
 //! use std::path::Path;
 //! 
-//! # async fn example() -> tsrc::Result<()> {
+//! # async fn example() -> wmgr::Result<()> {
 //! let manifest_service = ManifestService::new();
 //! let processed = manifest_service.parse_from_file(Path::new("manifest.yml")).await?;
 //! 
