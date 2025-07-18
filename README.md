@@ -16,18 +16,51 @@ Manage groups of git repositories with ease.
 
 ## Installation
 
-### From Releases
+### Quick Install (Recommended)
+
+Use the official install script to automatically download and install the latest version:
+
+```bash
+# Install latest version
+curl -sSLf https://raw.githubusercontent.com/tk-aria/wmgr/main/scripts/install.sh | sh
+
+# Install specific version
+curl -sSLf https://raw.githubusercontent.com/tk-aria/wmgr/main/scripts/install.sh | WMGR_VERSION=v0.1.14 sh
+
+# Install to custom location
+curl -sSLf https://raw.githubusercontent.com/tk-aria/wmgr/main/scripts/install.sh | WMGR_INSTALL_PATH=/usr/bin sh
+```
+
+The install script automatically:
+- Detects your operating system (Linux, macOS, Windows)
+- Detects your CPU architecture (x86_64, aarch64/ARM64)
+- Downloads the appropriate binary from GitHub Releases
+- Installs to `/usr/local/bin` by default
+- Sets proper executable permissions
+
+### Manual Installation
 
 Download the latest binary from the [releases page](https://github.com/tk-aria/wmgr/releases):
 
 ```bash
-# Linux/macOS quick install
-curl -L https://github.com/tk-aria/wmgr/releases/latest/download/install.sh | bash
-
-# Or manually download and install
+# Linux x86_64
 wget https://github.com/tk-aria/wmgr/releases/latest/download/wmgr-linux-x86_64.tar.gz
 tar xzf wmgr-linux-x86_64.tar.gz
 sudo mv wmgr /usr/local/bin/
+
+# macOS ARM64 (M1/M2)
+wget https://github.com/tk-aria/wmgr/releases/latest/download/wmgr-darwin-aarch64.tar.gz
+tar xzf wmgr-darwin-aarch64.tar.gz
+sudo mv wmgr /usr/local/bin/
+
+# macOS x86_64 (Intel)
+wget https://github.com/tk-aria/wmgr/releases/latest/download/wmgr-darwin-x86_64.tar.gz
+tar xzf wmgr-darwin-x86_64.tar.gz
+sudo mv wmgr /usr/local/bin/
+
+# Windows x86_64
+# Download wmgr-windows-x86_64.tar.gz from releases page
+# Extract and place wmgr.exe in your PATH
 ```
 
 ### From Source

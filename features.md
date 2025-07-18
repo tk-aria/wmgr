@@ -191,22 +191,22 @@
 
 ## インストールスクリプトの作成
 
-- [ ] wmgr用の公式インストールスクリプトの作成
-  - [ ] `scripts/install.sh` - メインインストールスクリプト
-    - [ ] OS検出機能（Linux、macOS、Windows対応）
-    - [ ] アーキテクチャ検出機能（amd64、arm64、arm対応）  
-    - [ ] 最新バージョン自動取得機能
-    - [ ] GitHub Releasesからのバイナリダウンロード
-    - [ ] バイナリの実行権限設定
-    - [ ] インストールパスの設定（/usr/local/bin）
-    - [ ] バージョン指定インストール対応
-  - [ ] 使用方法のドキュメント化
-    - [ ] `curl -sSLf https://get.wmgr.sh | sh` でのインストール
-    - [ ] `curl -sSLf https://get.wmgr.sh | WMGR_VERSION=v1.0.0 sh` でのバージョン指定
-  - [ ] エラーハンドリングの実装
-    - [ ] サポートされていないOS/アーキテクチャの適切な検出
-    - [ ] ダウンロード失敗時の適切なエラーメッセージ
-    - [ ] 権限不足時の適切な案内
+- [x] wmgr用の公式インストールスクリプトの作成
+  - [x] `scripts/install.sh` - メインインストールスクリプト
+    - [x] OS検出機能（Linux、macOS、Windows対応）
+    - [x] アーキテクチャ検出機能（amd64、arm64、arm対応）  
+    - [x] 最新バージョン自動取得機能
+    - [x] GitHub Releasesからのバイナリダウンロード
+    - [x] バイナリの実行権限設定
+    - [x] インストールパスの設定（/usr/local/bin）
+    - [x] バージョン指定インストール対応
+  - [x] 使用方法のドキュメント化
+    - [x] `curl -sSLf https://get.wmgr.sh | sh` でのインストール
+    - [x] `curl -sSLf https://get.wmgr.sh | WMGR_VERSION=v1.0.0 sh` でのバージョン指定
+  - [x] エラーハンドリングの実装
+    - [x] サポートされていないOS/アーキテクチャの適切な検出
+    - [x] ダウンロード失敗時の適切なエラーメッセージ
+    - [x] 権限不足時の適切な案内
 
 ### サンプルコード: `scripts/install.sh`
 
