@@ -160,31 +160,81 @@ impl Workspace {
     }
     
     /// マニフェストファイル（wmgr.yml、manifest.yml）のパスを取得
-    /// 優先順位: カレントディレクトリのwmgr.yml/wmgr.yaml → manifest.yml/manifest.yaml → .wmgr/wmgr.yml/wmgr.yaml → .wmgr/manifest.yml/manifest.yaml
+    /// walkdir + regex を使用した動的探索で優先順位付き
     pub fn manifest_file_path(&self) -> PathBuf {
-        let manifest_candidates = vec![
-            // カレントディレクトリ: wmgr.*
-            self.root_path.join("wmgr.yml"),
-            self.root_path.join("wmgr.yaml"),
-            // カレントディレクトリ: manifest.*
-            self.root_path.join("manifest.yml"),
-            self.root_path.join("manifest.yaml"),
-            // .wmgrディレクトリ: wmgr.*
-            self.root_path.join(".wmgr").join("wmgr.yml"),
-            self.root_path.join(".wmgr").join("wmgr.yaml"),
-            // .wmgrディレクトリ: manifest.*
-            self.root_path.join(".wmgr").join("manifest.yml"),
-            self.root_path.join(".wmgr").join("manifest.yaml"),
+        let found_files = self.find_manifest_files_with_regex();
+        
+        if let Some(first_file) = found_files.first() {
+            first_file.clone()
+        } else {
+            // デフォルトはカレントディレクトリのwmgr.yml
+            self.root_path.join("wmgr.yml")
+        }
+    }
+    
+    /// walkdir + regex でマニフェストファイルを動的に探索
+    /// 優先順位でソートされたリストを返す
+    pub fn find_manifest_files_with_regex(&self) -> Vec<std::path::PathBuf> {
+        use walkdir::WalkDir;
+        use regex::Regex;
+        
+        let manifest_regex = Regex::new(r"^(wmgr|manifest)\.(yml|yaml)$").unwrap();
+        
+        let search_dirs = vec![
+            self.root_path.clone(),           // カレントディレクトリ
+            self.root_path.join(".wmgr"),     // .wmgrディレクトリ
         ];
         
-        for candidate in &manifest_candidates {
-            if candidate.exists() {
-                return candidate.clone();
+        let mut manifest_files = Vec::new();
+        
+        for search_dir in search_dirs {
+            if !search_dir.exists() { continue; }
+            
+            // walkdirで探索（深度1のみ = 直下のファイルのみ）
+            for entry in WalkDir::new(&search_dir)
+                .max_depth(1)                    // 直下のファイルのみ
+                .into_iter()
+                .filter_map(|e| e.ok())          // エラーを除外
+                .filter(|e| e.file_type().is_file()) // ファイルのみ
+            {
+                // ファイル名取得
+                if let Some(file_name) = entry.file_name().to_str() {
+                    // 正規表現でマッチチェック
+                    if manifest_regex.is_match(file_name) {
+                        manifest_files.push(entry.path().to_path_buf());
+                    }
+                }
             }
         }
         
-        // デフォルトはカレントディレクトリのwmgr.yml
-        self.root_path.join("wmgr.yml")
+        // 優先順位でソート
+        manifest_files.sort_by_key(|path| Self::get_file_priority(path));
+        
+        manifest_files
+    }
+    
+    /// ファイルの優先順位を取得（数値が小さいほど優先度が高い）
+    fn get_file_priority(path: &std::path::PathBuf) -> u8 {
+        let file_name = path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        
+        let is_in_wmgr = path.parent()
+            .and_then(|p| p.file_name())
+            .map(|n| n == ".wmgr")
+            .unwrap_or(false);
+        
+        match (file_name, is_in_wmgr) {
+            ("wmgr.yml", false) => 1,
+            ("wmgr.yaml", false) => 2,
+            ("manifest.yml", false) => 3,
+            ("manifest.yaml", false) => 4,
+            ("wmgr.yml", true) => 5,
+            ("wmgr.yaml", true) => 6,
+            ("manifest.yml", true) => 7,
+            ("manifest.yaml", true) => 8,
+            _ => 99,
+        }
     }
     
     /// 旧マニフェストファイル（.tsrc/manifest.yml）のパスを取得
