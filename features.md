@@ -171,6 +171,9 @@
   - [x] ファイルパストラバーサル対策
 - [x] wmgr.yml or manifest.yml 両方のファイル名を探索するように修正
 - [x] ファイル拡張子は yml, yaml の両方に対応するように修正
+- [x] walkdir + regex を使用した動的マニフェストファイル探索の実装
+- [x] 正規表現パターン ^(wmgr|manifest)\.(yml|yaml)$ によるファイルマッチング
+- [x] 優先順位付きファイルソート機能の実装
 
 ## GitHub Actions CI/CD自動リリース
 
