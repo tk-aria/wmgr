@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["auto_display","print_command_result","print_repo_info","print_separator"]};

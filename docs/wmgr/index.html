@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="wmgr - Git Repository Manager"><title>wmgr - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="wmgr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0 (6b00bc388 2025-06-23)" data-channel="1.88.0" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../wmgr/index.html">wmgr</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#wmgr---git-repository-manager" title="wmgr - Git Repository Manager">wmgr - Git Repository Manager</a><ul><li><a href="#features" title="Features">Features</a></li><li><a href="#quick-start" title="Quick Start">Quick Start</a></li><li><a href="#architecture" title="Architecture">Architecture</a></li><li><a href="#domain-model" title="Domain Model">Domain Model</a></li><li><a href="#use-cases" title="Use Cases">Use Cases</a></li><li><a href="#infrastructure" title="Infrastructure">Infrastructure</a></li><li><a href="#error-handling" title="Error Handling">Error Handling</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#feature-flags" title="Feature Flags">Feature Flags</a></li></ul></li></ul><h3><a href="#reexports">Crate Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>wmgr</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/wmgr/lib.rs.html#1-149">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="wmgr---git-repository-manager"><a class="doc-anchor" href="#wmgr---git-repository-manager">§</a>wmgr - Git Repository Manager</h2>
+<p><code>wmgr</code> is a command-line tool for managing multiple git repositories organized in workspaces.
+It provides a clean, efficient way to synchronize, check status, and run commands across
+collections of repositories.</p>
+<h3 id="features"><a class="doc-anchor" href="#features">§</a>Features</h3>
+<ul>
+<li><strong>Repository Management</strong>: Clone, sync, and manage multiple git repositories</li>
+<li><strong>Group Organization</strong>: Organize repositories into logical groups</li>
+<li><strong>Parallel Operations</strong>: Execute commands across repositories in parallel</li>
+<li><strong>Status Checking</strong>: Get an overview of all repository states</li>
+<li><strong>Manifest-based Configuration</strong>: Define your workspace using YAML manifests</li>
+</ul>
+<h3 id="quick-start"><a class="doc-anchor" href="#quick-start">§</a>Quick Start</h3>
+<ol>
+<li>Create a manifest file (<code>manifest.yml</code>):</li>
+</ol>
+<div class="example-wrap"><pre class="language-yaml"><code>repos:
+  - dest: &quot;frontend&quot;
+    url: &quot;https://github.com/example/frontend.git&quot;
+    groups: [&quot;web&quot;]
+  - dest: &quot;backend&quot;
+    url: &quot;https://github.com/example/backend.git&quot;
+    groups: [&quot;api&quot;]</code></pre></div>
+<ol start="2">
+<li>Initialize your workspace:</li>
+</ol>
+<div class="example-wrap"><pre class="language-bash"><code>wmgr init manifest.yml</code></pre></div>
+<ol start="3">
+<li>Sync all repositories:</li>
+</ol>
+<div class="example-wrap"><pre class="language-bash"><code>wmgr sync</code></pre></div><h3 id="architecture"><a class="doc-anchor" href="#architecture">§</a>Architecture</h3>
+<p>The crate is organized using clean architecture principles:</p>
+<ul>
+<li><a href="domain/index.html" title="mod wmgr::domain"><code>domain</code></a>: Core business logic and entities</li>
+<li><a href="application/index.html" title="mod wmgr::application"><code>application</code></a>: Use cases and business workflows</li>
+<li><a href="infrastructure/index.html" title="mod wmgr::infrastructure"><code>infrastructure</code></a>: External dependencies and I/O operations</li>
+<li><a href="presentation/index.html" title="mod wmgr::presentation"><code>presentation</code></a>: CLI interface and user interaction</li>
+<li><a href="common/index.html" title="mod wmgr::common"><code>common</code></a>: Shared utilities and error handling</li>
+</ul>
+<h3 id="domain-model"><a class="doc-anchor" href="#domain-model">§</a>Domain Model</h3>
+<p>The core domain entities include:</p>
+<ul>
+<li><a href="domain/entities/workspace/struct.Workspace.html" title="struct wmgr::domain::entities::workspace::Workspace"><code>domain::entities::workspace::Workspace</code></a>: Represents a workspace containing multiple repositories</li>
+<li><a href="domain/entities/manifest/struct.Manifest.html" title="struct wmgr::domain::entities::manifest::Manifest"><code>domain::entities::manifest::Manifest</code></a>: Configuration defining repositories and their organization</li>
+<li><a href="domain/entities/repository/struct.Repository.html" title="struct wmgr::domain::entities::repository::Repository"><code>domain::entities::repository::Repository</code></a>: Individual git repository with its configuration</li>
+<li><a href="domain/value_objects/git_url/struct.GitUrl.html" title="struct wmgr::domain::value_objects::git_url::GitUrl"><code>domain::value_objects::git_url::GitUrl</code></a>: Type-safe Git URL representation</li>
+<li><a href="domain/value_objects/branch_name/struct.BranchName.html" title="struct wmgr::domain::value_objects::branch_name::BranchName"><code>domain::value_objects::branch_name::BranchName</code></a>: Type-safe branch name representation</li>
+</ul>
+<h3 id="use-cases"><a class="doc-anchor" href="#use-cases">§</a>Use Cases</h3>
+<p>The main application use cases are:</p>
+<ul>
+<li><a href="application/use_cases/init_workspace/index.html" title="mod wmgr::application::use_cases::init_workspace"><code>application::use_cases::init_workspace</code></a>: Initialize a new workspace from a manifest</li>
+<li><a href="application/use_cases/sync_repositories/index.html" title="mod wmgr::application::use_cases::sync_repositories"><code>application::use_cases::sync_repositories</code></a>: Synchronize repositories in a workspace</li>
+<li><a href="application/use_cases/status_check/index.html" title="mod wmgr::application::use_cases::status_check"><code>application::use_cases::status_check</code></a>: Check the status of repositories</li>
+<li><a href="application/use_cases/foreach_command/index.html" title="mod wmgr::application::use_cases::foreach_command"><code>application::use_cases::foreach_command</code></a>: Execute commands across repositories</li>
+</ul>
+<h3 id="infrastructure"><a class="doc-anchor" href="#infrastructure">§</a>Infrastructure</h3>
+<p>Infrastructure components provide concrete implementations:</p>
+<ul>
+<li><a href="infrastructure/git/index.html" title="mod wmgr::infrastructure::git"><code>infrastructure::git</code></a>: Git operations using libgit2</li>
+<li><a href="infrastructure/filesystem/index.html" title="mod wmgr::infrastructure::filesystem"><code>infrastructure::filesystem</code></a>: File system operations and configuration storage</li>
+<li><a href="infrastructure/process/index.html" title="mod wmgr::infrastructure::process"><code>infrastructure::process</code></a>: Process execution for external commands</li>
+</ul>
+<h3 id="error-handling"><a class="doc-anchor" href="#error-handling">§</a>Error Handling</h3>
+<p>The crate uses a comprehensive error handling system:</p>
+<ul>
+<li><a href="common/error/enum.TsrcError.html" title="enum wmgr::common::error::TsrcError"><code>common::error::TsrcError</code></a>: Main error type with detailed context</li>
+<li><a href="common/result/type.TsrcResult.html" title="type wmgr::common::result::TsrcResult"><code>common::result::TsrcResult</code></a>: Type alias for <code>Result&lt;T, TsrcError&gt;</code></li>
+</ul>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3><h4 id="using-the-library"><a class="doc-anchor" href="#using-the-library">§</a>Using the Library</h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>wmgr::application::use_cases::sync_repositories::{
+    SyncRepositoriesUseCase, SyncRepositoriesConfig
+};
+<span class="kw">use </span>wmgr::domain::entities::workspace::Workspace;
+
+<span class="comment">// Load workspace
+</span><span class="kw">let </span>workspace = Workspace::load_from_path(<span class="string">"."</span>)<span class="question-mark">?</span>;
+
+<span class="comment">// Create sync configuration
+</span><span class="kw">let </span>config = SyncRepositoriesConfig::new(<span class="string">"."</span>)
+    .with_groups(<span class="macro">vec!</span>[<span class="string">"web"</span>.to_string()])
+    .with_force(<span class="bool-val">false</span>);
+
+<span class="comment">// Execute sync
+</span><span class="kw">let </span>use_case = SyncRepositoriesUseCase::new(config);
+<span class="kw">let </span>result = use_case.execute().<span class="kw">await</span><span class="question-mark">?</span>;
+
+<span class="macro">println!</span>(<span class="string">"Synced {} repositories"</span>, result.successful);</code></pre></div>
+<h4 id="working-with-manifests"><a class="doc-anchor" href="#working-with-manifests">§</a>Working with Manifests</h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>wmgr::application::services::manifest_service::ManifestService;
+<span class="kw">use </span>std::path::Path;
+
+<span class="kw">let </span>manifest_service = ManifestService::new();
+<span class="kw">let </span>processed = manifest_service.parse_from_file(Path::new(<span class="string">"manifest.yml"</span>)).<span class="kw">await</span><span class="question-mark">?</span>;
+
+<span class="macro">println!</span>(<span class="string">"Found {} repositories"</span>, processed.manifest.repos.len());
+
+<span class="kw">for </span>repo <span class="kw">in </span><span class="kw-2">&amp;</span>processed.manifest.repos {
+    <span class="macro">println!</span>(<span class="string">"Repository: {} -&gt; {}"</span>, repo.dest, repo.url);
+}</code></pre></div>
+<h3 id="feature-flags"><a class="doc-anchor" href="#feature-flags">§</a>Feature Flags</h3>
+<p>Currently all features are enabled by default. Future versions may include optional features
+for different backends or additional functionality.</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.TsrcError"><code>pub use crate::common::error::<a class="enum" href="common/error/enum.TsrcError.html" title="enum wmgr::common::error::TsrcError">TsrcError</a>;</code></dt><dt id="reexport.Result"><code>pub use crate::common::result::<a class="type" href="common/result/type.TsrcResult.html" title="type wmgr::common::result::TsrcResult">TsrcResult</a> as Result;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="application/index.html" title="mod wmgr::application">application</a></dt><dt><a class="mod" href="common/index.html" title="mod wmgr::common">common</a></dt><dt><a class="mod" href="domain/index.html" title="mod wmgr::domain">domain</a></dt><dt><a class="mod" href="infrastructure/index.html" title="mod wmgr::infrastructure">infrastructure</a></dt><dt><a class="mod" href="presentation/index.html" title="mod wmgr::presentation">presentation</a></dt></dl></section></div></main></body></html>

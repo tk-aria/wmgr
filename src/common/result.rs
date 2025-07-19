@@ -1,19 +1,19 @@
 use crate::common::error::TsrcError;
 
 /// tsrcプロジェクト全体で使用するResult型のエイリアス
-/// 
+///
 /// このエイリアスにより、プロジェクト全体で一貫したエラーハンドリングが可能になる。
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// use tsrc::common::result::TsrcResult;
 /// use tsrc::common::error::TsrcError;
-/// 
+///
 /// fn example_function() -> TsrcResult<String> {
 ///     Ok("success".to_string())
 /// }
-/// 
+///
 /// fn example_with_error() -> TsrcResult<()> {
 ///     Err(TsrcError::internal_error("Something went wrong"))
 /// }
@@ -21,27 +21,27 @@ use crate::common::error::TsrcError;
 pub type TsrcResult<T> = Result<T, TsrcError>;
 
 /// Optionのエラー変換ヘルパー
-/// 
+///
 /// OptionをTsrcResultに変換するためのヘルパー関数
 pub trait OptionExt<T> {
     /// OptionをTsrcResultに変換する
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `error` - Noneの場合に返すエラー
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use tsrc::common::result::{TsrcResult, OptionExt};
     /// use tsrc::common::error::TsrcError;
-    /// 
+    ///
     /// let some_value: Option<String> = Some("value".to_string());
     /// let result: TsrcResult<String> = some_value.ok_or_tsrc(
     ///     TsrcError::internal_error("Value not found")
     /// );
     /// assert!(result.is_ok());
-    /// 
+    ///
     /// let none_value: Option<String> = None;
     /// let result: TsrcResult<String> = none_value.ok_or_tsrc(
     ///     TsrcError::internal_error("Value not found")
@@ -51,16 +51,16 @@ pub trait OptionExt<T> {
     fn ok_or_tsrc(self, error: TsrcError) -> TsrcResult<T>;
 
     /// Optionをエラーメッセージ付きでTsrcResultに変換する
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - Noneの場合に使用するエラーメッセージ
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use tsrc::common::result::{TsrcResult, OptionExt};
-    /// 
+    ///
     /// let none_value: Option<String> = None;
     /// let result: TsrcResult<String> = none_value.ok_or_internal_error("Value not found");
     /// assert!(result.is_err());
@@ -68,17 +68,17 @@ pub trait OptionExt<T> {
     fn ok_or_internal_error(self, message: impl Into<String>) -> TsrcResult<T>;
 
     /// Option値をValidationErrorに変換する
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `field` - バリデーションエラーのフィールド名
     /// * `message` - エラーメッセージ
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use tsrc::common::result::{TsrcResult, OptionExt};
-    /// 
+    ///
     /// let none_value: Option<String> = None;
     /// let result: TsrcResult<String> = none_value.ok_or_validation_error("field", "required");
     /// assert!(result.is_err());
@@ -109,22 +109,22 @@ impl<T> OptionExt<T> for Option<T> {
 }
 
 /// Resultのエラー変換ヘルパー
-/// 
+///
 /// 標準のResult型をTsrcResultに変換するためのヘルパー
 pub trait ResultExt<T, E> {
     /// ResultをTsrcResultに変換する
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `f` - エラー変換関数
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use tsrc::common::result::{TsrcResult, ResultExt};
     /// use tsrc::common::error::TsrcError;
     /// use std::fs;
-    /// 
+    ///
     /// let result: Result<String, std::io::Error> = Ok("content".to_string());
     /// let tsrc_result: TsrcResult<String> = result.map_tsrc_err(|e| {
     ///     TsrcError::filesystem_error_with_source("Failed to read", None, e)
@@ -136,17 +136,17 @@ pub trait ResultExt<T, E> {
         F: FnOnce(E) -> TsrcError;
 
     /// ResultをTsrcResultに変換（エラーメッセージ付き）
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `message` - エラーメッセージ
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use tsrc::common::result::{TsrcResult, ResultExt};
     /// use std::fs;
-    /// 
+    ///
     /// let result: Result<String, std::io::Error> = Err(std::io::Error::new(
     ///     std::io::ErrorKind::NotFound, "file not found"
     /// ));
@@ -216,21 +216,21 @@ impl<T, E> ResultExt<T, E> for Result<T, E> {
 }
 
 /// チェーンオペレーション用のヘルパー
-/// 
+///
 /// 複数のTsrcResult操作を連鎖させるためのヘルパー
 pub trait TsrcResultExt<T> {
     /// エラー時にコンテキストを追加
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `context` - 追加するコンテキスト
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use tsrc::common::result::{TsrcResult, TsrcResultExt};
     /// use tsrc::common::error::TsrcError;
-    /// 
+    ///
     /// let result: TsrcResult<String> = Err(TsrcError::internal_error("original error"));
     /// let with_context = result.with_context("operation failed");
     /// assert!(with_context.is_err());
@@ -281,15 +281,12 @@ pub mod async_helpers {
     use std::future::Future;
 
     /// タイムアウト付きasync実行
-    pub async fn with_timeout<F, T>(
-        f: F,
-        timeout_secs: u64,
-    ) -> TsrcResult<T>
+    pub async fn with_timeout<F, T>(f: F, timeout_secs: u64) -> TsrcResult<T>
     where
         F: Future<Output = TsrcResult<T>>,
     {
         let timeout_duration = std::time::Duration::from_secs(timeout_secs);
-        
+
         match tokio::time::timeout(timeout_duration, f).await {
             Ok(result) => result,
             Err(_) => Err(TsrcError::timeout(timeout_secs)),
@@ -319,7 +316,7 @@ mod tests {
         let none_value: Option<String> = None;
         let result = none_value.ok_or_internal_error("test error");
         assert!(result.is_err());
-        
+
         if let Err(TsrcError::InternalError { message, .. }) = result {
             assert_eq!(message, "test error");
         } else {
@@ -332,7 +329,7 @@ mod tests {
         let none_value: Option<String> = None;
         let result = none_value.ok_or_validation_error("field", "required");
         assert!(result.is_err());
-        
+
         if let Err(TsrcError::ValidationError { field, message, .. }) = result {
             assert_eq!(field, "field");
             assert_eq!(message, "required");
@@ -345,11 +342,10 @@ mod tests {
     fn test_result_ext_map_tsrc_err() {
         let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let result: Result<String, std::io::Error> = Err(io_error);
-        
-        let tsrc_result = result.map_tsrc_err(|e| {
-            TsrcError::filesystem_error_with_source("test", None, e)
-        });
-        
+
+        let tsrc_result =
+            result.map_tsrc_err(|e| TsrcError::filesystem_error_with_source("test", None, e));
+
         assert!(tsrc_result.is_err());
     }
 
@@ -358,7 +354,7 @@ mod tests {
         let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let result: Result<String, std::io::Error> = Err(io_error);
         let path = Some(PathBuf::from("/test/path"));
-        
+
         let tsrc_result = result.with_filesystem_error("test operation", path);
         assert!(tsrc_result.is_err());
     }
@@ -367,7 +363,7 @@ mod tests {
     fn test_tsrc_result_ext_with_context() {
         let result: TsrcResult<String> = Err(TsrcError::internal_error("original"));
         let with_context = result.with_context("additional context");
-        
+
         assert!(with_context.is_err());
     }
 
@@ -405,7 +401,7 @@ mod tests {
         };
         let result = with_timeout(slow_future, 1).await;
         assert!(result.is_err());
-        
+
         if let Err(TsrcError::Timeout { timeout_secs }) = result {
             assert_eq!(timeout_secs, 1);
         } else {

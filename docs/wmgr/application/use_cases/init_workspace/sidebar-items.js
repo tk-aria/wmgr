@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["InitWorkspaceError"],"struct":["InitWorkspaceConfig","InitWorkspaceUseCase","WorkspaceConfigFile"]};

@@ -1,11 +1,11 @@
-use tsrc::application::services::manifest_service::{ManifestService, ManifestProcessingOptions};
-use tsrc::domain::entities::manifest::{Manifest, ManifestRepo, Group};
+use tsrc::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
+use tsrc::domain::entities::manifest::{Group, Manifest, ManifestRepo};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a manifest service with default options
     let mut service = ManifestService::default();
-    
+
     // Example YAML manifest content
     let manifest_yaml = r#"
 repos:
@@ -33,26 +33,26 @@ groups:
 
 default_branch: main
 "#;
-    
+
     // Parse the manifest
     println!("Parsing manifest...");
     let result = service.parse_from_string(manifest_yaml, None).await?;
-    
+
     // Display basic information
     println!("✅ Manifest parsed successfully!");
     println!("📦 Total repositories: {}", result.manifest.repos.len());
-    
+
     if !result.warnings.is_empty() {
         println!("⚠️  Warnings: {}", result.warnings.len());
         for warning in &result.warnings {
             println!("   - {}", warning);
         }
     }
-    
+
     // List all groups
     let groups = service.list_groups(&result.manifest);
     println!("📂 Groups: {:?}", groups);
-    
+
     // Filter by specific group
     println!("\nFiltering by 'core' group...");
     let filtered = service.filter_by_groups(&result.manifest, &["core".to_string()])?;
@@ -60,7 +60,7 @@ default_branch: main
     for repo in &filtered.repos {
         println!("   - {} -> {}", repo.dest, repo.url);
     }
-    
+
     // Get detailed group information
     if let Some((group, repos)) = service.get_group_info(&result.manifest, "core") {
         println!("\n📋 Group 'core' details:");
@@ -69,11 +69,11 @@ default_branch: main
         }
         println!("   Repositories: {}", repos.len());
     }
-    
+
     // Serialize back to YAML
     println!("\nSerializing filtered manifest to YAML:");
     let yaml_output = service.serialize_to_yaml(&filtered)?;
     println!("{}", yaml_output);
-    
+
     Ok(())
 }

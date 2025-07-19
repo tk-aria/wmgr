@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["apply_manifest","audit","dump_manifest","foreach","init","log","status","sync"]};

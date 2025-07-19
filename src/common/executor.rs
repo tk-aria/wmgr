@@ -75,7 +75,10 @@ pub trait ExecutableTask: Send + Sync {
     fn id(&self) -> &str;
 
     /// タスクを実行
-    async fn execute(&self, progress_sender: Option<mpsc::UnboundedSender<TaskProgress>>) -> TsrcResult<Self::Output>;
+    async fn execute(
+        &self,
+        progress_sender: Option<mpsc::UnboundedSender<TaskProgress>>,
+    ) -> TsrcResult<Self::Output>;
 
     /// タスクの推定実行時間を取得（オプション）
     fn estimated_duration(&self) -> Option<Duration> {
@@ -153,19 +156,23 @@ impl TaskExecutor {
     }
 
     /// 単一のタスクを実行
-    pub async fn execute_task<T: ExecutableTask>(&self, task: T) -> TsrcResult<TaskResult<T::Output>> {
+    pub async fn execute_task<T: ExecutableTask>(
+        &self,
+        task: T,
+    ) -> TsrcResult<TaskResult<T::Output>> {
         let task_id = task.id().to_string();
         let started_at = Instant::now();
 
         info!("Starting task: {}", task_id);
 
         // セマフォを取得（同時実行数制御）
-        let _permit = self.semaphore.acquire().await
-            .map_err(|e| TsrcError::internal_error(format!("Failed to acquire semaphore: {}", e)))?;
+        let _permit = self.semaphore.acquire().await.map_err(|e| {
+            TsrcError::internal_error(format!("Failed to acquire semaphore: {}", e))
+        })?;
 
         // キャンセル用チャンネル
         let (cancel_tx, cancel_rx) = oneshot::channel();
-        
+
         // 実行中タスクに登録
         {
             let mut running = self.running_tasks.lock().unwrap();
@@ -191,7 +198,10 @@ impl TaskExecutor {
             Err(_) => TaskStatus::Failed,
         };
 
-        info!("Task {} completed with status: {:?} in {:?}", task_id, status, duration);
+        info!(
+            "Task {} completed with status: {:?} in {:?}",
+            task_id, status, duration
+        );
 
         Ok(TaskResult {
             task_id,
@@ -212,9 +222,7 @@ impl TaskExecutor {
 
         for task in tasks {
             let executor = self.clone_for_task();
-            let handle = tokio::spawn(async move {
-                executor.execute_task(task).await
-            });
+            let handle = tokio::spawn(async move { executor.execute_task(task).await });
             handles.push(handle);
         }
 
@@ -250,30 +258,30 @@ impl TaskExecutor {
     ) -> TsrcResult<Vec<TaskResult<T::Output>>> {
         // 依存関係グラフを構築
         let dependency_graph = self.build_dependency_graph(&tasks)?;
-        
+
         // トポロジカルソートで実行順序を決定
         let execution_order = self.topological_sort(&dependency_graph)?;
-        
+
         // 実行順序に従ってタスクを実行
         let mut results = Vec::new();
         let mut completed_tasks = std::collections::HashSet::new();
-        
+
         for task_id in execution_order {
             if let Some(task) = tasks.iter().find(|t| t.id() == task_id) {
                 // 依存関係が満たされるまで待機
                 self.wait_for_dependencies(task, &completed_tasks).await?;
-                
+
                 // タスクを実行（クローンして所有権を移動）
                 let result = self.execute_task(task.clone()).await?;
-                
+
                 if result.is_success() {
                     completed_tasks.insert(task_id.clone());
                 }
-                
+
                 results.push(result);
             }
         }
-        
+
         Ok(results)
     }
 
@@ -282,7 +290,7 @@ impl TaskExecutor {
         let mut running = self.running_tasks.lock().unwrap();
         let tasks_to_cancel: Vec<_> = running.drain().collect();
         drop(running); // Mutexを早期解放
-        
+
         for (task_id, cancel_tx) in tasks_to_cancel {
             debug!("Cancelling task: {}", task_id);
             let _ = cancel_tx.send(());
@@ -312,7 +320,12 @@ impl TaskExecutor {
 
         while attempt < max_attempts {
             if attempt > 0 {
-                info!("Retrying task {} (attempt {}/{})", task.id(), attempt + 1, max_attempts);
+                info!(
+                    "Retrying task {} (attempt {}/{})",
+                    task.id(),
+                    attempt + 1,
+                    max_attempts
+                );
                 tokio::time::sleep(self.config.retry_interval).await;
             }
 
@@ -378,21 +391,18 @@ impl TaskExecutor {
         tasks: &[T],
     ) -> TsrcResult<HashMap<String, Vec<String>>> {
         let mut graph = HashMap::new();
-        
+
         for task in tasks {
             graph.insert(task.id().to_string(), task.dependencies());
         }
-        
+
         // 循環依存をチェック
         self.check_circular_dependencies(&graph)?;
-        
+
         Ok(graph)
     }
 
-    fn check_circular_dependencies(
-        &self,
-        graph: &HashMap<String, Vec<String>>,
-    ) -> TsrcResult<()> {
+    fn check_circular_dependencies(&self, graph: &HashMap<String, Vec<String>>) -> TsrcResult<()> {
         let mut visited = std::collections::HashSet::new();
         let mut rec_stack = std::collections::HashSet::new();
 
@@ -437,10 +447,7 @@ impl TaskExecutor {
         false
     }
 
-    fn topological_sort(
-        &self,
-        graph: &HashMap<String, Vec<String>>,
-    ) -> TsrcResult<Vec<String>> {
+    fn topological_sort(&self, graph: &HashMap<String, Vec<String>>) -> TsrcResult<Vec<String>> {
         let mut in_degree = HashMap::new();
         let mut adj_list = HashMap::new();
 
@@ -501,16 +508,16 @@ impl TaskExecutor {
         completed_tasks: &std::collections::HashSet<String>,
     ) -> TsrcResult<()> {
         let dependencies = task.dependencies();
-        
+
         if dependencies.is_empty() {
             return Ok(());
         }
 
         let start_time = Instant::now();
-        
+
         loop {
             let all_satisfied = dependencies.iter().all(|dep| completed_tasks.contains(dep));
-            
+
             if all_satisfied {
                 return Ok(());
             }
@@ -571,9 +578,12 @@ mod tests {
             &self.id
         }
 
-        async fn execute(&self, _progress_sender: Option<mpsc::UnboundedSender<TaskProgress>>) -> TsrcResult<Self::Output> {
+        async fn execute(
+            &self,
+            _progress_sender: Option<mpsc::UnboundedSender<TaskProgress>>,
+        ) -> TsrcResult<Self::Output> {
             tokio::time::sleep(self.duration).await;
-            
+
             if self.should_fail {
                 return Err(TsrcError::internal_error("Test task failed"));
             }
@@ -629,7 +639,7 @@ mod tests {
 
         assert_eq!(results.len(), 3);
         assert!(results.iter().all(|r| r.is_success()));
-        
+
         // 並列実行により、3つのタスクが200ms程度で完了することを確認
         // (2つ並列 + 1つ追加で約200ms)
         assert!(total_time < Duration::from_millis(250));
@@ -639,7 +649,7 @@ mod tests {
     async fn test_task_timeout() {
         let mut config = ExecutorConfig::default();
         config.task_timeout = Some(Duration::from_millis(50));
-        
+
         let executor = TaskExecutor::new(config);
         let task = TestTask::new("slow-task", Duration::from_millis(200));
 
@@ -656,9 +666,7 @@ mod tests {
 
         let task_handle = tokio::spawn({
             let executor = executor.clone_for_task();
-            async move {
-                executor.execute_task(task).await
-            }
+            async move { executor.execute_task(task).await }
         });
 
         // 短時間待ってからキャンセル

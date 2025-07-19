@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GitRemoteError"],"mod":["utils"],"struct":["GitRemoteManager","RemoteInfo"]};

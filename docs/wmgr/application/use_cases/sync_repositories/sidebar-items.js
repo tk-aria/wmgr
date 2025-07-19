@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SyncOperation","SyncRepositoriesError"],"struct":["SyncRepositoriesConfig","SyncRepositoriesUseCase","SyncResult"]};

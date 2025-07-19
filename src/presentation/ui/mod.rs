@@ -1,3 +1,3 @@
 pub mod display;
 
-pub use display::{DisplayHelper, StatusType, helpers};
+pub use display::{helpers, DisplayHelper, StatusType};

@@ -14,7 +14,7 @@ NC='\033[0m'
 DOCS_DIR="target/doc"
 OUTPUT_DIR=${1:-"docs"}
 
-echo -e "${BLUE}Generating API documentation for tsrc...${NC}"
+echo -e "${BLUE}Generating API documentation for wmgr...${NC}"
 
 # Clean previous docs
 echo -e "${YELLOW}Cleaning previous documentation...${NC}"
@@ -44,8 +44,8 @@ cat > "${OUTPUT_DIR}/index.html" << 'EOF'
 <html>
 <head>
     <meta charset="utf-8">
-    <title>tsrc Documentation</title>
-    <meta http-equiv="refresh" content="0; url=tsrc/index.html">
+    <title>wmgr Documentation</title>
+    <meta http-equiv="refresh" content="0; url=wmgr/index.html">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -65,10 +65,10 @@ cat > "${OUTPUT_DIR}/index.html" << 'EOF'
     </style>
 </head>
 <body>
-    <h1>tsrc Documentation</h1>
+    <h1>wmgr Documentation</h1>
     <div class="loading">
         <p>Redirecting to documentation...</p>
-        <p>If you are not redirected automatically, <a href="tsrc/index.html">click here</a>.</p>
+        <p>If you are not redirected automatically, <a href="wmgr/index.html">click here</a>.</p>
     </div>
 </body>
 </html>
@@ -81,11 +81,11 @@ echo -e "${YELLOW}Generating additional documentation...${NC}"
 cat > "${OUTPUT_DIR}/API_OVERVIEW.md" << 'EOF'
 # API Overview
 
-This document provides a high-level overview of the tsrc API structure.
+This document provides a high-level overview of the wmgr API structure.
 
 ## Modules
 
-### Domain Layer (`tsrc::domain`)
+### Domain Layer (`wmgr::domain`)
 
 The domain layer contains the core business logic and entities:
 
@@ -99,7 +99,7 @@ The domain layer contains the core business logic and entities:
   - `branch_name::BranchName`: Branch name representation
   - `file_path::FilePath`: File path representation
 
-### Application Layer (`tsrc::application`)
+### Application Layer (`wmgr::application`)
 
 The application layer contains use cases and services:
 
@@ -112,7 +112,7 @@ The application layer contains use cases and services:
 - `services/`: Application services
   - `manifest_service`: Manifest parsing and validation
 
-### Infrastructure Layer (`tsrc::infrastructure`)
+### Infrastructure Layer (`wmgr::infrastructure`)
 
 The infrastructure layer provides concrete implementations:
 
@@ -120,13 +120,13 @@ The infrastructure layer provides concrete implementations:
 - `filesystem/`: File system operations and storage
 - `process/`: External process execution
 
-### Presentation Layer (`tsrc::presentation`)
+### Presentation Layer (`wmgr::presentation`)
 
 The presentation layer handles user interaction:
 
 - `cli/`: Command-line interface implementation
 
-### Common (`tsrc::common`)
+### Common (`wmgr::common`)
 
 Shared utilities and cross-cutting concerns:
 
@@ -138,7 +138,7 @@ Shared utilities and cross-cutting concerns:
 
 ### Error Handling
 
-All operations return `tsrc::Result<T>` which is an alias for `Result<T, TsrcError>`.
+All operations return `wmgr::Result<T>` which is an alias for `Result<T, WmgrError>`.
 
 ### Configuration
 
@@ -172,46 +172,46 @@ echo -e "${YELLOW}Generating module documentation index...${NC}"
 cat > "${OUTPUT_DIR}/MODULES.md" << 'EOF'
 # Module Documentation
 
-This page provides links to the main modules in the tsrc crate.
+This page provides links to the main modules in the wmgr crate.
 
 ## Core Modules
 
-- [tsrc](tsrc/index.html) - Main crate documentation
-- [Domain](tsrc/domain/index.html) - Core business logic
-- [Application](tsrc/application/index.html) - Use cases and services
-- [Infrastructure](tsrc/infrastructure/index.html) - External integrations
-- [Presentation](tsrc/presentation/index.html) - User interface
-- [Common](tsrc/common/index.html) - Shared utilities
+- [wmgr](wmgr/index.html) - Main crate documentation
+- [Domain](wmgr/domain/index.html) - Core business logic
+- [Application](wmgr/application/index.html) - Use cases and services
+- [Infrastructure](wmgr/infrastructure/index.html) - External integrations
+- [Presentation](wmgr/presentation/index.html) - User interface
+- [Common](wmgr/common/index.html) - Shared utilities
 
 ## Key Components
 
 ### Domain Entities
 
-- [Workspace](tsrc/domain/entities/workspace/struct.Workspace.html)
-- [Manifest](tsrc/domain/entities/manifest/struct.Manifest.html)
-- [Repository](tsrc/domain/entities/repository/struct.Repository.html)
+- [Workspace](wmgr/domain/entities/workspace/struct.Workspace.html)
+- [Manifest](wmgr/domain/entities/manifest/struct.Manifest.html)
+- [Repository](wmgr/domain/entities/repository/struct.Repository.html)
 
 ### Value Objects
 
-- [GitUrl](tsrc/domain/value_objects/git_url/struct.GitUrl.html)
-- [BranchName](tsrc/domain/value_objects/branch_name/struct.BranchName.html)
-- [FilePath](tsrc/domain/value_objects/file_path/struct.FilePath.html)
+- [GitUrl](wmgr/domain/value_objects/git_url/struct.GitUrl.html)
+- [BranchName](wmgr/domain/value_objects/branch_name/struct.BranchName.html)
+- [FilePath](wmgr/domain/value_objects/file_path/struct.FilePath.html)
 
 ### Use Cases
 
-- [InitWorkspace](tsrc/application/use_cases/init_workspace/index.html)
-- [SyncRepositories](tsrc/application/use_cases/sync_repositories/index.html)
-- [StatusCheck](tsrc/application/use_cases/status_check/index.html)
-- [ForeachCommand](tsrc/application/use_cases/foreach_command/index.html)
+- [InitWorkspace](wmgr/application/use_cases/init_workspace/index.html)
+- [SyncRepositories](wmgr/application/use_cases/sync_repositories/index.html)
+- [StatusCheck](wmgr/application/use_cases/status_check/index.html)
+- [ForeachCommand](wmgr/application/use_cases/foreach_command/index.html)
 
 ### Services
 
-- [ManifestService](tsrc/application/services/manifest_service/index.html)
+- [ManifestService](wmgr/application/services/manifest_service/index.html)
 
 ### Error Handling
 
-- [TsrcError](tsrc/common/error/enum.TsrcError.html)
-- [Result](tsrc/common/result/type.Result.html)
+- [WmgrError](wmgr/common/error/enum.WmgrError.html)
+- [Result](wmgr/common/result/type.Result.html)
 EOF
 
 # Generate examples documentation
@@ -220,19 +220,19 @@ echo -e "${YELLOW}Generating examples documentation...${NC}"
 cat > "${OUTPUT_DIR}/EXAMPLES.md" << 'EOF'
 # Code Examples
 
-This page contains practical examples of using the tsrc library.
+This page contains practical examples of using the wmgr library.
 
 ## Basic Workspace Operations
 
 ### Initialize a Workspace
 
 ```rust
-use tsrc::application::use_cases::init_workspace::{
+use wmgr::application::use_cases::init_workspace::{
     InitWorkspaceUseCase, InitWorkspaceConfig
 };
-use tsrc::domain::value_objects::{git_url::GitUrl, file_path::FilePath};
+use wmgr::domain::value_objects::{git_url::GitUrl, file_path::FilePath};
 
-async fn init_workspace() -> tsrc::Result<()> {
+async fn init_workspace() -> wmgr::Result<()> {
     let config = InitWorkspaceConfig {
         manifest_url: GitUrl::new("https://github.com/example/manifest.git")?,
         workspace_path: FilePath::new_absolute("/path/to/workspace")?,
@@ -253,11 +253,11 @@ async fn init_workspace() -> tsrc::Result<()> {
 ### Sync Repositories
 
 ```rust
-use tsrc::application::use_cases::sync_repositories::{
+use wmgr::application::use_cases::sync_repositories::{
     SyncRepositoriesUseCase, SyncRepositoriesConfig
 };
 
-async fn sync_repositories() -> tsrc::Result<()> {
+async fn sync_repositories() -> wmgr::Result<()> {
     let config = SyncRepositoriesConfig::new(".")
         .with_groups(vec!["web".to_string()])
         .with_force(false)
@@ -276,11 +276,11 @@ async fn sync_repositories() -> tsrc::Result<()> {
 ### Check Status
 
 ```rust
-use tsrc::application::use_cases::status_check::{
+use wmgr::application::use_cases::status_check::{
     StatusCheckUseCase, StatusCheckConfig
 };
 
-async fn check_status() -> tsrc::Result<()> {
+async fn check_status() -> wmgr::Result<()> {
     let config = StatusCheckConfig::new(".")
         .with_show_branch(true)
         .with_compact(false);
@@ -299,11 +299,11 @@ async fn check_status() -> tsrc::Result<()> {
 ### Execute Commands
 
 ```rust
-use tsrc::application::use_cases::foreach_command::{
+use wmgr::application::use_cases::foreach_command::{
     ForeachCommandUseCase, ForeachCommandConfig
 };
 
-async fn run_foreach() -> tsrc::Result<()> {
+async fn run_foreach() -> wmgr::Result<()> {
     let config = ForeachCommandConfig::new(".", "git status")
         .with_groups(vec!["core".to_string()])
         .with_parallel(true)
@@ -330,10 +330,10 @@ async fn run_foreach() -> tsrc::Result<()> {
 ### Parse Manifest from File
 
 ```rust
-use tsrc::application::services::manifest_service::ManifestService;
+use wmgr::application::services::manifest_service::ManifestService;
 use std::path::Path;
 
-async fn parse_manifest() -> tsrc::Result<()> {
+async fn parse_manifest() -> wmgr::Result<()> {
     let service = ManifestService::new();
     let processed = service.parse_from_file(Path::new("manifest.yml")).await?;
     
@@ -360,9 +360,9 @@ async fn parse_manifest() -> tsrc::Result<()> {
 ### Parse Manifest from URL
 
 ```rust
-use tsrc::application::services::manifest_service::ManifestService;
+use wmgr::application::services::manifest_service::ManifestService;
 
-async fn parse_remote_manifest() -> tsrc::Result<()> {
+async fn parse_remote_manifest() -> wmgr::Result<()> {
     let service = ManifestService::new();
     let processed = service.parse_from_url("https://example.com/manifest.yml").await?;
     
@@ -377,7 +377,7 @@ async fn parse_remote_manifest() -> tsrc::Result<()> {
 ### Basic Error Handling
 
 ```rust
-use tsrc::{TsrcError, Result};
+use wmgr::{WmgrError, Result};
 
 fn handle_errors() -> Result<()> {
     match some_operation() {
@@ -385,13 +385,13 @@ fn handle_errors() -> Result<()> {
             println!("Success: {:?}", result);
             Ok(())
         }
-        Err(TsrcError::GitOperationFailed { operation, error }) => {
+        Err(WmgrError::GitOperationFailed { operation, error }) => {
             eprintln!("Git operation '{}' failed: {}", operation, error);
-            Err(TsrcError::GitOperationFailed { operation, error })
+            Err(WmgrError::GitOperationFailed { operation, error })
         }
-        Err(TsrcError::ManifestParsingFailed { path, error }) => {
+        Err(WmgrError::ManifestParsingFailed { path, error }) => {
             eprintln!("Failed to parse manifest at '{}': {}", path, error);
-            Err(TsrcError::ManifestParsingFailed { path, error })
+            Err(WmgrError::ManifestParsingFailed { path, error })
         }
         Err(e) => {
             eprintln!("Unexpected error: {}", e);
@@ -409,7 +409,7 @@ fn some_operation() -> Result<String> {
 ### Using ? Operator
 
 ```rust
-use tsrc::Result;
+use wmgr::Result;
 
 async fn chained_operations() -> Result<()> {
     // These operations will automatically propagate errors
@@ -442,9 +442,9 @@ async fn sync_repositories(workspace: &Workspace, manifest: &Manifest) -> Result
 ### Working with GitUrl
 
 ```rust
-use tsrc::domain::value_objects::git_url::GitUrl;
+use wmgr::domain::value_objects::git_url::GitUrl;
 
-fn git_url_examples() -> tsrc::Result<()> {
+fn git_url_examples() -> wmgr::Result<()> {
     // Create URLs
     let https_url = GitUrl::new("https://github.com/owner/repo.git")?;
     let ssh_url = GitUrl::new("git@github.com:owner/repo.git")?;
@@ -466,9 +466,9 @@ fn git_url_examples() -> tsrc::Result<()> {
 ### Working with BranchName
 
 ```rust
-use tsrc::domain::value_objects::branch_name::BranchName;
+use wmgr::domain::value_objects::branch_name::BranchName;
 
-fn branch_name_examples() -> tsrc::Result<()> {
+fn branch_name_examples() -> wmgr::Result<()> {
     let branch = BranchName::new("feature/new-functionality")?;
     
     println!("Branch name: {}", branch.as_str());
@@ -482,7 +482,7 @@ EOF
 
 echo -e "${GREEN}Documentation generation completed!${NC}"
 echo -e "${BLUE}Generated files:${NC}"
-echo "  - API documentation: ${OUTPUT_DIR}/tsrc/index.html"
+echo "  - API documentation: ${OUTPUT_DIR}/wmgr/index.html"
 echo "  - Main index: ${OUTPUT_DIR}/index.html"
 echo "  - API overview: ${OUTPUT_DIR}/API_OVERVIEW.md"
 echo "  - Module index: ${OUTPUT_DIR}/MODULES.md"

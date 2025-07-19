@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GitBranchType","GitRepositoryError","ResetMode"],"struct":["CloneConfig","FetchConfig","GitRepository","RepositoryStatus"]};

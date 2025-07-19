@@ -1,6 +1,6 @@
-use std::env;
-use colored::Colorize;
 use anyhow::Result;
+use colored::Colorize;
+use std::env;
 
 use crate::domain::entities::workspace::Workspace;
 
@@ -36,16 +36,20 @@ impl LogCommand {
     pub async fn execute(&self) -> Result<()> {
         // Load workspace
         let workspace = self.load_workspace().await?;
-        
+
         // Get repositories to check
         let repositories = self.get_repositories_to_check(&workspace)?;
-        
+
         if repositories.is_empty() {
             println!("{} No repositories found to check log", "⚠".yellow().bold());
             return Ok(());
         }
 
-        println!("{} Showing commit log for {} repositories", "::".blue().bold(), repositories.len());
+        println!(
+            "{} Showing commit log for {} repositories",
+            "::".blue().bold(),
+            repositories.len()
+        );
 
         // Show log for each repository
         for repo in repositories {
@@ -55,9 +59,13 @@ impl LogCommand {
         Ok(())
     }
 
-    async fn show_repository_log(&self, repo: &crate::domain::entities::repository::Repository, workspace: &Workspace) -> Result<()> {
+    async fn show_repository_log(
+        &self,
+        repo: &crate::domain::entities::repository::Repository,
+        workspace: &Workspace,
+    ) -> Result<()> {
         let repo_path = workspace.root_path.join(&repo.dest);
-        
+
         if !repo_path.exists() {
             if self.verbose {
                 println!("{} {}: repository not found", "⚠".yellow(), repo.dest);
@@ -67,7 +75,7 @@ impl LogCommand {
 
         println!();
         println!("{} {}", "Repository:".bold(), repo.dest.green());
-        
+
         // Try to open the git repository
         let git_repo = match git2::Repository::open(&repo_path) {
             Ok(repo) => repo,
@@ -119,7 +127,10 @@ impl LogCommand {
                 // For simplicity, we'll just show a placeholder for date parsing
                 // In a real implementation, you'd parse the date string
                 if self.verbose {
-                    println!("  (Date filtering with 'since: {}' not fully implemented)", since);
+                    println!(
+                        "  (Date filtering with 'since: {}' not fully implemented)",
+                        since
+                    );
                 }
             }
 
@@ -127,7 +138,10 @@ impl LogCommand {
                 // For simplicity, we'll just show a placeholder for date parsing
                 // In a real implementation, you'd parse the date string
                 if self.verbose {
-                    println!("  (Date filtering with 'until: {}' not fully implemented)", until);
+                    println!(
+                        "  (Date filtering with 'until: {}' not fully implemented)",
+                        until
+                    );
                 }
             }
 
@@ -136,14 +150,14 @@ impl LogCommand {
             let short_hash = &commit_hash[..7];
             let message = commit.message().unwrap_or("(no message)");
             let summary = message.lines().next().unwrap_or("(no message)");
-            
+
             if self.oneline {
                 println!("  {} {}", short_hash.yellow(), summary);
             } else {
                 let author = commit.author();
                 let author_name = author.name().unwrap_or("unknown");
                 let author_email = author.email().unwrap_or("unknown");
-                
+
                 // Format time
                 let datetime = chrono::DateTime::from_timestamp(commit_timestamp, 0)
                     .unwrap_or_else(|| chrono::DateTime::from_timestamp(0, 0).unwrap());
@@ -153,7 +167,7 @@ impl LogCommand {
                 println!("  {}: {} <{}>", "Author".blue(), author_name, author_email);
                 println!("  {}: {}", "Date".blue(), formatted_time);
                 println!();
-                
+
                 // Show full commit message with indentation
                 for line in message.lines() {
                     println!("      {}", line);
@@ -171,17 +185,20 @@ impl LogCommand {
         Ok(())
     }
 
-    fn get_repositories_to_check(&self, workspace: &Workspace) -> Result<Vec<crate::domain::entities::repository::Repository>> {
+    fn get_repositories_to_check(
+        &self,
+        workspace: &Workspace,
+    ) -> Result<Vec<crate::domain::entities::repository::Repository>> {
         // For now, return a sample repository
         // In a real implementation, this would load from the workspace manifest
         let mut repositories = Vec::new();
-        
+
         // This is a placeholder implementation
         // In a real implementation, you would:
         // 1. Load the manifest from the workspace
         // 2. Filter repositories by groups if specified
         // 3. Return the filtered list
-        
+
         if self.verbose {
             println!("  (Repository filtering by groups not fully implemented)");
         }
@@ -192,34 +209,40 @@ impl LogCommand {
     /// Load workspace from the current directory
     async fn load_workspace(&self) -> Result<Workspace> {
         let current_dir = env::current_dir()?;
-        
+
         let workspace = Workspace::new(current_dir.clone(), WorkspaceConfig::default_local());
-        
+
         // Use workspace.manifest_file_path() to support wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml
         let manifest_file = workspace.manifest_file_path();
-        
+
         if !manifest_file.exists() {
             return Err(anyhow::anyhow!("Manifest file not found. Tried wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml in current directory and .wmgr/ subdirectory"));
         }
-        
+
         // Load manifest file
+        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
         use crate::infrastructure::filesystem::manifest_store::ManifestStore;
-        use crate::domain::entities::workspace::{WorkspaceStatus, WorkspaceConfig};
         let mut manifest_store = ManifestStore::new();
-        
-        let processed_manifest = manifest_store.read_manifest(&manifest_file).await
+
+        let processed_manifest = manifest_store
+            .read_manifest(&manifest_file)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to read manifest: {}", e))?;
-        
+
         // Create workspace config from manifest
         let workspace_config = WorkspaceConfig::new(
             "file://".to_string() + &manifest_file.to_string_lossy(),
-            processed_manifest.manifest.default_branch.clone().unwrap_or_else(|| "main".to_string())
+            processed_manifest
+                .manifest
+                .default_branch
+                .clone()
+                .unwrap_or_else(|| "main".to_string()),
         );
-        
+
         let workspace = Workspace::new(current_dir, workspace_config)
             .with_status(WorkspaceStatus::Initialized)
             .with_manifest(processed_manifest.manifest);
-        
+
         Ok(workspace)
     }
 }

@@ -1,16 +1,12 @@
 //! Assertion helpers for testing
-//! 
+//!
 //! This module provides custom assertion macros and helper functions
 //! that make test assertions more readable and provide better error messages.
 
 use std::path::Path;
 use std::time::Duration;
 use tsrc::domain::{
-    entities::{
-        workspace::Workspace,
-        manifest::Manifest,
-        repository::Repository,
-    },
+    entities::{manifest::Manifest, repository::Repository, workspace::Workspace},
     value_objects::git_url::GitUrl,
 };
 
@@ -18,19 +14,10 @@ use tsrc::domain::{
 #[macro_export]
 macro_rules! assert_file_exists {
     ($path:expr) => {
-        assert!(
-            $path.exists(),
-            "File should exist: {}",
-            $path.display()
-        );
+        assert!($path.exists(), "File should exist: {}", $path.display());
     };
     ($path:expr, $msg:expr) => {
-        assert!(
-            $path.exists(),
-            "{}: {}",
-            $msg,
-            $path.display()
-        );
+        assert!($path.exists(), "{}: {}", $msg, $path.display());
     };
 }
 
@@ -45,12 +32,7 @@ macro_rules! assert_file_not_exists {
         );
     };
     ($path:expr, $msg:expr) => {
-        assert!(
-            !$path.exists(),
-            "{}: {}",
-            $msg,
-            $path.display()
-        );
+        assert!(!$path.exists(), "{}: {}", $msg, $path.display());
     };
 }
 
@@ -115,12 +97,7 @@ macro_rules! assert_contains {
         );
     };
     ($collection:expr, $item:expr, $msg:expr) => {
-        assert!(
-            $collection.contains($item),
-            "{}: {:?}",
-            $msg,
-            $item
-        );
+        assert!($collection.contains($item), "{}: {:?}", $msg, $item);
     };
 }
 
@@ -180,8 +157,11 @@ pub struct AssertionHelpers;
 impl AssertionHelpers {
     /// Assert that workspace has the expected structure
     pub fn assert_workspace_structure(workspace: &Workspace, expected_repos: &[&str]) {
-        assert!(workspace.is_initialized(), "Workspace should be initialized");
-        
+        assert!(
+            workspace.is_initialized(),
+            "Workspace should be initialized"
+        );
+
         if let Some(manifest) = &workspace.manifest {
             assert_eq!(
                 manifest.repos.len(),
@@ -190,7 +170,7 @@ impl AssertionHelpers {
                 expected_repos.len(),
                 manifest.repos.len()
             );
-            
+
             for expected_repo in expected_repos {
                 assert!(
                     manifest.repos.iter().any(|r| r.dest == *expected_repo),
@@ -201,16 +181,16 @@ impl AssertionHelpers {
         } else {
             panic!("Workspace should have a manifest");
         }
-        
+
         // Check directory structure
         assert_file_exists!(workspace.tsrc_dir(), "tsrc directory should exist");
         assert_file_exists!(workspace.config_path(), "config file should exist");
-        
+
         if workspace.manifest.is_some() {
             assert_file_exists!(workspace.manifest_file_path(), "manifest file should exist");
         }
     }
-    
+
     /// Assert that manifest has expected repositories
     pub fn assert_manifest_repos(manifest: &Manifest, expected_repos: &[(&str, &str)]) {
         assert_eq!(
@@ -220,7 +200,7 @@ impl AssertionHelpers {
             expected_repos.len(),
             manifest.repos.len()
         );
-        
+
         for (expected_dest, expected_url) in expected_repos {
             let repo = manifest.repos.iter().find(|r| r.dest == *expected_dest);
             assert!(
@@ -228,7 +208,7 @@ impl AssertionHelpers {
                 "Repository with dest '{}' not found",
                 expected_dest
             );
-            
+
             let repo = repo.unwrap();
             assert_eq!(
                 repo.url, *expected_url,
@@ -237,11 +217,14 @@ impl AssertionHelpers {
             );
         }
     }
-    
+
     /// Assert that manifest has expected groups
     pub fn assert_manifest_groups(manifest: &Manifest, expected_groups: &[(&str, &[&str])]) {
-        let groups = manifest.groups.as_ref().expect("Manifest should have groups");
-        
+        let groups = manifest
+            .groups
+            .as_ref()
+            .expect("Manifest should have groups");
+
         assert_eq!(
             groups.len(),
             expected_groups.len(),
@@ -249,15 +232,11 @@ impl AssertionHelpers {
             expected_groups.len(),
             groups.len()
         );
-        
+
         for (expected_name, expected_repos) in expected_groups {
             let group = groups.get(*expected_name);
-            assert!(
-                group.is_some(),
-                "Group '{}' not found",
-                expected_name
-            );
-            
+            assert!(group.is_some(), "Group '{}' not found", expected_name);
+
             let group = group.unwrap();
             assert_eq!(
                 group.repos.len(),
@@ -267,7 +246,7 @@ impl AssertionHelpers {
                 expected_repos.len(),
                 group.repos.len()
             );
-            
+
             for expected_repo in *expected_repos {
                 assert!(
                     group.repos.contains(&expected_repo.to_string()),
@@ -278,7 +257,7 @@ impl AssertionHelpers {
             }
         }
     }
-    
+
     /// Assert that repository has expected remotes
     pub fn assert_repository_remotes(repository: &Repository, expected_remotes: &[(&str, &str)]) {
         assert_eq!(
@@ -288,15 +267,11 @@ impl AssertionHelpers {
             expected_remotes.len(),
             repository.remotes.len()
         );
-        
+
         for (expected_name, expected_url) in expected_remotes {
             let remote = repository.get_remote(expected_name);
-            assert!(
-                remote.is_some(),
-                "Remote '{}' not found",
-                expected_name
-            );
-            
+            assert!(remote.is_some(), "Remote '{}' not found", expected_name);
+
             let remote = remote.unwrap();
             assert_eq!(
                 remote.url, *expected_url,
@@ -305,7 +280,7 @@ impl AssertionHelpers {
             );
         }
     }
-    
+
     /// Assert that Git URLs represent the same repository
     pub fn assert_same_repository(url1: &GitUrl, url2: &GitUrl) {
         assert!(
@@ -315,7 +290,7 @@ impl AssertionHelpers {
             url2.as_str()
         );
     }
-    
+
     /// Assert that Git URL has expected components
     pub fn assert_git_url_components(
         url: &GitUrl,
@@ -328,7 +303,7 @@ impl AssertionHelpers {
             "URL organization mismatch for: {}",
             url.as_str()
         );
-        
+
         assert_eq!(
             url.repo_name().as_deref(),
             expected_repo,
@@ -336,22 +311,22 @@ impl AssertionHelpers {
             url.as_str()
         );
     }
-    
+
     /// Assert that directory contains expected files
     pub fn assert_directory_contents(dir: &Path, expected_files: &[&str]) {
         assert_dir_exists!(dir, "Directory should exist");
-        
+
         let entries: Result<Vec<_>, _> = std::fs::read_dir(dir)
             .expect("Failed to read directory")
             .collect();
-        
+
         let entries = entries.expect("Failed to collect directory entries");
         let actual_files: Vec<String> = entries
             .iter()
             .filter(|e| e.file_type().unwrap().is_file())
             .map(|e| e.file_name().to_string_lossy().to_string())
             .collect();
-        
+
         for expected_file in expected_files {
             assert!(
                 actual_files.contains(&expected_file.to_string()),
@@ -361,17 +336,17 @@ impl AssertionHelpers {
             );
         }
     }
-    
+
     /// Assert that two file contents are equal
     pub fn assert_files_equal(path1: &Path, path2: &Path) {
         assert_file_exists!(path1, "First file should exist");
         assert_file_exists!(path2, "Second file should exist");
-        
+
         let content1 = std::fs::read_to_string(path1)
             .expect(&format!("Failed to read first file: {}", path1.display()));
         let content2 = std::fs::read_to_string(path2)
             .expect(&format!("Failed to read second file: {}", path2.display()));
-        
+
         assert_eq!(
             content1.trim(),
             content2.trim(),
@@ -380,7 +355,7 @@ impl AssertionHelpers {
             path2.display()
         );
     }
-    
+
     /// Assert that string matches a regex pattern
     pub fn assert_matches_pattern(text: &str, pattern: &str) {
         // Simple pattern matching without regex dependency
@@ -392,13 +367,9 @@ impl AssertionHelpers {
             text
         );
     }
-    
+
     /// Assert that operation completes within timeout
-    pub async fn assert_async_timeout<F, T>(
-        future: F,
-        timeout: Duration,
-        operation_name: &str,
-    ) -> T
+    pub async fn assert_async_timeout<F, T>(future: F, timeout: Duration, operation_name: &str) -> T
     where
         F: std::future::Future<Output = T>,
     {
@@ -406,8 +377,7 @@ impl AssertionHelpers {
             Ok(result) => result,
             Err(_) => panic!(
                 "Operation '{}' timed out after {:?}",
-                operation_name,
-                timeout
+                operation_name, timeout
             ),
         }
     }
@@ -416,62 +386,62 @@ impl AssertionHelpers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::common::test_fixtures::{ManifestFixture, WorkspaceFixture, RepositoryFixture};
-    use tempfile::TempDir;
+    use crate::common::test_fixtures::{ManifestFixture, RepositoryFixture, WorkspaceFixture};
     use std::collections::HashMap;
-    
+    use tempfile::TempDir;
+
     #[test]
     fn test_file_assertions() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.txt");
-        
+
         // File doesn't exist initially
         assert_file_not_exists!(file_path);
-        
+
         // Create file
         std::fs::write(&file_path, "hello world").unwrap();
         assert_file_exists!(file_path);
-        
+
         // Check content
         assert_file_content!(file_path, "hello world");
         assert_file_contains!(file_path, "hello");
         assert_file_contains!(file_path, "world");
     }
-    
+
     #[test]
     fn test_directory_assertions() {
         let temp_dir = TempDir::new().unwrap();
         let dir_path = temp_dir.path().join("subdir");
-        
+
         std::fs::create_dir_all(&dir_path).unwrap();
         assert_dir_exists!(dir_path);
     }
-    
+
     #[test]
     fn test_result_assertions() {
         let ok_result: Result<i32, &str> = Ok(42);
         let err_result: Result<i32, &str> = Err("error");
-        
+
         let value = assert_ok!(ok_result);
         assert_eq!(value, 42);
-        
+
         assert_err!(err_result);
     }
-    
+
     #[test]
     fn test_workspace_structure_assertion() {
         let temp_dir = TempDir::new().unwrap();
         let workspace = WorkspaceFixture::basic(&temp_dir);
-        
+
         // Create the required structure
         std::fs::create_dir_all(workspace.tsrc_dir()).unwrap();
         std::fs::write(workspace.config_path(), "test config").unwrap();
         std::fs::write(workspace.manifest_file_path(), "test manifest").unwrap();
-        
+
         let expected_repos = vec!["repo1", "repo2"];
         AssertionHelpers::assert_workspace_structure(&workspace, &expected_repos);
     }
-    
+
     #[test]
     fn test_manifest_repos_assertion() {
         let manifest = ManifestFixture::simple();
@@ -479,10 +449,10 @@ mod tests {
             ("repo1", "https://github.com/example/repo1.git"),
             ("repo2", "https://github.com/example/repo2.git"),
         ];
-        
+
         AssertionHelpers::assert_manifest_repos(&manifest, &expected_repos);
     }
-    
+
     #[test]
     fn test_manifest_groups_assertion() {
         let manifest = ManifestFixture::complex();
@@ -491,10 +461,10 @@ mod tests {
             ("frontend", vec!["frontend/web"].as_slice()),
             ("core", vec!["backend/api", "frontend/web"].as_slice()),
         ];
-        
+
         AssertionHelpers::assert_manifest_groups(&manifest, &expected_groups);
     }
-    
+
     #[test]
     fn test_repository_remotes_assertion() {
         let repository = RepositoryFixture::with_multiple_remotes("test-repo");
@@ -503,51 +473,52 @@ mod tests {
             ("upstream", "https://github.com/upstream/test-repo.git"),
             ("fork", "https://github.com/user/test-repo.git"),
         ];
-        
+
         AssertionHelpers::assert_repository_remotes(&repository, &expected_remotes);
     }
-    
+
     #[test]
     fn test_git_url_assertions() {
         let url1 = GitUrl::new("https://github.com/example/repo.git").unwrap();
         let url2 = GitUrl::new("git@github.com:example/repo.git").unwrap();
-        
+
         AssertionHelpers::assert_same_repository(&url1, &url2);
         AssertionHelpers::assert_git_url_components(&url1, Some("example"), Some("repo"));
     }
-    
+
     #[test]
     fn test_directory_contents_assertion() {
         let temp_dir = TempDir::new().unwrap();
-        
+
         // Create some files
         std::fs::write(temp_dir.path().join("file1.txt"), "content1").unwrap();
         std::fs::write(temp_dir.path().join("file2.txt"), "content2").unwrap();
-        
+
         let expected_files = vec!["file1.txt", "file2.txt"];
         AssertionHelpers::assert_directory_contents(temp_dir.path(), &expected_files);
     }
-    
+
     #[test]
     fn test_files_equal_assertion() {
         let temp_dir = TempDir::new().unwrap();
         let file1 = temp_dir.path().join("file1.txt");
         let file2 = temp_dir.path().join("file2.txt");
-        
+
         std::fs::write(&file1, "same content").unwrap();
         std::fs::write(&file2, "same content").unwrap();
-        
+
         AssertionHelpers::assert_files_equal(&file1, &file2);
     }
-    
+
     #[tokio::test]
     async fn test_async_timeout_assertion() {
         let result = AssertionHelpers::assert_async_timeout(
             async { 42 },
             Duration::from_millis(100),
-            "test operation"
-        ).await;
-        
+            "test operation",
+        )
+        .await;
+
         assert_eq!(result, 42);
     }
 }

@@ -176,6 +176,12 @@
 - [x] 優先順位付きファイルソート機能の実装
 - [x] wmgr init で 雛型ファイル(wmgr.yaml)を生成
 - [x] 雛型ファイルはrustのマクロ機能を用いてビルド時にymlファイルを埋め込む形にして
+- [x] windowsはbashの実行が一般的ではない為、scripts/install.shを参考にpowershellのインストールスクリプトも実装して
+- [x] ci.yamlはpull requestでのみ実行するようにして
+- [x] actコマンドを用いてci.yamlの実行をシミュレートしエラーが発生しなくなるまで問題を修正して
+- [x] dry-runは使用せずにactコマンドを用いて ci.yamlの実行を行い、エラーが発生しなくなるまで修正して
+- [x] actコマンドを用いてdocs.yamlの実行をシミュレートしエラーが発生しなくなるまで問題を修正して
+- [x] dry-runは使用せずにactコマンドを用いて docs.yamlの実行を行い、エラーが発生しなくなるまで修正して
 
 ## GitHub Actions CI/CD自動リリース
 

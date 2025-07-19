@@ -1,11 +1,9 @@
-pub mod repository;
 pub mod remote;
+pub mod repository;
 
 // Re-export main types for convenience
+pub use remote::{GitRemoteError, GitRemoteManager, RemoteInfo};
 pub use repository::{
-    GitRepository, GitRepositoryError, RepositoryStatus, CloneConfig, FetchConfig,
-    ResetMode, GitBranchType,
-};
-pub use remote::{
-    GitRemoteManager, GitRemoteError, RemoteInfo,
+    CloneConfig, FetchConfig, GitBranchType, GitRepository, GitRepositoryError, RepositoryStatus,
+    ResetMode,
 };

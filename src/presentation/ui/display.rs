@@ -1,6 +1,6 @@
 use colored::{Color, Colorize};
 use console::{Style, Term};
-use indicatif::{ProgressBar, ProgressStyle, ProgressDrawTarget};
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::io::{self, Write};
 use std::time::Duration;
 
@@ -163,7 +163,7 @@ impl DisplayHelper {
                 ProgressStyle::default_spinner()
                     .tick_strings(&["⠁", "⠂", "⠄", "⡀", "⢀", "⠠", "⠐", "⠈"])
                     .template("{spinner:.green} {msg}")
-                    .unwrap()
+                    .unwrap(),
             );
             pb.set_message(message.to_string());
             pb.enable_steady_tick(Duration::from_millis(120));
@@ -303,17 +303,17 @@ impl DisplayHelper {
 
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
-        
+
         Ok(input.trim().to_lowercase() == "y" || input.trim().to_lowercase() == "yes")
     }
 
     /// Print error details with context
     pub fn print_error_details(&self, title: &str, error: &anyhow::Error) {
         self.error(title);
-        
+
         let mut current = error.source();
         let mut level = 1;
-        
+
         while let Some(err) = current {
             self.print_indented(&format!("Caused by: {}", err), level);
             current = err.source();
@@ -325,7 +325,7 @@ impl DisplayHelper {
     pub fn format_duration(&self, duration: Duration) -> String {
         let secs = duration.as_secs();
         let millis = duration.subsec_millis();
-        
+
         if secs > 60 {
             let mins = secs / 60;
             let remaining_secs = secs % 60;
@@ -385,13 +385,24 @@ pub mod helpers {
     }
 
     /// Print a command execution result
-    pub fn print_command_result(display: &DisplayHelper, command: &str, success: bool, output: Option<&str>) {
+    pub fn print_command_result(
+        display: &DisplayHelper,
+        command: &str,
+        success: bool,
+        output: Option<&str>,
+    ) {
         if success {
-            display.success(&format!("Command executed: {}", display.format_command(command)));
+            display.success(&format!(
+                "Command executed: {}",
+                display.format_command(command)
+            ));
         } else {
-            display.error(&format!("Command failed: {}", display.format_command(command)));
+            display.error(&format!(
+                "Command failed: {}",
+                display.format_command(command)
+            ));
         }
-        
+
         if let Some(output) = output {
             if !output.trim().is_empty() {
                 println!("Output:");

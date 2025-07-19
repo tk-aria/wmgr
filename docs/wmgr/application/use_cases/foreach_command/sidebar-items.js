@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CommandStatus","ForeachCommandError"],"struct":["CommandResult","ForeachCommandConfig","ForeachCommandUseCase","ForeachResult"]};

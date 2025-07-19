@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ManifestServiceError"],"struct":["DeprecationWarning","ExtendedManifest","FutureManifestConfig","IncludeInfo","ManifestInclude","ManifestProcessingOptions","ManifestService","ProcessedManifest"]};

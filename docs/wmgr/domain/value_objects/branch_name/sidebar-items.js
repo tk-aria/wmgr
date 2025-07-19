@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BranchNameError","BranchType"],"struct":["BranchName"]};

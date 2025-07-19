@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["foreach_command","init_workspace","security_audit","status_check","sync_repositories"]};

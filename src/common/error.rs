@@ -82,9 +82,7 @@ pub enum TsrcError {
     Cancelled,
 
     #[error("Operation timed out after {timeout_secs} seconds")]
-    Timeout {
-        timeout_secs: u64,
-    },
+    Timeout { timeout_secs: u64 },
 
     #[error("Internal error: {message}")]
     InternalError {

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["are_same_repository","extract_repo_info","normalize_remote_name","suggest_remote_name"]};

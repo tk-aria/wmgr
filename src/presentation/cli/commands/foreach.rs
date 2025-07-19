@@ -1,9 +1,9 @@
-use std::env;
-use colored::Colorize;
 use anyhow::Result;
+use colored::Colorize;
+use std::env;
 
 use crate::application::use_cases::foreach_command::{
-    ForeachCommandUseCase, ForeachCommandConfig, ForeachCommandError
+    ForeachCommandConfig, ForeachCommandError, ForeachCommandUseCase,
 };
 use crate::domain::entities::workspace::Workspace;
 
@@ -42,21 +42,21 @@ impl ForeachCommand {
     pub async fn execute(&self) -> Result<()> {
         // Load workspace
         let workspace = self.load_workspace().await?;
-        
+
         // Prepare groups list
         let groups_list = if self.groups.is_empty() {
             None
         } else {
             Some(self.groups.clone())
         };
-        
+
         // Build the full command
         let full_command = if self.args.is_empty() {
             self.command.clone()
         } else {
             format!("{} {}", self.command, self.args.join(" "))
         };
-        
+
         // Create configuration
         let config = ForeachCommandConfig {
             command: full_command,
@@ -67,12 +67,12 @@ impl ForeachCommand {
             verbose: self.verbose,
             ..Default::default()
         };
-        
+
         // Execute the use case
         let use_case = ForeachCommandUseCase::new(config);
-        
+
         println!("{} Running command: {}", "::".blue().bold(), self.command);
-        
+
         match use_case.execute(&workspace).await {
             Ok(result) => {
                 println!("{} Command execution completed!", "✓".green().bold());
@@ -84,7 +84,7 @@ impl ForeachCommand {
                         println!("  Executed in parallel");
                     }
                 }
-                
+
                 // Show any errors
                 let failed_results = result.failed_results();
                 if !failed_results.is_empty() {
@@ -95,7 +95,7 @@ impl ForeachCommand {
                         println!("  {}: {}", result.dest.bold(), error_msg.red());
                     }
                 }
-                
+
                 Ok(())
             }
             Err(ForeachCommandError::WorkspaceNotInitialized(path)) => {
@@ -110,34 +110,40 @@ impl ForeachCommand {
     /// Load workspace from the current directory
     async fn load_workspace(&self) -> Result<Workspace> {
         let current_dir = env::current_dir()?;
-        
+
         let workspace = Workspace::new(current_dir.clone(), WorkspaceConfig::default_local());
-        
+
         // Use workspace.manifest_file_path() to support wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml
         let manifest_file = workspace.manifest_file_path();
-        
+
         if !manifest_file.exists() {
             return Err(anyhow::anyhow!("Manifest file not found. Tried wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml in current directory and .wmgr/ subdirectory"));
         }
-        
+
         // Load manifest file
+        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
         use crate::infrastructure::filesystem::manifest_store::ManifestStore;
-        use crate::domain::entities::workspace::{WorkspaceStatus, WorkspaceConfig};
         let mut manifest_store = ManifestStore::new();
-        
-        let processed_manifest = manifest_store.read_manifest(&manifest_file).await
+
+        let processed_manifest = manifest_store
+            .read_manifest(&manifest_file)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to read manifest: {}", e))?;
-        
+
         // Create workspace config from manifest
         let workspace_config = WorkspaceConfig::new(
             "file://".to_string() + &manifest_file.to_string_lossy(),
-            processed_manifest.manifest.default_branch.clone().unwrap_or_else(|| "main".to_string())
+            processed_manifest
+                .manifest
+                .default_branch
+                .clone()
+                .unwrap_or_else(|| "main".to_string()),
         );
-        
+
         let workspace = Workspace::new(current_dir, workspace_config)
             .with_status(WorkspaceStatus::Initialized)
             .with_manifest(processed_manifest.manifest);
-        
+
         Ok(workspace)
     }
 }

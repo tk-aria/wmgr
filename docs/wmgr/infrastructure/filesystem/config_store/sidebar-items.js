@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConfigStoreError"],"struct":["BackupConfig","ConfigMetadata","ConfigStore","ValidatedWorkspaceConfig","ValidationConfig"]};

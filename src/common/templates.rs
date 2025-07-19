@@ -1,6 +1,6 @@
 /// Templates module for embedded YAML templates
 /// This module provides access to embedded template files using include_str! macro
-
+///
 /// Get the default wmgr.yaml template content
 /// The template is embedded at compile time using include_str! macro
 pub fn get_wmgr_template() -> &'static str {
@@ -15,14 +15,18 @@ impl TemplateProcessor {
     pub fn new() -> Self {
         Self
     }
-    
+
     /// Process template with optional replacements
     /// For now, returns the template as-is, but can be extended for variable substitution
-    pub fn process(&self, template: &str, _replacements: Option<std::collections::HashMap<String, String>>) -> String {
+    pub fn process(
+        &self,
+        template: &str,
+        _replacements: Option<std::collections::HashMap<String, String>>,
+    ) -> String {
         // Future enhancement: implement variable substitution like {{workspace_name}}, {{description}}, etc.
         template.to_string()
     }
-    
+
     /// Get the default wmgr.yaml template with optional processing
     pub fn get_default_wmgr_template(&self) -> String {
         let template = get_wmgr_template();

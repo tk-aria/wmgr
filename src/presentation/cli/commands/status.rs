@@ -1,9 +1,9 @@
-use std::env;
-use colored::Colorize;
 use anyhow::Result;
+use colored::Colorize;
+use std::env;
 
 use crate::application::use_cases::status_check::{
-    StatusCheckUseCase, StatusCheckConfig, StatusCheckError, RepositoryState
+    RepositoryState, StatusCheckConfig, StatusCheckError, StatusCheckUseCase,
 };
 use crate::domain::entities::workspace::Workspace;
 
@@ -16,12 +16,7 @@ pub struct StatusCommand {
 }
 
 impl StatusCommand {
-    pub fn new(
-        groups: Vec<String>,
-        show_branch: bool,
-        compact: bool,
-        verbose: bool,
-    ) -> Self {
+    pub fn new(groups: Vec<String>, show_branch: bool, compact: bool, verbose: bool) -> Self {
         Self {
             groups,
             show_branch,
@@ -33,14 +28,14 @@ impl StatusCommand {
     pub async fn execute(&self) -> Result<()> {
         // Load workspace
         let workspace = self.load_workspace().await?;
-        
+
         // Prepare groups list
         let groups_list = if self.groups.is_empty() {
             None
         } else {
             Some(self.groups.clone())
         };
-        
+
         // Create configuration
         let config = StatusCheckConfig {
             groups: groups_list,
@@ -48,10 +43,10 @@ impl StatusCommand {
             compact: self.compact,
             verbose: self.verbose,
         };
-        
+
         // Execute the use case
         let use_case = StatusCheckUseCase::new(config);
-        
+
         match use_case.execute(&workspace).await {
             Ok(status) => {
                 if self.compact {
@@ -61,16 +56,18 @@ impl StatusCommand {
                 }
                 Ok(())
             }
-            Err(StatusCheckError::WorkspaceNotInitialized(path)) => {
-                Err(anyhow::anyhow!("Workspace not initialized at: {}\nManifest file not found", path))
-            }
-            Err(e) => {
-                Err(anyhow::anyhow!("Failed to check status: {}", e))
-            }
+            Err(StatusCheckError::WorkspaceNotInitialized(path)) => Err(anyhow::anyhow!(
+                "Workspace not initialized at: {}\nManifest file not found",
+                path
+            )),
+            Err(e) => Err(anyhow::anyhow!("Failed to check status: {}", e)),
         }
     }
 
-    fn print_compact_status(&self, status: &crate::application::use_cases::status_check::StatusResult) {
+    fn print_compact_status(
+        &self,
+        status: &crate::application::use_cases::status_check::StatusResult,
+    ) {
         for repo_status in &status.repositories {
             let state_char = match repo_status.state {
                 RepositoryState::Clean => "✓".green(),
@@ -83,8 +80,11 @@ impl StatusCommand {
             println!("{} {}", state_char, repo_status.dest);
         }
     }
-    
-    fn print_detailed_status(&self, status: &crate::application::use_cases::status_check::StatusResult) {
+
+    fn print_detailed_status(
+        &self,
+        status: &crate::application::use_cases::status_check::StatusResult,
+    ) {
         for repo_status in &status.repositories {
             let state_text = match repo_status.state {
                 RepositoryState::Clean => "clean".green(),
@@ -94,15 +94,15 @@ impl StatusCommand {
                 RepositoryState::OutOfSync => "out of sync".magenta(),
                 RepositoryState::Error => "error".red(),
             };
-            
+
             print!("{}: {}", repo_status.dest.bold(), state_text);
-            
+
             if self.show_branch {
                 if let Some(ref current_branch) = repo_status.current_branch {
                     print!(" ({})", current_branch.blue());
                 }
             }
-            
+
             if repo_status.state == RepositoryState::Dirty {
                 let mut changes = Vec::new();
                 if repo_status.modified_files > 0 {
@@ -118,7 +118,7 @@ impl StatusCommand {
                     print!(" [{}]", changes.join(" "));
                 }
             }
-            
+
             println!();
         }
     }
@@ -126,29 +126,28 @@ impl StatusCommand {
     /// Load workspace from the current directory
     async fn load_workspace(&self) -> Result<Workspace> {
         let current_dir = env::current_dir()?;
-        
+
         let workspace = Workspace::new(current_dir.clone(), WorkspaceConfig::default_local());
-        
+
         // Use workspace.manifest_file_path() to support wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml
         let manifest_file = workspace.manifest_file_path();
-        
+
         if !manifest_file.exists() {
             return Err(anyhow::anyhow!("Manifest file not found. Tried wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml in current directory and .wmgr/ subdirectory"));
         }
-        
+
         // Load manifest file
+        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
         use crate::infrastructure::filesystem::manifest_store::ManifestStore;
-        use crate::domain::entities::workspace::{WorkspaceStatus, WorkspaceConfig};
         let mut manifest_store = ManifestStore::new();
-        let processed_manifest = manifest_store.read_manifest(&manifest_file).await
+        let processed_manifest = manifest_store
+            .read_manifest(&manifest_file)
+            .await
             .map_err(|e| anyhow::anyhow!("Failed to load manifest: {}", e))?;
-        
+
         // Create a simple workspace configuration
-        let workspace_config = WorkspaceConfig::new(
-            &manifest_file.display().to_string(),
-            "main"
-        );
-        
+        let workspace_config = WorkspaceConfig::new(&manifest_file.display().to_string(), "main");
+
         let workspace = Workspace::new(current_dir, workspace_config)
             .with_status(WorkspaceStatus::Initialized)
             .with_manifest(processed_manifest.manifest);

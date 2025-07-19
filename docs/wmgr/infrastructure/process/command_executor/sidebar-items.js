@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CommandExecutorError"],"struct":["CommandExecutor","ExecutionConfig","ExecutionResult","ExecutionTask","ParallelConfig","ParallelResult"]};

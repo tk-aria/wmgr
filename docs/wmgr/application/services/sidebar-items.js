@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["manifest_service","security_service"]};

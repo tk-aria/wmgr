@@ -1,13 +1,13 @@
+use super::repository::{Remote, Repository};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use super::repository::{Repository, Remote};
 
 /// グループの定義
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Group {
     /// グループに含まれるリポジトリのdest（相対パス）のリスト
     pub repos: Vec<String>,
-    
+
     /// グループの説明（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -21,7 +21,7 @@ impl Group {
             description: None,
         }
     }
-    
+
     /// 説明を設定
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
         self.description = Some(description.into());
@@ -34,34 +34,34 @@ impl Group {
 pub struct ManifestRepo {
     /// リポジトリのURL
     pub url: String,
-    
+
     /// ワークスペース内での相対パス
     pub dest: String,
-    
+
     /// ブランチ名（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
-    
+
     /// SHA1ハッシュ（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sha1: Option<String>,
-    
+
     /// タグ（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tag: Option<String>,
-    
+
     /// 追加のリモート定義
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remotes: Option<Vec<Remote>>,
-    
+
     /// shallow cloneを使用するか
     #[serde(default)]
     pub shallow: bool,
-    
+
     /// ファイルコピー操作の定義
     #[serde(skip_serializing_if = "Option::is_none")]
     pub copy: Option<Vec<FileCopy>>,
-    
+
     /// シンボリックリンク操作の定義
     #[serde(skip_serializing_if = "Option::is_none")]
     pub symlink: Option<Vec<FileSymlink>>,
@@ -72,7 +72,7 @@ pub struct ManifestRepo {
 pub struct FileCopy {
     /// コピー元のファイル（リポジトリ内の相対パス）
     pub file: String,
-    
+
     /// コピー先のパス（ワークスペースルートからの相対パス）
     pub dest: String,
 }
@@ -82,7 +82,7 @@ pub struct FileCopy {
 pub struct FileSymlink {
     /// リンク元（ワークスペースルートからの相対パス）
     pub source: String,
-    
+
     /// リンク先（sourceからの相対パス）
     pub target: String,
 }
@@ -102,18 +102,18 @@ impl ManifestRepo {
             symlink: None,
         }
     }
-    
+
     /// Repositoryエンティティに変換
     pub fn to_repository(&self) -> Repository {
         let mut remotes = vec![Remote::new("origin", &self.url)];
-        
+
         // 追加のリモートがあれば追加
         if let Some(additional_remotes) = &self.remotes {
             remotes.extend(additional_remotes.iter().cloned());
         }
-        
+
         let mut repo = Repository::new(&self.dest, remotes);
-        
+
         if let Some(branch) = &self.branch {
             repo = repo.with_branch(branch);
         }
@@ -124,7 +124,7 @@ impl ManifestRepo {
             repo = repo.with_tag(tag);
         }
         repo = repo.with_shallow(self.shallow);
-        
+
         repo
     }
 }
@@ -134,11 +134,11 @@ impl ManifestRepo {
 pub struct Manifest {
     /// リポジトリのリスト
     pub repos: Vec<ManifestRepo>,
-    
+
     /// グループ定義（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub groups: Option<HashMap<String, Group>>,
-    
+
     /// デフォルトブランチ（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_branch: Option<String>,
@@ -153,19 +153,19 @@ impl Manifest {
             default_branch: None,
         }
     }
-    
+
     /// グループを設定
     pub fn with_groups(mut self, groups: HashMap<String, Group>) -> Self {
         self.groups = Some(groups);
         self
     }
-    
+
     /// デフォルトブランチを設定
     pub fn with_default_branch(mut self, branch: impl Into<String>) -> Self {
         self.default_branch = Some(branch.into());
         self
     }
-    
+
     /// 特定のグループに属するリポジトリを取得
     pub fn get_repos_in_group(&self, group_name: &str) -> Vec<&ManifestRepo> {
         if let Some(groups) = &self.groups {
@@ -181,12 +181,12 @@ impl Manifest {
             vec![]
         }
     }
-    
+
     /// 全てのリポジトリをRepositoryエンティティのリストに変換
     pub fn to_repositories(&self) -> Vec<Repository> {
         self.repos.iter().map(|r| r.to_repository()).collect()
     }
-    
+
     /// destでリポジトリを検索
     pub fn find_repo_by_dest(&self, dest: &str) -> Option<&ManifestRepo> {
         self.repos.iter().find(|r| r.dest == dest)
@@ -196,39 +196,40 @@ impl Manifest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_group_creation() {
         let group = Group::new(vec!["repo1".to_string(), "repo2".to_string()])
             .with_description("Test group");
-        
+
         assert_eq!(group.repos.len(), 2);
         assert_eq!(group.description, Some("Test group".to_string()));
     }
-    
+
     #[test]
     fn test_manifest_repo_creation() {
         let repo = ManifestRepo::new("git@github.com:example/repo.git", "path/to/repo");
-        
+
         assert_eq!(repo.url, "git@github.com:example/repo.git");
         assert_eq!(repo.dest, "path/to/repo");
         assert!(!repo.shallow);
     }
-    
+
     #[test]
     fn test_manifest_repo_to_repository() {
-        let mut manifest_repo = ManifestRepo::new("git@github.com:example/repo.git", "path/to/repo");
+        let mut manifest_repo =
+            ManifestRepo::new("git@github.com:example/repo.git", "path/to/repo");
         manifest_repo.branch = Some("main".to_string());
         manifest_repo.sha1 = Some("abc123".to_string());
-        
+
         let repo = manifest_repo.to_repository();
-        
+
         assert_eq!(repo.dest, "path/to/repo");
         assert_eq!(repo.branch, Some("main".to_string()));
         assert_eq!(repo.sha1, Some("abc123".to_string()));
         assert_eq!(repo.clone_url(), Some("git@github.com:example/repo.git"));
     }
-    
+
     #[test]
     fn test_manifest_with_groups() {
         let repos = vec![
@@ -236,15 +237,15 @@ mod tests {
             ManifestRepo::new("git@github.com:example/repo2.git", "repo2"),
             ManifestRepo::new("git@github.com:example/repo3.git", "repo3"),
         ];
-        
+
         let mut groups = HashMap::new();
         groups.insert(
             "group1".to_string(),
             Group::new(vec!["repo1".to_string(), "repo2".to_string()]),
         );
-        
+
         let manifest = Manifest::new(repos).with_groups(groups);
-        
+
         let group_repos = manifest.get_repos_in_group("group1");
         assert_eq!(group_repos.len(), 2);
         assert_eq!(group_repos[0].dest, "repo1");

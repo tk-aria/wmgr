@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ManifestStoreError"],"struct":["FileOperationConfig","FileOperationResult","ManifestMetadata","ManifestProcessingOptions","ManifestStore"]};

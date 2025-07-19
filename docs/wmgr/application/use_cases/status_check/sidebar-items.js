@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RepositoryState","StatusCheckError"],"struct":["GitStatusInfo","RepositoryStatus","StatusCheckConfig","StatusCheckUseCase","StatusResult"]};
