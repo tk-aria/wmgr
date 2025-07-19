@@ -41,6 +41,18 @@ impl WorkspaceConfig {
         }
     }
     
+    /// デフォルトのWorkspaceConfigインスタンスを作成（ローカルファイル用）
+    pub fn default_local() -> Self {
+        Self {
+            manifest_url: "".to_string(),
+            manifest_branch: "main".to_string(),
+            shallow_clones: false,
+            repo_groups: vec!["default".to_string()],
+            clone_all_repos: false,
+            singular_remote: None,
+        }
+    }
+    
     /// リポジトリグループを設定
     pub fn with_repo_groups(mut self, groups: Vec<String>) -> Self {
         self.repo_groups = groups;
@@ -147,20 +159,32 @@ impl Workspace {
         self.tsrc_dir()
     }
     
-    /// マニフェストファイル（manifest.yml）のパスを取得
-    /// 優先順位: カレントディレクトリのmanifest.yml → .wmgr/manifest.yml
+    /// マニフェストファイル（wmgr.yml、manifest.yml）のパスを取得
+    /// 優先順位: カレントディレクトリのwmgr.yml/wmgr.yaml → manifest.yml/manifest.yaml → .wmgr/wmgr.yml/wmgr.yaml → .wmgr/manifest.yml/manifest.yaml
     pub fn manifest_file_path(&self) -> PathBuf {
-        let current_manifest = self.root_path.join("manifest.yml");
-        let wmgr_manifest = self.root_path.join(".wmgr").join("manifest.yml");
+        let manifest_candidates = vec![
+            // カレントディレクトリ: wmgr.*
+            self.root_path.join("wmgr.yml"),
+            self.root_path.join("wmgr.yaml"),
+            // カレントディレクトリ: manifest.*
+            self.root_path.join("manifest.yml"),
+            self.root_path.join("manifest.yaml"),
+            // .wmgrディレクトリ: wmgr.*
+            self.root_path.join(".wmgr").join("wmgr.yml"),
+            self.root_path.join(".wmgr").join("wmgr.yaml"),
+            // .wmgrディレクトリ: manifest.*
+            self.root_path.join(".wmgr").join("manifest.yml"),
+            self.root_path.join(".wmgr").join("manifest.yaml"),
+        ];
         
-        if current_manifest.exists() {
-            current_manifest
-        } else if wmgr_manifest.exists() {
-            wmgr_manifest
-        } else {
-            // デフォルトはカレントディレクトリのmanifest.yml
-            current_manifest
+        for candidate in &manifest_candidates {
+            if candidate.exists() {
+                return candidate.clone();
+            }
         }
+        
+        // デフォルトはカレントディレクトリのwmgr.yml
+        self.root_path.join("wmgr.yml")
     }
     
     /// 旧マニフェストファイル（.tsrc/manifest.yml）のパスを取得

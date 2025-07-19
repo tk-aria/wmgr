@@ -169,6 +169,8 @@
 - [x] 入力検証の強化
   - [x] URLインジェクション対策
   - [x] ファイルパストラバーサル対策
+- [x] wmgr.yml or manifest.yml 両方のファイル名を探索するように修正
+- [x] ファイル拡張子は yml, yaml の両方に対応するように修正
 
 ## GitHub Actions CI/CD自動リリース
 

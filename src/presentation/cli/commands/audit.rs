@@ -91,16 +91,14 @@ impl AuditCommand {
     
     /// Load workspace from directory
     async fn load_workspace(&self, workspace_dir: &PathBuf) -> Result<Workspace, Box<dyn std::error::Error>> {
-        // Try to find manifest.yml in current directory first, then .wmgr/
-        let manifest_file = if workspace_dir.join("manifest.yml").exists() {
-            workspace_dir.join("manifest.yml")
-        } else if workspace_dir.join(".wmgr").join("manifest.yml").exists() {
-            workspace_dir.join(".wmgr").join("manifest.yml")
-        } else {
-            return Err(format!("Manifest file not found at: {} or {}", 
-                workspace_dir.join("manifest.yml").display(),
-                workspace_dir.join(".wmgr").join("manifest.yml").display()).into());
-        };
+        let workspace = Workspace::new(workspace_dir.clone(), WorkspaceConfig::default_local());
+        
+        // Use workspace.manifest_file_path() to support wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml
+        let manifest_file = workspace.manifest_file_path();
+        
+        if !manifest_file.exists() {
+            return Err("Manifest file not found. Tried wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml in current directory and .wmgr/ subdirectory".into());
+        }
         
         // Load manifest file
         use crate::infrastructure::filesystem::manifest_store::ManifestStore;

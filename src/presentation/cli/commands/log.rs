@@ -193,16 +193,14 @@ impl LogCommand {
     async fn load_workspace(&self) -> Result<Workspace> {
         let current_dir = env::current_dir()?;
         
-        // Try to find manifest.yml in current directory first, then .wmgr/
-        let manifest_file = if current_dir.join("manifest.yml").exists() {
-            current_dir.join("manifest.yml")
-        } else if current_dir.join(".wmgr").join("manifest.yml").exists() {
-            current_dir.join(".wmgr").join("manifest.yml")
-        } else {
-            return Err(anyhow::anyhow!("Manifest file not found at: {} or {}", 
-                current_dir.join("manifest.yml").display(),
-                current_dir.join(".wmgr").join("manifest.yml").display()));
-        };
+        let workspace = Workspace::new(current_dir.clone(), WorkspaceConfig::default_local());
+        
+        // Use workspace.manifest_file_path() to support wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml
+        let manifest_file = workspace.manifest_file_path();
+        
+        if !manifest_file.exists() {
+            return Err(anyhow::anyhow!("Manifest file not found. Tried wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml in current directory and .wmgr/ subdirectory"));
+        }
         
         // Load manifest file
         use crate::infrastructure::filesystem::manifest_store::ManifestStore;
