@@ -174,6 +174,8 @@
 - [x] walkdir + regex を使用した動的マニフェストファイル探索の実装
 - [x] 正規表現パターン ^(wmgr|manifest)\.(yml|yaml)$ によるファイルマッチング
 - [x] 優先順位付きファイルソート機能の実装
+- [x] wmgr init で 雛型ファイル(wmgr.yaml)を生成
+- [x] 雛型ファイルはrustのマクロ機能を用いてビルド時にymlファイルを埋め込む形にして
 
 ## GitHub Actions CI/CD自動リリース
 

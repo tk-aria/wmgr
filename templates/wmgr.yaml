@@ -1,0 +1,49 @@
+# wmgr configuration file template
+# This file defines the repositories and groups for wmgr management
+
+# Optional: Specify defaults for repository configuration
+defaults:
+  # Default remote name (optional)
+  remote: origin
+  # Default branch for cloning (optional)  
+  branch: main
+  # Enable shallow clones by default (optional)
+  shallow: false
+
+# Repository groups - organize repositories into logical groups
+groups:
+  # Example group: core repositories
+  - name: core
+    description: "Core application repositories"
+    repositories:
+      - name: example-repo
+        url: https://github.com/user/example-repo.git
+        dest: example-repo
+        # Optional: specify different branch
+        # branch: develop
+        # Optional: specify different remote name
+        # remote: upstream
+
+  # Example group: tools and utilities
+  - name: tools
+    description: "Development tools and utilities"
+    repositories:
+      - name: build-tools
+        url: https://github.com/user/build-tools.git
+        dest: tools/build-tools
+
+# Alternative flat repository list (without groups)
+# repositories:
+#   - name: my-project
+#     url: https://github.com/user/my-project.git
+#     dest: my-project
+#   - name: shared-lib
+#     url: https://github.com/user/shared-lib.git
+#     dest: libs/shared-lib
+
+# Optional: Workspace-level configuration
+workspace:
+  # Name of this workspace (optional)
+  name: "My Development Workspace"
+  # Description of this workspace (optional)
+  description: "Main development environment with all project repositories"

@@ -43,6 +43,21 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    /// Initialize a new wmgr workspace
+    Init {
+        /// Directory where to create the wmgr.yaml file (defaults to current directory)
+        #[arg(short, long)]
+        path: Option<String>,
+        
+        /// Force overwrite existing file
+        #[arg(short, long)]
+        force: bool,
+        
+        /// Use manifest.yaml instead of wmgr.yaml
+        #[arg(long)]
+        manifest: bool,
+    },
+    
     /// Synchronize repositories
     Sync {
         /// Groups to sync (if not specified, all groups will be synced)
@@ -211,6 +226,13 @@ impl CliApp {
     
     async fn handle_command(&self) -> anyhow::Result<()> {
         match &self.cli.command {
+            Commands::Init { 
+                path, 
+                force, 
+                manifest 
+            } => {
+                self.handle_init_command(path.as_ref(), *force, *manifest).await
+            }
             Commands::Sync { 
                 group, 
                 force, 
@@ -268,6 +290,19 @@ impl CliApp {
                 self.handle_apply_manifest_command(manifest_file, *force, *dry_run).await
             }
         }
+    }
+    
+    async fn handle_init_command(
+        &self,
+        path: Option<&String>,
+        force: bool,
+        use_manifest_name: bool,
+    ) -> anyhow::Result<()> {
+        use crate::presentation::cli::commands::init::InitCommand;
+        
+        let target_path = path.map(|p| std::path::PathBuf::from(p));
+        let init_cmd = InitCommand::new(target_path, force, use_manifest_name);
+        init_cmd.execute().await
     }
     
     async fn handle_sync_command(
