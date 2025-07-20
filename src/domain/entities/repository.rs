@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::domain::value_objects::scm_type::ScmType;
 
 /// リモートリポジトリの情報
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -54,6 +55,9 @@ pub struct Repository {
 
     /// ベアリポジトリかどうか
     pub is_bare: bool,
+
+    /// SCM (Source Control Management) の種別
+    pub scm_type: ScmType,
 }
 
 impl Repository {
@@ -71,6 +75,25 @@ impl Repository {
             tag: None,
             shallow: false,
             is_bare: false,
+            scm_type: ScmType::default(),
+        }
+    }
+
+    /// 新しいRepositoryインスタンスをSCM種別指定で作成
+    pub fn with_scm(dest: impl Into<String>, remotes: Vec<Remote>, scm_type: ScmType) -> Self {
+        Self {
+            dest: dest.into(),
+            remotes,
+            branch: None,
+            orig_branch: None,
+            keep_branch: false,
+            is_default_branch: false,
+            sha1: None,
+            sha1_full: None,
+            tag: None,
+            shallow: false,
+            is_bare: false,
+            scm_type,
         }
     }
 
@@ -98,6 +121,12 @@ impl Repository {
         self
     }
 
+    /// SCM種別を設定
+    pub fn with_scm_type(mut self, scm_type: ScmType) -> Self {
+        self.scm_type = scm_type;
+        self
+    }
+
     /// クローン用のURLを取得（最初のリモートのURL）
     pub fn clone_url(&self) -> Option<&str> {
         self.remotes.first().map(|r| r.url.as_str())
@@ -116,6 +145,46 @@ impl Repository {
     /// リポジトリが固定参照（SHA1またはタグ）を持っているか
     pub fn has_fixed_ref(&self) -> bool {
         self.sha1.is_some() || self.tag.is_some()
+    }
+
+    /// このリポジトリのSCMがブランチをサポートするか
+    pub fn supports_branches(&self) -> bool {
+        self.scm_type.supports_branches()
+    }
+
+    /// このリポジトリのSCMがリモートをサポートするか
+    pub fn supports_remotes(&self) -> bool {
+        self.scm_type.supports_remotes()
+    }
+
+    /// このリポジトリのSCMがshallow cloneをサポートするか
+    pub fn supports_shallow_clone(&self) -> bool {
+        self.scm_type.supports_shallow_clone()
+    }
+
+    /// このリポジトリが使用するSCMのメタデータディレクトリ名を取得
+    pub fn metadata_dir(&self) -> &'static str {
+        self.scm_type.metadata_dir()
+    }
+
+    /// ブランチ関連の設定が有効か（SCMがブランチをサポートする場合のみ）
+    pub fn is_branch_config_valid(&self) -> bool {
+        if self.supports_branches() {
+            true // Gitの場合は常に有効
+        } else {
+            // SVNやP4の場合、ブランチ関連の設定は無視される
+            self.branch.is_none() && self.orig_branch.is_none()
+        }
+    }
+
+    /// リモート関連の設定が有効か（SCMがリモートをサポートする場合のみ）
+    pub fn is_remote_config_valid(&self) -> bool {
+        if self.supports_remotes() {
+            !self.remotes.is_empty() // Gitの場合はリモートが必要
+        } else {
+            // SVNやP4の場合、単一のURLを使用
+            self.remotes.len() == 1
+        }
     }
 }
 
