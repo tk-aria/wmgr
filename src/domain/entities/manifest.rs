@@ -1,4 +1,5 @@
 use super::repository::{Remote, Repository};
+use crate::domain::value_objects::scm_type::ScmType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -65,6 +66,10 @@ pub struct ManifestRepo {
     /// シンボリックリンク操作の定義
     #[serde(skip_serializing_if = "Option::is_none")]
     pub symlink: Option<Vec<FileSymlink>>,
+
+    /// SCM (Source Control Management) の種別
+    #[serde(default)]
+    pub scm: ScmType,
 }
 
 /// ファイルコピー操作
@@ -100,6 +105,23 @@ impl ManifestRepo {
             shallow: false,
             copy: None,
             symlink: None,
+            scm: ScmType::default(),
+        }
+    }
+
+    /// SCM種別を指定して新しいManifestRepoインスタンスを作成
+    pub fn with_scm(url: impl Into<String>, dest: impl Into<String>, scm: ScmType) -> Self {
+        Self {
+            url: url.into(),
+            dest: dest.into(),
+            branch: None,
+            sha1: None,
+            tag: None,
+            remotes: None,
+            shallow: false,
+            copy: None,
+            symlink: None,
+            scm,
         }
     }
 
@@ -112,7 +134,7 @@ impl ManifestRepo {
             remotes.extend(additional_remotes.iter().cloned());
         }
 
-        let mut repo = Repository::new(&self.dest, remotes);
+        let mut repo = Repository::with_scm(&self.dest, remotes, self.scm.clone());
 
         if let Some(branch) = &self.branch {
             repo = repo.with_branch(branch);
@@ -142,6 +164,10 @@ pub struct Manifest {
     /// デフォルトブランチ（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_branch: Option<String>,
+
+    /// デフォルトのSCM種別（オプション）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_scm: Option<ScmType>,
 }
 
 impl Manifest {
@@ -151,6 +177,7 @@ impl Manifest {
             repos,
             groups: None,
             default_branch: None,
+            default_scm: None,
         }
     }
 
@@ -163,6 +190,12 @@ impl Manifest {
     /// デフォルトブランチを設定
     pub fn with_default_branch(mut self, branch: impl Into<String>) -> Self {
         self.default_branch = Some(branch.into());
+        self
+    }
+
+    /// デフォルトSCM種別を設定
+    pub fn with_default_scm(mut self, scm: ScmType) -> Self {
+        self.default_scm = Some(scm);
         self
     }
 
