@@ -1,0 +1,194 @@
+# wmgr.yaml - Individual SCM Configuration Template
+# This template demonstrates how to configure individual SCM settings per repository
+
+# Default settings (optional - can be overridden per repository)
+defaults:
+  scm: git       # Default SCM type: git, svn, p4
+  branch: main   # Default branch for Git repositories
+  remote: origin # Default remote name for Git repositories
+  shallow: false # Default shallow clone setting for Git
+
+# Workspace information (optional)
+workspace:
+  name: "Mixed SCM Development Environment"
+  description: "Example workspace with Git, SVN, and Perforce repositories"
+
+# Repository groups with individual SCM configurations
+groups:
+  # Modern Git-based projects
+  - name: modern-projects
+    description: "Modern Git repositories with various configurations"
+    repositories:
+      # Standard Git repository (uses defaults)
+      - name: web-app
+        url: https://github.com/company/web-app.git
+        dest: web-app
+        # scm: git (inherited from defaults)
+        # branch: main (inherited from defaults)
+        
+      # Git with custom branch and options
+      - name: api-service
+        url: git@github.com:company/api-service.git
+        dest: api-service
+        scm: git
+        branch: develop
+        shallow: true
+        scm_options:
+          type: Git
+          remote: upstream
+          depth: 50
+          recurse_submodules: true
+          
+      # Git with specific revision
+      - name: stable-frontend
+        url: https://github.com/company/frontend.git
+        dest: frontend-stable
+        scm: git
+        revision: v2.1.0  # Specific tag/commit
+        
+  # Legacy SVN repositories  
+  - name: legacy-svn
+    description: "Legacy Subversion repositories"
+    repositories:
+      # SVN trunk with authentication
+      - name: legacy-backend
+        url: https://svn.company.com/repos/backend/trunk
+        dest: legacy/backend
+        scm: svn
+        username: developer
+        password: ${SVN_PASSWORD}  # Environment variable
+        
+      # SVN specific branch with revision
+      - name: maintenance-branch
+        url: https://svn.company.com/repos/app/branches/maintenance-v1.x
+        dest: legacy/maintenance
+        scm: svn
+        revision: "1234"
+        scm_options:
+          type: Svn
+          username: svn-user
+          password: ${SVN_MAINT_PASSWORD}
+          
+      # SVN with extra options
+      - name: secure-svn
+        url: svn+ssh://developer@svn.company.com/repos/secure
+        dest: legacy/secure
+        scm: svn
+        extra_options:
+          - "--non-interactive"
+          - "--trust-server-cert"
+          - "--depth=infinity"
+
+  # Enterprise Perforce repositories
+  - name: enterprise-p4
+    description: "Perforce repositories with different configurations"
+    repositories:
+      # P4 with client workspace
+      - name: main-product
+        url: perforce://p4server.company.com:1666//depot/products/main/...
+        dest: products/main
+        scm: p4
+        username: ${P4_USER}
+        password: ${P4_PASSWORD}
+        scm_options:
+          type: P4
+          client: developer-main-workspace
+          stream: //depot/products/main
+          
+      # P4 with specific changelist
+      - name: stable-release
+        url: ssl:p4server.company.com:1667//depot/products/main/...
+        dest: products/stable
+        scm: p4
+        revision: "555555"  # Changelist number
+        scm_options:
+          type: P4
+          client: developer-stable-ws
+          changelist: "555555"
+          username: p4-release-user
+          password: ${P4_RELEASE_PASSWORD}
+          
+      # P4 with extra options
+      - name: large-assets
+        url: tcp:p4server.company.com:1666//depot/assets/...
+        dest: assets
+        scm: p4
+        scm_options:
+          type: P4
+          client: developer-assets-ws
+        extra_options:
+          - "-f"  # force
+          - "-q"  # quiet
+          - "-m100"  # max 100 files
+
+  # Mixed environment example
+  - name: mixed-environment
+    description: "Repositories using different SCM systems for different environments"
+    repositories:
+      # Development environment (Git)
+      - name: app-dev
+        url: https://github.com/company/app.git
+        dest: env/development
+        scm: git
+        branch: develop
+        shallow: true
+        
+      # Staging environment (SVN)
+      - name: app-staging
+        url: https://svn.company.com/repos/app/tags/v1.0.0
+        dest: env/staging
+        scm: svn
+        revision: HEAD
+        
+      # Production environment (Perforce)
+      - name: app-production
+        url: perforce://p4server:1666//depot/app/release/...
+        dest: env/production
+        scm: p4
+        scm_options:
+          type: P4
+          client: production-workspace
+          changelist: "999999"
+
+# Alternative: Flat repository list (without groups)
+# repositories:
+#   # Git repositories
+#   - name: project-a
+#     url: https://github.com/user/project-a.git
+#     dest: project-a
+#     scm: git
+#     branch: main
+#     
+#   - name: project-b
+#     url: git@github.com:user/project-b.git
+#     dest: project-b
+#     scm: git
+#     branch: develop
+#     shallow: true
+#     scm_options:
+#       type: Git
+#       remote: upstream
+#       recurse_submodules: true
+#   
+#   # SVN repositories  
+#   - name: legacy-project
+#     url: https://svn.server.com/repos/legacy/trunk
+#     dest: legacy
+#     scm: svn
+#     username: svn-user
+#     password: ${SVN_PASS}
+#     scm_options:
+#       type: Svn
+#       revision: "1500"
+#   
+#   # Perforce repositories
+#   - name: enterprise-project
+#     url: perforce://p4server:1666//depot/enterprise/...
+#     dest: enterprise
+#     scm: p4
+#     scm_options:
+#       type: P4
+#       client: my-workspace
+#       stream: //depot/enterprise/main
+#       username: p4-user
+#       password: ${P4_PASS}
