@@ -1,0 +1,214 @@
+# wmgr.yaml - Individual SCM Configuration Example
+# 各リポジトリごとに異なるSCM設定を行う詳細な例
+
+# デフォルト設定（省略可能 - 指定がない場合のフォールバック）
+defaults:
+  scm: git  # デフォルトはGitだが、各リポジトリで上書き可能
+
+# ワークスペース設定
+workspace:
+  name: "Multi-SCM Individual Configuration"
+  description: "Each repository with individual SCM settings"
+
+# リポジトリグループ - 各リポジトリで個別SCM設定
+groups:
+  # プロジェクトコア - 異なるSCMシステムの組み合わせ
+  - name: project-core
+    description: "Core project components from different SCM systems"
+    repositories:
+      # Git リポジトリ - 最新のフロントエンド
+      - name: react-frontend
+        url: https://github.com/company/react-frontend.git
+        dest: frontend
+        scm: git  # 明示的にGitを指定
+        branch: develop
+        shallow: true
+        
+      # SVN リポジトリ - レガシーバックエンド
+      - name: java-backend
+        url: https://svn.company.com/repos/java-backend/trunk
+        dest: backend
+        scm: svn  # SVNに変更
+        username: developer
+        # password: ${SVN_PASSWORD}  # 環境変数で管理
+        
+      # Perforce リポジトリ - 企業の共有ライブラリ
+      - name: shared-components
+        url: perforce://p4server.company.com:1666//depot/shared/components/...
+        dest: shared
+        scm: p4  # Perforceに変更
+        client: developer-shared-ws
+        # username: ${P4_USER}
+        # password: ${P4_PASSWD}
+
+  # データベース・設定管理
+  - name: database-config
+    description: "Database and configuration management"
+    repositories:
+      # Git - モダンなマイグレーション管理
+      - name: db-migrations
+        url: git@github.com:company/db-migrations.git
+        dest: database/migrations
+        scm: git
+        branch: main
+        remote: origin
+        
+      # SVN - 従来の設定ファイル管理
+      - name: legacy-configs
+        url: svn://svn.internal.com/configs/production
+        dest: database/configs
+        scm: svn
+        revision: HEAD
+        extra_options:
+          - "--non-interactive"
+          - "--trust-server-cert"
+          
+      # Perforce - エンタープライズ設定
+      - name: enterprise-configs
+        url: ssl:p4server.company.com:1667//depot/configs/enterprise/...
+        dest: database/enterprise
+        scm: p4
+        changelist: latest
+        stream: //depot/configs/enterprise/main
+
+  # 開発ツール・ユーティリティ
+  - name: dev-tools
+    description: "Development tools from various sources"
+    repositories:
+      # Git - オープンソースツール
+      - name: build-tools
+        url: https://github.com/company/build-tools.git
+        dest: tools/build
+        scm: git
+        branch: stable
+        
+      # Git SSH - 内部ツール
+      - name: internal-scripts
+        url: git@gitlab.company.com:tools/internal-scripts.git
+        dest: tools/scripts
+        scm: git
+        branch: master
+        
+      # SVN - レガシービルドスクリプト
+      - name: legacy-build
+        url: https://svn.company.com/repos/tools/legacy-build/trunk
+        dest: tools/legacy
+        scm: svn
+        username: build-user
+        
+      # Perforce - 企業標準ツール
+      - name: enterprise-tools
+        url: tcp:p4server.company.com:1666//depot/tools/standard/...
+        dest: tools/enterprise
+        scm: p4
+        client: developer-tools-ws
+
+  # 外部ライブラリ・依存関係
+  - name: external-libs
+    description: "External libraries and dependencies"
+    repositories:
+      # Git - NPMライブラリのソース
+      - name: ui-library
+        url: https://github.com/external/ui-library.git
+        dest: libs/ui
+        scm: git
+        branch: v2.0
+        shallow: true  # 軽量クローン
+        
+      # SVN - 社内共有ライブラリ
+      - name: internal-utils
+        url: svn+ssh://developer@svn.internal.com/shared/utils/trunk
+        dest: libs/utils
+        scm: svn
+        # SSH鍵認証を使用
+        
+      # Perforce - ベンダー提供ライブラリ
+      - name: vendor-sdk
+        url: perforce://vendor-p4.company.com:1666//depot/sdk/current/...
+        dest: libs/vendor
+        scm: p4
+        username: vendor-user
+        # password: ${VENDOR_P4_PASS}
+
+  # テスト・品質保証
+  - name: testing
+    description: "Testing and QA resources"
+    repositories:
+      # Git - 自動テストスイート
+      - name: automated-tests
+        url: https://github.com/company/automated-tests.git
+        dest: tests/automated
+        scm: git
+        branch: main
+        
+      # SVN - マニュアルテストケース
+      - name: manual-testcases
+        url: file:///shared/svn/testcases/trunk
+        dest: tests/manual
+        scm: svn
+        # ローカルSVNリポジトリ
+        
+      # Perforce - パフォーマンステスト
+      - name: performance-tests
+        url: p4://p4server.company.com:1666//depot/tests/performance/...
+        dest: tests/performance
+        scm: p4
+        changelist: 567890
+
+# フラットな構造での個別SCM設定例
+# repositories:
+#   # 各リポジトリで明示的にSCMを指定
+#   - name: project-a
+#     url: https://github.com/user/project-a.git
+#     dest: project-a
+#     scm: git
+#     branch: develop
+#     
+#   - name: project-b
+#     url: https://svn.server.com/repos/project-b/trunk
+#     dest: project-b
+#     scm: svn
+#     revision: 1500
+#     
+#   - name: project-c
+#     url: perforce://p4server:1666//depot/project-c/...
+#     dest: project-c
+#     scm: p4
+#     client: my-workspace
+
+# 高度な個別設定例
+# repositories:
+#   - name: complex-git-setup
+#     url: git@github.com:company/complex-project.git
+#     dest: complex
+#     scm: git
+#     branch: feature/multi-scm
+#     remote: upstream
+#     shallow: false
+#     extra_options:
+#       - "--recurse-submodules"
+#       - "--depth=50"
+#       
+#   - name: complex-svn-setup
+#     url: https://svn.company.com/repos/complex-svn/trunk
+#     dest: complex-svn
+#     scm: svn
+#     revision: 2000
+#     username: advanced-user
+#     password: ${COMPLEX_SVN_PASS}
+#     extra_options:
+#       - "--depth=infinity"
+#       - "--ignore-externals"
+#       
+#   - name: complex-p4-setup
+#     url: ssl:p4server.company.com:1667//depot/complex/main/...
+#     dest: complex-p4
+#     scm: p4
+#     client: advanced-client-ws
+#     stream: //depot/complex/main
+#     changelist: 999999
+#     username: p4-advanced-user
+#     password: ${COMPLEX_P4_PASS}
+#     extra_options:
+#       - "-f"  # force
+#       - "-q"  # quiet

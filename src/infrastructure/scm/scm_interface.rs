@@ -49,12 +49,22 @@ pub struct CloneOptions {
     pub branch: Option<String>,
     /// Perform shallow clone (Git only)
     pub shallow: bool,
+    /// Shallow clone depth (Git only)
+    pub depth: Option<u32>,
+    /// Remote name (Git only)
+    pub remote: Option<String>,
+    /// Recurse submodules (Git only)
+    pub recurse_submodules: bool,
     /// Specific revision to checkout
     pub revision: Option<String>,
     /// Username for authentication
     pub username: Option<String>,
     /// Password for authentication
     pub password: Option<String>,
+    /// Client workspace (P4 only)
+    pub client: Option<String>,
+    /// Stream (P4 only)
+    pub stream: Option<String>,
     /// Additional SCM-specific options
     pub extra_options: Vec<String>,
 }
@@ -64,9 +74,14 @@ impl Default for CloneOptions {
         Self {
             branch: None,
             shallow: false,
+            depth: None,
+            remote: None,
+            recurse_submodules: false,
             revision: None,
             username: None,
             password: None,
+            client: None,
+            stream: None,
             extra_options: Vec::new(),
         }
     }
@@ -85,6 +100,10 @@ pub struct SyncOptions {
     pub username: Option<String>,
     /// Password for authentication
     pub password: Option<String>,
+    /// Client workspace (P4 only)
+    pub client: Option<String>,
+    /// Stream (P4 only)
+    pub stream: Option<String>,
     /// Additional SCM-specific options
     pub extra_options: Vec<String>,
 }
@@ -97,6 +116,8 @@ impl Default for SyncOptions {
             revision: None,
             username: None,
             password: None,
+            client: None,
+            stream: None,
             extra_options: Vec::new(),
         }
     }

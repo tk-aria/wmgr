@@ -1,0 +1,99 @@
+# wmgr.yaml - SVN Only Workspace Example
+# SVNのみを使用する従来型のワークスペース設定例
+
+# デフォルト設定（SVNをデフォルトに）
+defaults:
+  scm: svn
+
+# ワークスペース設定
+workspace:
+  name: "SVN Legacy Workspace"
+  description: "Traditional SVN-based development environment"
+
+# SVNリポジトリ群
+groups:
+  # メインプロジェクト
+  - name: main-projects
+    description: "Primary SVN projects"
+    repositories:
+      # トランク（trunk）からのチェックアウト
+      - name: core-application
+        url: https://svn.company.com/repos/core-app/trunk
+        dest: core-app
+        scm: svn
+        
+      # 特定のブランチからのチェックアウト
+      - name: feature-branch
+        url: https://svn.company.com/repos/core-app/branches/feature-v2
+        dest: core-app-v2
+        scm: svn
+        
+      # 特定のタグ（リリース版）
+      - name: stable-release
+        url: https://svn.company.com/repos/core-app/tags/release-1.5.0
+        dest: stable
+        scm: svn
+
+  # 共有ライブラリ
+  - name: shared-libraries
+    description: "Shared SVN libraries"
+    repositories:
+      - name: common-utils
+        url: svn://svn.company.com/shared/utils/trunk
+        dest: libs/utils
+        scm: svn
+        
+      - name: database-layer
+        url: svn+ssh://developer@svn.company.com/shared/db/trunk
+        dest: libs/database
+        scm: svn
+        # 認証情報（実際の運用では環境変数で管理）
+        # username: developer
+        # password: ${SVN_PASSWORD}
+
+  # 設定ファイル・リソース
+  - name: configurations
+    description: "Configuration and resource files"
+    repositories:
+      - name: app-config
+        url: file:///shared/svn/config/trunk
+        dest: config
+        scm: svn
+        
+      - name: static-assets
+        url: https://svn.company.com/repos/assets/trunk
+        dest: assets
+        scm: svn
+        # 特定のリビジョンを指定
+        # revision: 1234
+
+  # 開発ツール
+  - name: development-tools
+    description: "Development and build tools"
+    repositories:
+      - name: build-scripts
+        url: https://svn.company.com/repos/tools/build/trunk
+        dest: tools/build
+        scm: svn
+        
+      - name: deployment-scripts
+        url: https://svn.company.com/repos/tools/deploy/trunk
+        dest: tools/deploy
+        scm: svn
+
+# SVN固有の設定オプション例
+# repositories:
+#   - name: example-with-options
+#     url: https://svn.company.com/repos/example/trunk
+#     dest: example
+#     scm: svn
+#     # リビジョン指定
+#     revision: 1500
+#     # 認証情報
+#     username: myuser
+#     password: mypassword
+#     # SVN固有の追加オプション
+#     extra_options:
+#       - "--non-interactive"
+#       - "--trust-server-cert"
+#       - "--depth=infinity"
