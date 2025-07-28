@@ -1,5 +1,6 @@
 use crate::domain::entities::{manifest::ManifestRepo, workspace::Workspace};
 use crate::infrastructure::git::repository::{GitRepository, GitRepositoryError};
+use crate::infrastructure::scm::{ScmFactory, ScmError, StatusResult as ScmStatusResult};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -18,6 +19,9 @@ pub enum StatusCheckError {
 
     #[error("Git operation failed: {0}")]
     GitOperationFailed(String),
+
+    #[error("SCM operation failed: {0}")]
+    ScmOperationFailed(#[from] ScmError),
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
@@ -82,6 +86,12 @@ pub struct RepositoryStatus {
     /// リポジトリの状態
     pub state: RepositoryState,
 
+    /// SCMタイプ
+    pub scm_type: crate::domain::value_objects::scm_type::ScmType,
+
+    /// 現在のリビジョン/コミット
+    pub current_revision: Option<String>,
+
     /// 現在のブランチ
     pub current_branch: Option<String>,
 
@@ -105,14 +115,19 @@ pub struct RepositoryStatus {
 
     /// エラーメッセージ（エラー状態の場合）
     pub error_message: Option<String>,
+
+    /// SCM固有の追加情報
+    pub scm_extra_info: std::collections::HashMap<String, String>,
 }
 
 impl RepositoryStatus {
     /// 新しいRepositoryStatusを作成
-    pub fn new(dest: String) -> Self {
+    pub fn new(dest: String, scm_type: crate::domain::value_objects::scm_type::ScmType) -> Self {
         Self {
             dest,
             state: RepositoryState::Missing,
+            scm_type,
+            current_revision: None,
             current_branch: None,
             expected_branch: None,
             untracked_files: 0,
@@ -121,6 +136,7 @@ impl RepositoryStatus {
             commits_ahead: 0,
             commits_behind: 0,
             error_message: None,
+            scm_extra_info: std::collections::HashMap::new(),
         }
     }
 
@@ -304,34 +320,54 @@ impl StatusCheckUseCase {
         Ok(target_repos)
     }
 
-    /// 単一リポジトリのステータス確認
+    /// 単一リポジトリのステータス確認（SCM対応）
     async fn check_repository_status(
         &self,
         repo: &ManifestRepo,
         workspace: &Workspace,
     ) -> Result<RepositoryStatus, StatusCheckError> {
         let repo_path = workspace.repo_path(&repo.dest);
-        let mut status = RepositoryStatus::new(repo.dest.clone());
+        let mut status = RepositoryStatus::new(repo.dest.clone(), repo.scm.clone());
 
         if !repo_path.exists() {
             status.state = RepositoryState::Missing;
             return Ok(status);
         }
 
-        // Git操作を実行してステータスを取得
-        match self.perform_git_status_check(&repo_path, repo).await {
-            Ok(git_status) => {
-                status = status
-                    .with_branch_info(
-                        git_status.current_branch,
-                        Some(repo.branch.clone().unwrap_or_else(|| "main".to_string())),
-                    )
-                    .with_file_changes(
-                        git_status.untracked_files,
-                        git_status.modified_files,
-                        git_status.staged_files,
-                    )
-                    .with_remote_diff(git_status.commits_ahead, git_status.commits_behind);
+        // SCM操作を実行してステータスを取得
+        match self.perform_scm_status_check(&repo_path, repo).await {
+            Ok(scm_status) => {
+                status.current_revision = Some(scm_status.current_revision);
+                status.current_branch = scm_status.current_branch;
+                status.expected_branch = repo.branch.clone();
+                
+                // 変更情報を設定（SCMから取得できた場合）
+                if scm_status.has_changes {
+                    status.modified_files = 1; // 詳細な数は後で実装
+                    status.state = RepositoryState::Dirty;
+                } else {
+                    status.state = RepositoryState::Clean;
+                }
+
+                if scm_status.has_untracked {
+                    status.untracked_files = 1; // 詳細な数は後で実装
+                }
+
+                // ahead/behind情報（Gitのみ）
+                if let (Some(ahead), Some(behind)) = (scm_status.ahead_count, scm_status.behind_count) {
+                    status.commits_ahead = ahead;
+                    status.commits_behind = behind;
+                }
+
+                // SCM固有の追加情報
+                status.scm_extra_info = scm_status.extra_info;
+
+                // ブランチチェック
+                if let (Some(current), Some(expected)) = (&status.current_branch, &status.expected_branch) {
+                    if current != expected && status.state != RepositoryState::Dirty {
+                        status.state = RepositoryState::WrongBranch;
+                    }
+                }
             }
             Err(e) => {
                 status = status.with_error(e.to_string());
@@ -341,7 +377,38 @@ impl StatusCheckUseCase {
         Ok(status)
     }
 
-    /// Git status情報を取得
+    /// SCMステータス情報を取得
+    async fn perform_scm_status_check(
+        &self,
+        repo_path: &PathBuf,
+        repo: &ManifestRepo,
+    ) -> Result<ScmStatusResult, StatusCheckError> {
+        if self.config.verbose {
+            println!("Checking {} status for {}", repo.scm, repo_path.display());
+        }
+
+        // SCM操作インスタンスを作成
+        let scm = ScmFactory::create_scm(repo.scm.clone())?;
+
+        // リポジトリの種別を確認
+        if !scm.is_repository(repo_path) {
+            return Err(StatusCheckError::GitOperationFailed(format!(
+                "Path {} is not a valid {} repository",
+                repo_path.display(), repo.scm
+            )));
+        }
+
+        // SCMステータスを取得
+        let status = scm.get_status(repo_path).await?;
+
+        if self.config.verbose {
+            println!("Status check completed for {} ({})", repo_path.display(), repo.scm);
+        }
+
+        Ok(status)
+    }
+
+    /// Git status情報を取得（レガシー - 後で削除予定）
     async fn perform_git_status_check(
         &self,
         repo_path: &PathBuf,
@@ -394,7 +461,8 @@ mod tests {
 
     #[test]
     fn test_repository_status_creation() {
-        let status = RepositoryStatus::new("test/repo".to_string());
+        use crate::domain::value_objects::scm_type::ScmType;
+        let status = RepositoryStatus::new("test/repo".to_string(), ScmType::Git);
         assert_eq!(status.dest, "test/repo");
         assert_eq!(status.state, RepositoryState::Missing);
         assert!(status.current_branch.is_none());
@@ -403,27 +471,29 @@ mod tests {
 
     #[test]
     fn test_repository_status_has_issues() {
-        let clean_status = RepositoryStatus::new("repo".to_string()).with_file_changes(0, 0, 0);
+        use crate::domain::value_objects::scm_type::ScmType;
+        let clean_status = RepositoryStatus::new("repo".to_string(), ScmType::Git).with_file_changes(0, 0, 0);
         assert_eq!(clean_status.state, RepositoryState::Clean);
         assert!(!clean_status.has_issues());
 
-        let dirty_status = RepositoryStatus::new("repo".to_string()).with_file_changes(1, 0, 0);
+        let dirty_status = RepositoryStatus::new("repo".to_string(), ScmType::Git).with_file_changes(1, 0, 0);
         assert_eq!(dirty_status.state, RepositoryState::Dirty);
         assert!(dirty_status.has_issues());
 
         let error_status =
-            RepositoryStatus::new("repo".to_string()).with_error("Git error".to_string());
+            RepositoryStatus::new("repo".to_string(), ScmType::Git).with_error("Git error".to_string());
         assert_eq!(error_status.state, RepositoryState::Error);
         assert!(error_status.has_issues());
     }
 
     #[test]
     fn test_status_result_counting() {
+        use crate::domain::value_objects::scm_type::ScmType;
         let mut result = StatusResult::new();
 
-        let clean_status = RepositoryStatus::new("clean".to_string()).with_file_changes(0, 0, 0);
-        let dirty_status = RepositoryStatus::new("dirty".to_string()).with_file_changes(1, 0, 0);
-        let missing_status = RepositoryStatus::new("missing".to_string()); // デフォルトでMissing
+        let clean_status = RepositoryStatus::new("clean".to_string(), ScmType::Git).with_file_changes(0, 0, 0);
+        let dirty_status = RepositoryStatus::new("dirty".to_string(), ScmType::Git).with_file_changes(1, 0, 0);
+        let missing_status = RepositoryStatus::new("missing".to_string(), ScmType::Git); // デフォルトでMissing
 
         result.add_repository(clean_status);
         result.add_repository(dirty_status);

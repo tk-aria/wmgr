@@ -3,6 +3,7 @@ use crate::domain::entities::{
     workspace::{Workspace, WorkspaceStatus},
 };
 use crate::domain::value_objects::branch_name::BranchName;
+use crate::infrastructure::scm::{ScmFactory, ScmError};
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -26,6 +27,9 @@ pub enum SyncRepositoriesError {
 
     #[error("Git operation failed: {0}")]
     GitOperationFailed(String),
+
+    #[error("SCM operation failed: {0}")]
+    ScmOperationFailed(#[from] ScmError),
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
@@ -328,14 +332,14 @@ impl SyncRepositoriesUseCase {
         }
     }
 
-    /// リポジトリのクローン
+    /// リポジトリのクローン（SCM対応）
     async fn clone_repository(
         &self,
         repo: &ManifestRepo,
         target_path: &PathBuf,
     ) -> Result<(), SyncRepositoriesError> {
         if self.config.verbose {
-            println!("Cloning {} to {}", repo.url, target_path.display());
+            println!("Cloning {} ({}) to {}", repo.url, repo.scm, target_path.display());
         }
 
         // ディレクトリの親を作成
@@ -343,14 +347,46 @@ impl SyncRepositoriesUseCase {
             std::fs::create_dir_all(parent)?;
         }
 
-        // Git clone実行（疑似実装）
-        self.perform_git_clone(&repo.url, target_path, repo.branch.as_deref())
-            .await?;
+        // SCM操作の実行
+        self.perform_scm_clone(repo, target_path).await?;
 
         Ok(())
     }
 
-    /// Git clone実行（実際のGit操作）
+    /// SCMクローン実行（マルチSCM対応）
+    async fn perform_scm_clone(
+        &self,
+        repo: &ManifestRepo,
+        target_path: &PathBuf,
+    ) -> Result<(), SyncRepositoriesError> {
+        if self.config.verbose {
+            println!("Starting {} clone: {} -> {}", repo.scm, repo.url, target_path.display());
+        }
+
+        // SCM操作インスタンスを作成
+        let scm = ScmFactory::create_scm(repo.scm.clone())?;
+        
+        // クローンオプションを構築
+        let clone_options = repo.to_clone_options();
+
+        // SCMクローンを実行
+        scm.clone_repository(&repo.url, target_path, &clone_options)
+            .await
+            .map_err(|e| {
+                SyncRepositoriesError::RepositoryCloneFailed(format!(
+                    "Failed to clone {} ({}): {}",
+                    repo.url, repo.scm, e
+                ))
+            })?;
+
+        if self.config.verbose {
+            println!("Successfully cloned: {} -> {}", repo.url, target_path.display());
+        }
+
+        Ok(())
+    }
+
+    /// Git clone実行（実際のGit操作）（レガシー - 後で削除予定）
     async fn perform_git_clone(
         &self,
         url: &str,
@@ -394,25 +430,42 @@ impl SyncRepositoriesUseCase {
         Ok(())
     }
 
-    /// 既存リポジトリの更新
+    /// 既存リポジトリの更新（SCM対応）
     async fn update_repository(
         &self,
         repo: &ManifestRepo,
         repo_path: &PathBuf,
     ) -> Result<(), SyncRepositoriesError> {
         if self.config.verbose {
-            println!("Updating repository at {}", repo_path.display());
+            println!("Updating {} repository at {}", repo.scm, repo_path.display());
         }
 
-        // 1. リモートURLの更新
-        self.update_remotes(repo, repo_path).await?;
+        // SCM操作インスタンスを作成
+        let scm = ScmFactory::create_scm(repo.scm.clone())?;
 
-        // 2. フェッチ実行
-        self.perform_git_fetch(repo_path).await?;
+        // リポジトリの種別を確認
+        if !scm.is_repository(repo_path) {
+            return Err(SyncRepositoriesError::GitOperationFailed(format!(
+                "Path {} is not a valid {} repository",
+                repo_path.display(), repo.scm
+            )));
+        }
 
-        // 3. ブランチの同期
-        if !self.config.no_correct_branch {
-            self.sync_branch(repo, repo_path).await?;
+        // 同期オプションを構築
+        let sync_options = repo.to_sync_options(self.config.force);
+
+        // SCM同期を実行
+        scm.sync_repository(repo_path, &sync_options)
+            .await
+            .map_err(|e| {
+                SyncRepositoriesError::RemoteUpdateFailed {
+                    repo: repo.dest.clone(),
+                    error: format!("Failed to sync {} repository: {}", repo.scm, e),
+                }
+            })?;
+
+        if self.config.verbose {
+            println!("Successfully updated {} repository at {}", repo.scm, repo_path.display());
         }
 
         Ok(())
