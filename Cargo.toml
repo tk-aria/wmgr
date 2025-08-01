@@ -81,11 +81,10 @@ winapi = { version = "0.3", features = ["winbase", "winnt", "processthreadsapi"]
 git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl", "vendored-libgit2"] }
 reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls"], default-features = false }
 
-# aarch64 musl-specific dependencies (use system curl with static linking)
+# aarch64 musl-specific dependencies (use https without OpenSSL vendor)
 [target.'cfg(all(target_env = "musl", target_arch = "aarch64"))'.dependencies]
-git2 = { version = "0.18", default-features = false, features = ["curl"] }
+git2 = { version = "0.18", default-features = false, features = ["https"] }
 reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls"], default-features = false }
-curl-sys = { version = "0.4", features = ["static-curl", "static-ssl"] }
 
 [dev-dependencies]
 # Testing
