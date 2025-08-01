@@ -183,6 +183,19 @@
 - [x] actコマンドを用いてdocs.yamlの実行をシミュレートしエラーが発生しなくなるまで問題を修正して
 - [x] dry-runは使用せずにactコマンドを用いて docs.yamlの実行を行い、エラーが発生しなくなるまで修正して
 
+## Linux向けmuslビルド対応
+
+- [x] Linux向けmuslビルドターゲットの追加
+  - [x] `.github/workflows/release.yml` にmuslターゲット追加
+    - [x] x86_64-unknown-linux-musl
+    - [x] aarch64-unknown-linux-musl
+  - [x] musl-toolsのインストール設定
+  - [x] muslビルド用の静的リンク設定
+- [x] インストールスクリプトでのmuslデフォルト対応
+  - [x] `scripts/install.sh` でLinux向けにmuslバイナリを優先選択
+  - [x] glibcとmuslの両方が利用可能な場合のフォールバック機能
+  - [x] musl利用時の適切なエラーハンドリング
+
 ## GitHub Actions CI/CD自動リリース
 
 - [x] GitHub Actionsワークフローでマルチプラットフォーム対応リリースビルドの作成
