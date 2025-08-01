@@ -73,6 +73,8 @@ jobs:
       - name: Install musl-tools (Linux musl)
         if: contains(matrix.target, 'musl')
         run: |
+          # Wait for apt lock to be released
+          while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
           sudo apt-get update
           sudo apt-get install -y musl-tools
           # Disable GCC fortify functions for all musl builds
@@ -82,6 +84,10 @@ jobs:
       - name: Install aarch64 musl cross-compiler
         if: matrix.target == 'aarch64-unknown-linux-musl'
         run: |
+          # Wait for apt lock to be released and enable arm64 architecture
+          while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu libssl-dev:arm64
           # Set environment variables for cross-compilation
           echo "CC_aarch64_unknown_linux_musl=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
