@@ -66,10 +66,28 @@ cargo check
 - 静的リンクバイナリの生成準備完了
 - インストールスクリプトでの自動判定機能実装完了
 
+## GitHub Actions動作確認結果
+### 成功したビルドターゲット (v0.1.0-musl-fortify-fix)
+- ✅ x86_64-unknown-linux-gnu (glibc) - 1m33s
+- ✅ x86_64-unknown-linux-musl (musl) - 3m15s ← **新規対応成功**
+- ✅ x86_64-apple-darwin - 1m22s  
+- ✅ aarch64-apple-darwin - 1m38s
+
+### 実装した修正
+1. **musl-toolsインストール設定** - 成功
+2. **fortify functions無効化** (`-U_FORTIFY_SOURCE`) - 成功
+3. **aarch64クロスコンパイラ設定** - 部分的成功
+
+### 残存課題
+- aarch64-unknown-linux-musl: fortify functionsエラーは解決したが、別のリンクエラーが残存
+- 解決策: 将来のリリースで対応予定（x86_64 muslは完全動作）
+
 ## 次回のリリース時の期待動作
-1. GitHubActionsで4つのLinuxバイナリが生成される
+1. GitHubActionsで5つのバイナリが生成される
    - linux-x86_64 (glibc)
-   - linux-musl-x86_64 (musl)
-   - linux-musl-aarch64 (musl)
+   - linux-musl-x86_64 (musl) ← **実証済み**
+   - darwin-x86_64, darwin-aarch64
+   - windows-x86_64
 2. インストールスクリプトが環境に応じて最適なバイナリを自動選択
 3. フォールバック機能により幅広い環境での動作を保証
+4. 特にAlpine LinuxやDockerコンテナでの軽量デプロイメントが可能
