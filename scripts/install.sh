@@ -29,6 +29,32 @@ _detect_os() {
   unset os
 }
 
+# musl使用可否チェック（Linux用）
+_is_musl_available() {
+  # muslシステムかどうかを確認
+  if [ -f /lib/ld-musl-x86_64.so.1 ] || [ -f /lib/ld-musl-aarch64.so.1 ]; then
+    return 0
+  fi
+  
+  # lddコマンドでmuslリンクかどうかを確認
+  if command -v ldd >/dev/null 2>&1; then
+    if ldd --version 2>&1 | grep -q musl; then
+      return 0
+    fi
+  fi
+  
+  return 1
+}
+
+# Linux向けOS名決定（musllかglibcか）
+_detect_linux_variant() {
+  if _is_musl_available; then
+    echo "linux-musl"
+  else
+    echo "linux"
+  fi
+}
+
 # アーキテクチャ検出
 _detect_arch() {
   arch="$(uname -m)"
@@ -61,6 +87,57 @@ _download_url() {
   echo "https://github.com/${WMGR_REPO}/releases/download/${version}/${archive_name}"
 }
 
+# 複数のターゲットでダウンロードを試行（Linux用フォールバック）
+_try_download_with_fallback() {
+  local version="$1"
+  local base_os="$2"
+  local arch="$3"
+  local tmp_dir="$4"
+  
+  local targets=""
+  
+  # Linuxの場合、優先順位を設定
+  if [ "$base_os" = "linux" ]; then
+    if _is_musl_available; then
+      # muslシステムの場合：musl -> glibc
+      targets="linux-musl linux"
+      echo "Detected musl system, trying musl build first..."
+    else
+      # glibcシステムの場合：glibc -> musl
+      targets="linux linux-musl"
+      echo "Detected glibc system, trying glibc build first..."
+    fi
+  else
+    targets="$base_os"
+  fi
+  
+  local success=0
+  for target_os in $targets; do
+    local download_url="$(_download_url "$version" "$target_os" "$arch")"
+    echo "Trying to download from: $download_url"
+    
+    if curl -sSLf "$download_url" -o "$tmp_dir/wmgr.tar.gz"; then
+      echo "Successfully downloaded from: $download_url"
+      success=1
+      break
+    else
+      echo "Failed to download from: $download_url"
+      if [ "$target_os" != "${targets##* }" ]; then
+        echo "Trying fallback option..."
+      fi
+    fi
+  done
+  
+  if [ "$success" -eq 0 ]; then
+    echo "Failed to download wmgr archive from all available sources" 1>&2
+    echo "Tried targets: $targets" 1>&2
+    echo "Please check if version ${version} exists and supports your platform" 1>&2
+    return 1
+  fi
+  
+  return 0
+}
+
 # インストール実行
 main() {
   # バージョン決定
@@ -80,12 +157,8 @@ main() {
   wmgr_os="$(_detect_os)"
   wmgr_arch="$(_detect_arch)"
   wmgr_binary="$(_get_binary_name "$wmgr_os")"
-  
-  # ダウンロードURL生成
-  wmgr_download_url="$(_download_url "$WMGR_VERSION" "$wmgr_os" "$wmgr_arch")"
 
   echo "Installing wmgr ${WMGR_VERSION} for ${wmgr_os}/${wmgr_arch}..."
-  echo "Download URL: $wmgr_download_url"
 
   # インストールディレクトリ作成
   if [ ! -d "$wmgr_install_path" ]; then
@@ -97,11 +170,9 @@ main() {
   tmp_dir=$(mktemp -d)
   trap 'rm -rf "$tmp_dir"' EXIT
 
-  # アーカイブダウンロード
+  # アーカイブダウンロード（フォールバック機能付き）
   echo "Downloading wmgr archive..."
-  if ! curl -sSLf "$wmgr_download_url" -o "$tmp_dir/wmgr.tar.gz"; then
-    echo "Failed to download wmgr archive from: $wmgr_download_url" 1>&2
-    echo "Please check if the version ${WMGR_VERSION} exists and supports ${wmgr_os}/${wmgr_arch}" 1>&2
+  if ! _try_download_with_fallback "$WMGR_VERSION" "$wmgr_os" "$wmgr_arch" "$tmp_dir"; then
     return 1
   fi
 
