@@ -82,10 +82,37 @@ cargo check
 - aarch64-unknown-linux-musl: fortify functionsエラーは解決したが、別のリンクエラーが残存
 - 解決策: 将来のリリースで対応予定（x86_64 muslは完全動作）
 
+## aarch64-unknown-linux-musl 最終修正 (v0.1.0-test-aarch64)
+### 実施した追加修正
+1. **適切なaarch64ライブラリの使用**
+   - `libgit2-dev:arm64` および `libssl-dev:arm64` をインストール
+   - `sudo dpkg --add-architecture arm64` でarm64アーキテクチャサポートを追加
+
+2. **PKG_CONFIG設定の修正**
+   - `PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig` (x86_64パスから変更)
+   - `PKG_CONFIG_SYSROOT_DIR=/` でルートシステムを指定
+   - `LIBZ_SYS_STATIC=0` でシステムzlibを使用
+
+3. **OpenSSLパス設定の修正**
+   - `OPENSSL_LIB_DIR=/usr/lib/aarch64-linux-gnu` (aarch64専用パス)
+
+### GitHub Actions実行結果
+#### 第一回修正 (v0.1.0-test-aarch64) - 失敗
+- ワークフロー ID: 16687948202
+- エラー: system libgit2でのアーキテクチャ不一致
+- 原因: x86_64ライブラリがaarch64ビルドで参照された
+
+#### 第二回修正 (v0.1.0-vendored-deps) - 実行中
+- ワークフロー ID: 16688456804
+- 変更内容: 完全vendored依存関係への切り替え
+- `git2 = { features = ["https", "vendored-openssl", "vendored-libgit2"] }`
+- システムライブラリ依存を排除してクロスコンパイル問題を回避
+
 ## 次回のリリース時の期待動作
-1. GitHubActionsで5つのバイナリが生成される
+1. GitHubActionsで6つのバイナリが生成される
    - linux-x86_64 (glibc)
    - linux-musl-x86_64 (musl) ← **実証済み**
+   - linux-musl-aarch64 (musl) ← **修正実装済み**
    - darwin-x86_64, darwin-aarch64
    - windows-x86_64
 2. インストールスクリプトが環境に応じて最適なバイナリを自動選択
