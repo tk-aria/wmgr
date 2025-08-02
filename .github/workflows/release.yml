@@ -23,7 +23,6 @@ jobs:
   build:
     name: Build for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
     env:
       RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name || 'v0.1.0' }}
     strategy:
@@ -41,10 +40,9 @@ jobs:
             os_name: linux-musl
             arch_name: x86_64
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-20.04
             os_name: linux
             arch_name: aarch64
-            container: ubuntu:18.04
           
           # macOS
           - target: x86_64-apple-darwin
@@ -83,33 +81,19 @@ jobs:
           echo "CFLAGS=-U_FORTIFY_SOURCE" >> $GITHUB_ENV
           echo "CXXFLAGS=-U_FORTIFY_SOURCE" >> $GITHUB_ENV
           
-      - name: Setup Ubuntu 18.04 container environment
-        if: matrix.container == 'ubuntu:18.04'
-        run: |
-          # Update package lists and install basic tools for Ubuntu 18.04 (glibc 2.27)
-          apt-get update
-          apt-get install -y curl build-essential git ca-certificates
-          
       - name: Install aarch64 cross-compiler
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
-          # Install cross-compiler (works for both container and regular Ubuntu)
-          if [ -n "${{ matrix.container }}" ]; then
-            # Ubuntu 18.04 container (glibc 2.27)
-            apt-get update
-            apt-get install -y gcc-aarch64-linux-gnu
-          else
-            # Regular Ubuntu
-            while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
-            sudo apt-get update
-            sudo apt-get install -y gcc-aarch64-linux-gnu
-          fi
+          # Wait for apt lock to be released
+          while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
           # Set environment variables for cross-compilation
           echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
           echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> $GITHUB_ENV
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          # Set glibc compatibility flags for glibc 2.27+ (Ubuntu 18.04)
-          echo 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static' >> $GITHUB_ENV
+          # Set glibc minimum version flags for broader compatibility (2.27+)
+          echo 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static -C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-aarch64.so.1' >> $GITHUB_ENV
           
       - name: Install OpenSSL (macOS)
         if: matrix.os == 'macos-latest'
