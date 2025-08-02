@@ -1,0 +1,37 @@
+name: Check glibc Version
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-glibc:
+    name: Check glibc version info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Ubuntu version
+        run: |
+          echo "=== Ubuntu Version ==="
+          lsb_release -a
+          cat /etc/os-release
+          
+      - name: Check glibc version
+        run: |
+          echo "=== glibc Version ==="
+          ldd --version
+          /lib/x86_64-linux-gnu/libc.so.6
+          
+      - name: Check aarch64 cross-compiler glibc
+        run: |
+          echo "=== Installing aarch64 cross-compiler ==="
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          
+          echo "=== aarch64 glibc info ==="
+          aarch64-linux-gnu-gcc --version
+          find /usr -name "*libc.so*" -path "*aarch64*" 2>/dev/null | head -5
+          
+      - name: Check system libraries
+        run: |
+          echo "=== Available glibc packages ==="
+          apt list --installed | grep libc6
+          dpkg -l | grep libc6
