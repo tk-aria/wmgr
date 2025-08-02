@@ -40,7 +40,7 @@ jobs:
             os_name: linux-musl
             arch_name: x86_64
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-latest
             os_name: linux
             arch_name: aarch64
           
@@ -92,8 +92,8 @@ jobs:
           echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
           echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> $GITHUB_ENV
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          # Set glibc minimum version flags for broader compatibility (2.27+)
-          echo 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static -C link-arg=-Wl,--dynamic-linker=/lib/ld-linux-aarch64.so.1' >> $GITHUB_ENV
+          # Set glibc compatibility flags for older versions (2.17+)
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static" >> $GITHUB_ENV
           
       - name: Install OpenSSL (macOS)
         if: matrix.os == 'macos-latest'
