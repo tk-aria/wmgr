@@ -44,7 +44,7 @@ jobs:
             os: ubuntu-latest
             os_name: linux
             arch_name: aarch64
-            container: ubuntu:16.04
+            container: ubuntu:18.04
           
           # macOS
           - target: x86_64-apple-darwin
@@ -83,19 +83,19 @@ jobs:
           echo "CFLAGS=-U_FORTIFY_SOURCE" >> $GITHUB_ENV
           echo "CXXFLAGS=-U_FORTIFY_SOURCE" >> $GITHUB_ENV
           
-      - name: Setup Ubuntu 16.04 container environment
-        if: matrix.container == 'ubuntu:16.04'
+      - name: Setup Ubuntu 18.04 container environment
+        if: matrix.container == 'ubuntu:18.04'
         run: |
-          # Update package lists and install basic tools for Ubuntu 16.04
+          # Update package lists and install basic tools for Ubuntu 18.04 (glibc 2.27)
           apt-get update
-          apt-get install -y curl build-essential git
+          apt-get install -y curl build-essential git ca-certificates
           
       - name: Install aarch64 cross-compiler
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           # Install cross-compiler (works for both container and regular Ubuntu)
           if [ -n "${{ matrix.container }}" ]; then
-            # Ubuntu 16.04 container
+            # Ubuntu 18.04 container (glibc 2.27)
             apt-get update
             apt-get install -y gcc-aarch64-linux-gnu
           else
@@ -108,7 +108,7 @@ jobs:
           echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
           echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> $GITHUB_ENV
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          # Set glibc compatibility flags for glibc 2.23+ (Ubuntu 16.04)
+          # Set glibc compatibility flags for glibc 2.27+ (Ubuntu 18.04)
           echo 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static' >> $GITHUB_ENV
           
       - name: Install OpenSSL (macOS)
