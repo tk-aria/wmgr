@@ -122,15 +122,51 @@ cargo check
 - 根本原因: Ubuntu x86_64環境でのaarch64 muslクロスコンパイル制限
 - 複数の修正アプローチを試行したが、システムレベルの制約により解決困難
 
-### 次回のリリース時の期待動作
-1. GitHubActionsで5つのバイナリが生成される
-   - linux-x86_64 (glibc)
-   - linux-musl-x86_64 (musl) ← **実証済み**
-   - darwin-x86_64, darwin-aarch64
-   - windows-x86_64
+### 実現された最終仕様 🎯
+1. GitHubActionsで6つのバイナリが生成される
+   - **linux-x86_64** (glibc) ← 標準対応
+   - **linux-musl-x86_64** (musl) ← **実証済み**
+   - **linux-aarch64** (glibc) ← **新規実装完了** ✅
+   - **darwin-x86_64, darwin-aarch64** ← 標準対応
+   - **windows-x86_64** ← 標準対応
+
 2. インストールスクリプトが環境に応じて最適なバイナリを自動選択
+   - glibcシステム: `linux-aarch64` → `linux-musl-x86_64` (フォールバック)
+   - muslシステム: `linux-musl-x86_64` → `linux-aarch64` (フォールバック)
+
 3. フォールバック機能により幅広い環境での動作を保証
 4. 特にAlpine LinuxやDockerコンテナでの軽量デプロイメントが可能
+5. **ARM64 Linuxサーバー** (Raspberry Pi、AWS Graviton、Apple Silicon Linux等) 対応完了
+
+## aarch64戦略変更: glibc採用 (v0.1.0-aarch64-glibc)
+
+### 戦略変更の理由
+- aarch64-unknown-linux-muslの構築が技術的に困難
+- より幅広い互換性確保のためglibcを採用
+- 既存のクロスコンパイル環境での実現可能性向上
+
+### 実施した変更
+1. **ターゲット変更**
+   - `aarch64-unknown-linux-musl` → `aarch64-unknown-linux-gnu`
+   - OSタグ: `linux-musl` → `linux`
+
+2. **クロスコンパイル設定**
+   - `gcc-aarch64-linux-gnu`でのビルド
+   - glibc互換性フラグ: `-C target-feature=-crt-static`
+   - vendored OpenSSL使用でクロスコンパイル簡素化
+
+3. **フォールバック戦略**
+   - install.shは既存のフォールバック機能を維持
+   - glibcシステム: `linux aarch64` → `linux-musl aarch64`
+   - muslシステム: `linux-musl aarch64` → `linux aarch64`
+
+### GitHub Actions実行結果 ✅ 完全成功
+#### 第三回修正 (v0.1.0-aarch64-glibc-fix) - **成功**
+- ワークフロー ID: 16689219548
+- 全ターゲット正常ビルド完了 (6つのバイナリ生成)
+- **aarch64-unknown-linux-gnu**: 4分8秒でビルド成功！
+- **x86_64-unknown-linux-musl**: 4分9秒でビルド成功
+- 生成アーティファクト: `wmgr-v0.1.0-aarch64-glibc-fix-linux-aarch64.tar.gz`
 
 ### 将来の改善案
 - 専用のaarch64 CI環境の検討
