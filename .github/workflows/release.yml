@@ -23,6 +23,7 @@ jobs:
   build:
     name: Build for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     env:
       RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name || 'v0.1.0' }}
     strategy:
@@ -43,6 +44,7 @@ jobs:
             os: ubuntu-latest
             os_name: linux
             arch_name: aarch64
+            container: ubuntu:16.04
           
           # macOS
           - target: x86_64-apple-darwin
@@ -81,18 +83,33 @@ jobs:
           echo "CFLAGS=-U_FORTIFY_SOURCE" >> $GITHUB_ENV
           echo "CXXFLAGS=-U_FORTIFY_SOURCE" >> $GITHUB_ENV
           
+      - name: Setup Ubuntu 16.04 container environment
+        if: matrix.container == 'ubuntu:16.04'
+        run: |
+          # Update package lists and install basic tools for Ubuntu 16.04
+          apt-get update
+          apt-get install -y curl build-essential git
+          
       - name: Install aarch64 cross-compiler
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
-          # Wait for apt lock to be released
-          while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+          # Install cross-compiler (works for both container and regular Ubuntu)
+          if [ -n "${{ matrix.container }}" ]; then
+            # Ubuntu 16.04 container
+            apt-get update
+            apt-get install -y gcc-aarch64-linux-gnu
+          else
+            # Regular Ubuntu
+            while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done
+            sudo apt-get update
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          fi
           # Set environment variables for cross-compilation
           echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
           echo "AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar" >> $GITHUB_ENV
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-          # Set glibc compatibility flags for older versions (2.17+)
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static" >> $GITHUB_ENV
+          # Set glibc compatibility flags for glibc 2.23+ (Ubuntu 16.04)
+          echo 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C target-feature=-crt-static' >> $GITHUB_ENV
           
       - name: Install OpenSSL (macOS)
         if: matrix.os == 'macos-latest'
