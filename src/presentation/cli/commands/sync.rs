@@ -14,6 +14,7 @@ pub struct SyncCommand {
     pub no_correct_branch: bool,
     pub jobs: Option<usize>,
     pub verbose: bool,
+    pub no_recursive: bool,
 }
 
 impl SyncCommand {
@@ -23,6 +24,7 @@ impl SyncCommand {
         no_correct_branch: bool,
         jobs: Option<usize>,
         verbose: bool,
+        no_recursive: bool,
     ) -> Self {
         Self {
             groups,
@@ -30,6 +32,7 @@ impl SyncCommand {
             no_correct_branch,
             jobs,
             verbose,
+            no_recursive,
         }
     }
 
@@ -51,6 +54,7 @@ impl SyncCommand {
             no_correct_branch: self.no_correct_branch,
             parallel_jobs: self.jobs,
             verbose: self.verbose,
+            recursive: !self.no_recursive,
         };
 
         // Execute the use case
