@@ -12,4 +12,6 @@ test_dot_error.rs
 #.claude/
 .claude/settings.local.json
 .claude/mcp.json
+mcp.json
+settings.local.json
 .wmgr
