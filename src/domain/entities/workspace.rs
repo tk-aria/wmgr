@@ -306,6 +306,31 @@ impl Workspace {
     pub fn find_repository_mut(&mut self, dest: &str) -> Option<&mut Repository> {
         self.repositories.iter_mut().find(|r| r.dest == dest)
     }
+
+    /// 現在のディレクトリから上位に向かってワークスペースルートを発見
+    pub fn discover_workspace_root(start_path: &std::path::Path) -> Option<PathBuf> {
+        let mut current_path = start_path.to_path_buf();
+        
+        loop {
+            // 現在のパスで一時的なワークスペースを作成してマニフェストファイルを探索
+            let temp_workspace = Self::new(current_path.clone(), WorkspaceConfig::default_local());
+            let manifest_files = temp_workspace.find_manifest_files_with_regex();
+            
+            if !manifest_files.is_empty() {
+                return Some(current_path);
+            }
+            
+            // 親ディレクトリに移動
+            if let Some(parent) = current_path.parent() {
+                current_path = parent.to_path_buf();
+            } else {
+                // ルートディレクトリに到達したが見つからない
+                break;
+            }
+        }
+        
+        None
+    }
 }
 
 #[cfg(test)]
@@ -401,5 +426,35 @@ mod tests {
         let filtered = workspace.filter_repos_by_groups();
         assert_eq!(filtered.len(), 1);
         assert_eq!(filtered[0].dest, "repo1");
+    }
+
+    #[test]
+    fn test_workspace_discovery() {
+        use tempfile::TempDir;
+        
+        // テスト用の一時ディレクトリを作成
+        let temp_dir = TempDir::new().unwrap();
+        let workspace_root = temp_dir.path().to_path_buf();
+        
+        // wmgr.ymlファイルを作成
+        let manifest_file = workspace_root.join("wmgr.yml");
+        std::fs::write(&manifest_file, "repos: []").unwrap();
+        
+        // サブディレクトリを作成
+        let sub_dir = workspace_root.join("sub").join("dir");
+        std::fs::create_dir_all(&sub_dir).unwrap();
+        
+        // サブディレクトリからワークスペースルートを発見
+        let discovered = Workspace::discover_workspace_root(&sub_dir);
+        assert!(discovered.is_some());
+        assert_eq!(discovered.unwrap(), workspace_root);
+        
+        // マニフェストファイルがない場合はNoneを返す
+        let temp_dir2 = TempDir::new().unwrap();
+        let no_manifest_dir = temp_dir2.path().join("no_manifest");
+        std::fs::create_dir_all(&no_manifest_dir).unwrap();
+        
+        let not_found = Workspace::discover_workspace_root(&no_manifest_dir);
+        assert!(not_found.is_none());
     }
 }
