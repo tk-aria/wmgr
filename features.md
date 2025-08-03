@@ -176,6 +176,7 @@
 - [x] 優先順位付きファイルソート機能の実装
 - [x] wmgr init で 雛型ファイル(wmgr.yaml)を生成
 - [x] 雛型ファイルはrustのマクロ機能を用いてビルド時にymlファイルを埋め込む形にして
+- [x] wmgr init コマンドの出力ファイル名を wmgr.yaml → wmgr.yml に変更
 - [x] windowsはbashの実行が一般的ではない為、scripts/install.shを参考にpowershellのインストールスクリプトも実装して
 - [x] ci.yamlはpull requestでのみ実行するようにして
 - [x] actコマンドを用いてci.yamlの実行をシミュレートしエラーが発生しなくなるまで問題を修正して
