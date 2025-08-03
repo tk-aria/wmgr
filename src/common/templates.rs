@@ -4,7 +4,7 @@
 /// Get the default wmgr.yaml template content
 /// The template is embedded at compile time using include_str! macro
 pub fn get_wmgr_template() -> &'static str {
-    include_str!("../../templates/wmgr.yaml")
+    include_str!("../../config/wmgr-template.yml")
 }
 
 /// Template replacement functionality
