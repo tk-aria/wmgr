@@ -6,11 +6,11 @@ use std::path::PathBuf;
 
 /// Initialize a new wmgr workspace
 pub struct InitCommand {
-    /// Path where to create the wmgr.yaml file
+    /// Path where to create the wmgr.yml file
     pub path: Option<PathBuf>,
     /// Force overwrite existing file
     pub force: bool,
-    /// Use manifest.yaml instead of wmgr.yaml
+    /// Use manifest.yml instead of wmgr.yml
     pub use_manifest_name: bool,
 }
 
@@ -30,9 +30,9 @@ impl InitCommand {
 
         // Determine filename based on use_manifest_name flag
         let filename = if self.use_manifest_name {
-            "manifest.yaml"
+            "manifest.yml"
         } else {
-            "wmgr.yaml"
+            "wmgr.yml"
         };
 
         let target_file = target_dir.join(filename);
