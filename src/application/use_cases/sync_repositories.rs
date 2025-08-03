@@ -61,6 +61,9 @@ pub struct SyncRepositoriesConfig {
 
     /// 詳細ログを出力するか
     pub verbose: bool,
+
+    /// 子ディレクトリのワークスペースも再帰的に同期するか
+    pub recursive: bool,
 }
 
 impl Default for SyncRepositoriesConfig {
@@ -71,6 +74,7 @@ impl Default for SyncRepositoriesConfig {
             no_correct_branch: false,
             parallel_jobs: None,
             verbose: false,
+            recursive: true,
         }
     }
 }
@@ -98,6 +102,11 @@ impl SyncRepositoriesConfig {
 
     pub fn with_verbose(mut self, verbose: bool) -> Self {
         self.verbose = verbose;
+        self
+    }
+
+    pub fn with_recursive(mut self, recursive: bool) -> Self {
+        self.recursive = recursive;
         self
     }
 }
@@ -176,7 +185,12 @@ impl SyncRepositoriesUseCase {
         self.sync_repositories(&target_repos, workspace, &mut result)
             .await?;
 
-        // 5. ワークスペース状態の更新
+        // 5. 再帰的な子ワークスペースの同期（recursive フラグが有効な場合）
+        if self.config.recursive {
+            self.sync_child_workspaces(workspace, &mut result).await?;
+        }
+
+        // 6. ワークスペース状態の更新
         workspace.status = WorkspaceStatus::Initialized;
 
         Ok(result)
@@ -743,6 +757,130 @@ impl SyncRepositoriesUseCase {
         }
 
         Ok(())
+    }
+
+    /// 子ディレクトリのワークスペースを再帰的に同期
+    async fn sync_child_workspaces(
+        &self,
+        workspace: &Workspace,
+        result: &mut SyncResult,
+    ) -> Result<(), SyncRepositoriesError> {
+        if self.config.verbose {
+            println!("Searching for child workspaces...");
+        }
+
+        // 現在のワークスペースのマニフェストを取得
+        let manifest = workspace.manifest.as_ref().ok_or_else(|| {
+            SyncRepositoriesError::ManifestUpdateFailed("Manifest not loaded".to_string())
+        })?;
+
+        // 各リポジトリディレクトリで子ワークスペースを検索
+        for repo in &manifest.repos {
+            let repo_path = workspace.root_path.join(&repo.dest);
+            
+            if !repo_path.exists() {
+                continue; // リポジトリがまだクローンされていない場合はスキップ
+            }
+
+            // 子ディレクトリでワークスペースルートを検索
+            if let Some(child_workspace_root) = Workspace::discover_workspace_root(&repo_path) {
+                // 親ワークスペースと同じ場合はスキップ（無限ループ防止）
+                if child_workspace_root == workspace.root_path {
+                    continue;
+                }
+
+                if self.config.verbose {
+                    println!("Found child workspace at: {}", child_workspace_root.display());
+                }
+
+                // 子ワークスペースの同期を実行
+                match self.sync_child_workspace(&child_workspace_root, result).await {
+                    Ok(_) => {
+                        if self.config.verbose {
+                            println!("Successfully synced child workspace: {}", child_workspace_root.display());
+                        }
+                    }
+                    Err(e) => {
+                        let error_msg = format!(
+                            "Failed to sync child workspace {}: {}",
+                            child_workspace_root.display(),
+                            e
+                        );
+                        if self.config.verbose {
+                            println!("Error: {}", error_msg);
+                        }
+                        result.add_error(error_msg);
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// 個別の子ワークスペースを同期
+    fn sync_child_workspace<'a>(
+        &'a self,
+        child_workspace_root: &'a std::path::Path,
+        result: &'a mut SyncResult,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), SyncRepositoriesError>> + 'a>> {
+        Box::pin(async move {
+        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+
+        // 子ワークスペースを作成
+        let child_workspace_config = WorkspaceConfig::default_local();
+        let child_workspace = Workspace::new(child_workspace_root.to_path_buf(), child_workspace_config);
+        let manifest_file = child_workspace.manifest_file_path();
+
+        // マニフェストファイルが存在するかチェック
+        if !manifest_file.exists() {
+            return Err(SyncRepositoriesError::ManifestUpdateFailed(format!(
+                "Child workspace manifest file not found: {}",
+                manifest_file.display()
+            )));
+        }
+
+        // マニフェストを読み込み
+        let mut manifest_store = ManifestStore::new();
+        let processed_manifest = manifest_store
+            .read_manifest(&manifest_file)
+            .await
+            .map_err(|e| {
+                SyncRepositoriesError::ManifestUpdateFailed(format!(
+                    "Failed to load child workspace manifest: {}",
+                    e
+                ))
+            })?;
+
+        // 子ワークスペースの設定
+        let mut child_workspace = child_workspace
+            .with_status(WorkspaceStatus::Initialized)
+            .with_manifest(processed_manifest.manifest);
+
+        // 子ワークスペース用の設定を作成（recursive=falseで無限ループを防止）
+        let child_config = SyncRepositoriesConfig {
+            groups: self.config.groups.clone(),
+            force: self.config.force,
+            no_correct_branch: self.config.no_correct_branch,
+            parallel_jobs: self.config.parallel_jobs,
+            verbose: self.config.verbose,
+            recursive: false, // 子ワークスペースでは再帰を無効化
+        };
+
+        // 子ワークスペースの同期実行
+        let child_use_case = SyncRepositoriesUseCase::new(child_config);
+        let child_result = child_use_case.execute(&mut child_workspace).await?;
+
+        // 結果をマージ
+        result.synced_count += child_result.synced_count;
+        result.cloned_count += child_result.cloned_count;
+        result.updated_count += child_result.updated_count;
+        result.skipped_count += child_result.skipped_count;
+        result.errors.extend(child_result.errors);
+
+        Ok(())
+        })
     }
 }
 

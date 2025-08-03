@@ -72,6 +72,10 @@ pub enum Commands {
         /// Number of parallel jobs
         #[arg(short, long)]
         jobs: Option<usize>,
+
+        /// Disable recursive sync of child workspaces
+        #[arg(long)]
+        no_recursive: bool,
     },
 
     /// Show repository status
@@ -234,8 +238,9 @@ impl CliApp {
                 force,
                 no_correct_branch,
                 jobs,
+                no_recursive,
             } => {
-                self.handle_sync_command(group, *force, *no_correct_branch, *jobs)
+                self.handle_sync_command(group, *force, *no_correct_branch, *jobs, *no_recursive)
                     .await
             }
             Commands::Status {
@@ -318,6 +323,7 @@ impl CliApp {
         force: bool,
         no_correct_branch: bool,
         jobs: Option<usize>,
+        no_recursive: bool,
     ) -> anyhow::Result<()> {
         // Load workspace
         let mut workspace = self.load_workspace().await?;
@@ -336,6 +342,7 @@ impl CliApp {
             no_correct_branch,
             parallel_jobs: jobs,
             verbose: self.cli.verbose,
+            recursive: !no_recursive,
         };
 
         // Execute the use case
