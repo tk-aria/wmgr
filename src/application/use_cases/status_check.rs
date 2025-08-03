@@ -78,7 +78,7 @@ pub enum RepositoryState {
 }
 
 /// 単一リポジトリのステータス
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RepositoryStatus {
     /// リポジトリの相対パス
     pub dest: String,
@@ -204,7 +204,7 @@ impl RepositoryStatus {
 }
 
 /// 全体のステータス結果
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatusResult {
     /// 各リポジトリのステータス
     pub repositories: Vec<RepositoryStatus>,

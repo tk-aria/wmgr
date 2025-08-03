@@ -1,6 +1,7 @@
 pub mod commands;
 
-use clap::{Parser, Subcommand};
+use anyhow::Result;
+use clap::{Parser, Subcommand, ValueEnum};
 use colored::Colorize;
 use std::env;
 use std::process::exit;
@@ -14,6 +15,17 @@ use crate::application::use_cases::{
 use crate::domain::entities::workspace::Workspace;
 
 use crate::domain::value_objects::{file_path::FilePath, git_url::GitUrl};
+
+/// Output format options for status command
+#[derive(Debug, Clone, ValueEnum)]
+pub enum OutputFormat {
+    /// Human-readable text output (default)
+    Text,
+    /// JSON output
+    Json,
+    /// YAML output
+    Yaml,
+}
 
 /// wmgr - A tool for managing multiple git repositories
 #[derive(Parser)]
@@ -91,6 +103,10 @@ pub enum Commands {
         /// Groups to check (if not specified, all groups will be checked)
         #[arg(short, long)]
         group: Vec<String>,
+
+        /// Output format (text, json, yaml)
+        #[arg(short, long, value_enum, default_value = "text")]
+        output: OutputFormat,
     },
 
     /// Run a command in each repository
@@ -247,7 +263,8 @@ impl CliApp {
                 branch,
                 compact,
                 group,
-            } => self.handle_status_command(*branch, *compact, group).await,
+                output,
+            } => self.handle_status_command(*branch, *compact, group, output.clone()).await,
             Commands::Foreach {
                 command,
                 args,
@@ -385,6 +402,7 @@ impl CliApp {
         show_branch: bool,
         compact: bool,
         groups: &[String],
+        output_format: OutputFormat,
     ) -> anyhow::Result<()> {
         // Load workspace
         let workspace = self.load_workspace().await?;
@@ -409,10 +427,16 @@ impl CliApp {
 
         match use_case.execute(&workspace).await {
             Ok(status) => {
-                if compact {
-                    self.print_compact_status(&status);
-                } else {
-                    self.print_detailed_status(&status, show_branch);
+                match output_format {
+                    OutputFormat::Json => self.print_json_status(&status)?,
+                    OutputFormat::Yaml => self.print_yaml_status(&status)?,
+                    OutputFormat::Text => {
+                        if compact {
+                            self.print_compact_status(&status);
+                        } else {
+                            self.print_detailed_status(&status, show_branch);
+                        }
+                    }
                 }
                 Ok(())
             }
@@ -694,5 +718,23 @@ impl CliApp {
 
             println!();
         }
+    }
+
+    fn print_json_status(
+        &self,
+        status: &crate::application::use_cases::status_check::StatusResult,
+    ) -> anyhow::Result<()> {
+        let json = serde_json::to_string_pretty(status)?;
+        println!("{}", json);
+        Ok(())
+    }
+
+    fn print_yaml_status(
+        &self,
+        status: &crate::application::use_cases::status_check::StatusResult,
+    ) -> anyhow::Result<()> {
+        let yaml = serde_yaml::to_string(status)?;
+        print!("{}", yaml);
+        Ok(())
     }
 }

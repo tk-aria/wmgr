@@ -388,3 +388,15 @@ curl -sSLf https://get.wmgr.sh | DEBUG=1 sh
   - [x] 子ワークスペースのマニフェストファイル検出と読み込み
   - [x] 子ワークスペースの同期結果を親の結果にマージ
   - [x] .gitignoreにtmp/ディレクトリを追加
+
+## wmgr statusコマンドのJSON/YAML出力対応
+
+- [x] statusコマンドに複数の出力形式をサポート
+  - [x] `--output`オプション（`-o`）を追加
+  - [x] `text`（デフォルト）、`json`、`yaml`の3つの出力形式をサポート
+  - [x] `RepositoryStatus`と`StatusResult`にSerialize traitを追加
+  - [x] JSON出力用の`print_json_status`メソッドを実装
+  - [x] YAML出力用の`print_yaml_status`メソッドを実装
+  - [x] 既存のテキスト出力機能は変更なしで維持
+  - [x] CLIでの`OutputFormat` enumを`ValueEnum`で実装
+  - [x] JSON/YAML出力のテスト完了
