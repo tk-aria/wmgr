@@ -21,9 +21,14 @@ use crate::domain::value_objects::{file_path::FilePath, git_url::GitUrl};
 #[command(about = "A tool for managing multiple git repositories")]
 #[command(version)]
 #[command(propagate_version = true)]
+#[command(disable_version_flag = true)]
 pub struct Cli {
+    /// Print version information
+    #[arg(short = 'v', long = "version", action = clap::ArgAction::Version)]
+    pub version: bool,
+
     /// Enable verbose output
-    #[arg(short, long, global = true)]
+    #[arg(long, global = true)]
     pub verbose: bool,
 
     /// Disable colored output
