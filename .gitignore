@@ -15,3 +15,6 @@ test_dot_error.rs
 mcp.json
 settings.local.json
 .wmgr
+
+tmp/
+

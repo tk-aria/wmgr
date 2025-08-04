@@ -14,6 +14,7 @@ pub struct SyncCommand {
     pub no_correct_branch: bool,
     pub jobs: Option<usize>,
     pub verbose: bool,
+    pub no_recursive: bool,
 }
 
 impl SyncCommand {
@@ -23,6 +24,7 @@ impl SyncCommand {
         no_correct_branch: bool,
         jobs: Option<usize>,
         verbose: bool,
+        no_recursive: bool,
     ) -> Self {
         Self {
             groups,
@@ -30,6 +32,7 @@ impl SyncCommand {
             no_correct_branch,
             jobs,
             verbose,
+            no_recursive,
         }
     }
 
@@ -51,6 +54,7 @@ impl SyncCommand {
             no_correct_branch: self.no_correct_branch,
             parallel_jobs: self.jobs,
             verbose: self.verbose,
+            recursive: !self.no_recursive,
         };
 
         // Execute the use case
@@ -88,18 +92,23 @@ impl SyncCommand {
         }
     }
 
-    /// Load workspace from the current directory
+    /// Load workspace from the current directory or any parent directory
     async fn load_workspace(&self) -> Result<Workspace> {
         let current_dir = env::current_dir()?;
 
-        let workspace = Workspace::new(current_dir.clone(), WorkspaceConfig::default_local());
+        // Discover workspace root by searching upward for manifest files
+        let workspace_root = if let Some(root) = Workspace::discover_workspace_root(&current_dir) {
+            root
+        } else {
+            return Err(anyhow::anyhow!(
+                "No wmgr workspace found. Searched upward from {} for wmgr.yml, wmgr.yaml, manifest.yml, or manifest.yaml files.",
+                current_dir.display()
+            ));
+        };
 
-        // Use workspace.manifest_file_path() to support wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml
+        // Create workspace and find manifest file
+        let workspace = Workspace::new(workspace_root.clone(), WorkspaceConfig::default_local());
         let manifest_file = workspace.manifest_file_path();
-
-        if !manifest_file.exists() {
-            return Err(anyhow::anyhow!("Manifest file not found. Tried wmgr.yml, wmgr.yaml, manifest.yml, manifest.yaml in current directory and .wmgr/ subdirectory"));
-        }
 
         // Load manifest file
         use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
@@ -110,10 +119,10 @@ impl SyncCommand {
             .await
             .map_err(|e| anyhow::anyhow!("Failed to load manifest: {}", e))?;
 
-        // Create a simple workspace configuration
+        // Create a workspace configuration
         let workspace_config = WorkspaceConfig::new(&manifest_file.display().to_string(), "main");
 
-        let workspace = Workspace::new(current_dir, workspace_config)
+        let workspace = Workspace::new(workspace_root, workspace_config)
             .with_status(WorkspaceStatus::Initialized)
             .with_manifest(processed_manifest.manifest);
         Ok(workspace)

@@ -1,0 +1,142 @@
+# wmgr.yaml - Perforce (P4) Workspace Example
+# Perforceを使用するエンタープライズ環境の設定例
+
+# デフォルト設定（Perforceをデフォルトに）
+defaults:
+  scm: p4
+
+# ワークスペース設定
+workspace:
+  name: "Perforce Enterprise Workspace"
+  description: "Perforce-based enterprise development environment"
+
+# Perforceリポジトリ群
+groups:
+  # メインプロダクト
+  - name: main-products
+    description: "Primary product lines"
+    repositories:
+      # メインプロダクトのストリーム
+      - name: flagship-product
+        url: perforce://p4server.company.com:1666//depot/products/flagship/...
+        dest: products/flagship
+        scm: p4
+        # P4固有の設定
+        # client: developer-flagship-ws
+        # stream: //depot/products/flagship
+        
+      # 特定のチェンジリストを指定
+      - name: stable-build
+        url: p4://p4server.company.com:1666//depot/products/flagship/...
+        dest: stable/flagship
+        scm: p4
+        # changelist: 123456
+        
+      # セカンダリプロダクト
+      - name: mobile-app
+        url: ssl:p4server.company.com:1667//depot/mobile/app/...
+        dest: mobile/app
+        scm: p4
+
+  # 共有コンポーネント
+  - name: shared-components
+    description: "Shared libraries and components"
+    repositories:
+      - name: core-library
+        url: perforce://p4server.company.com:1666//depot/shared/core/...
+        dest: libs/core
+        scm: p4
+        
+      - name: ui-components
+        url: tcp:p4server.company.com:1666//depot/shared/ui/...
+        dest: libs/ui
+        scm: p4
+        
+      - name: data-layer
+        url: perforce://p4server.company.com:1666//depot/shared/data/...
+        dest: libs/data
+        scm: p4
+
+  # ビルド・デプロイメント
+  - name: build-deploy
+    description: "Build and deployment tools"
+    repositories:
+      - name: build-system
+        url: perforce://p4server.company.com:1666//depot/tools/build/...
+        dest: tools/build
+        scm: p4
+        
+      - name: deployment-scripts
+        url: p4://p4server.company.com:1666//depot/tools/deploy/...
+        dest: tools/deploy
+        scm: p4
+        
+      - name: ci-cd-configs
+        url: perforce://p4server.company.com:1666//depot/tools/ci-cd/...
+        dest: tools/ci-cd
+        scm: p4
+
+  # アセット・リソース
+  - name: assets
+    description: "Digital assets and resources"
+    repositories:
+      - name: graphics-assets
+        url: ssl:p4server.company.com:1667//depot/assets/graphics/...
+        dest: assets/graphics
+        scm: p4
+        
+      - name: documentation
+        url: perforce://p4server.company.com:1666//depot/docs/...
+        dest: docs
+        scm: p4
+        
+      - name: localization
+        url: p4://p4server.company.com:1666//depot/l10n/...
+        dest: localization
+        scm: p4
+
+# Perforce固有の設定オプション例
+# repositories:
+#   - name: advanced-p4-example
+#     url: perforce://p4server.company.com:1666//depot/example/...
+#     dest: example
+#     scm: p4
+#     # クライアント・ワークスペース指定
+#     client: my-client-workspace
+#     # ストリーム指定（P4 Streams使用時）
+#     stream: //depot/example/main
+#     # 特定のチェンジリスト
+#     changelist: 987654
+#     # 認証情報
+#     username: p4user
+#     password: ${P4_PASSWORD}
+#     # P4固有の追加オプション
+#     extra_options:
+#       - "-f"  # force
+#       - "-q"  # quiet mode
+
+# 環境変数を使用した設定例
+# P4環境変数を使用してサーバー情報などを動的に設定
+# repositories:
+#   - name: dynamic-config
+#     url: perforce://${P4PORT}//depot/project/...
+#     dest: project
+#     scm: p4
+#     username: ${P4USER}
+#     password: ${P4PASSWD}
+
+# 複数のP4サーバーを使用する例
+# groups:
+#   - name: server-a-repos
+#     repositories:
+#       - name: project-a
+#         url: perforce://p4-server-a.company.com:1666//depot/project-a/...
+#         dest: project-a
+#         scm: p4
+#         
+#   - name: server-b-repos  
+#     repositories:
+#       - name: project-b
+#         url: perforce://p4-server-b.company.com:1666//depot/project-b/...
+#         dest: project-b
+#         scm: p4

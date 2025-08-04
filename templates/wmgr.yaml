@@ -3,11 +3,13 @@
 
 # Optional: Specify defaults for repository configuration
 defaults:
-  # Default remote name (optional)
+  # Default SCM type (git, svn, p4) - optional, defaults to git
+  scm: git
+  # Default remote name (optional, git only)
   remote: origin
-  # Default branch for cloning (optional)  
+  # Default branch for cloning (optional, git only)  
   branch: main
-  # Enable shallow clones by default (optional)
+  # Enable shallow clones by default (optional, git only)
   shallow: false
 
 # Repository groups - organize repositories into logical groups
@@ -19,9 +21,11 @@ groups:
       - name: example-repo
         url: https://github.com/user/example-repo.git
         dest: example-repo
-        # Optional: specify different branch
+        # Optional: specify SCM type (git, svn, p4) - defaults to git
+        # scm: git
+        # Optional: specify different branch (git only)
         # branch: develop
-        # Optional: specify different remote name
+        # Optional: specify different remote name (git only)
         # remote: upstream
 
   # Example group: tools and utilities
@@ -32,14 +36,40 @@ groups:
         url: https://github.com/user/build-tools.git
         dest: tools/build-tools
 
+  # Example group: mixed SCM repositories  
+  - name: legacy
+    description: "Legacy repositories using different SCM systems"
+    repositories:
+      - name: legacy-svn-project
+        url: https://svn.example.com/repos/legacy-project
+        dest: legacy/svn-project
+        scm: svn
+        # SVN-specific options
+        # revision: HEAD
+        # username: myuser
+        
+      - name: perforce-project  
+        url: perforce://p4server:1666//depot/project
+        dest: legacy/p4-project
+        scm: p4
+        # Perforce-specific options
+        # client: my-client-workspace
+        # changelist: latest
+
 # Alternative flat repository list (without groups)
 # repositories:
 #   - name: my-project
 #     url: https://github.com/user/my-project.git
 #     dest: my-project
+#     scm: git
 #   - name: shared-lib
 #     url: https://github.com/user/shared-lib.git
 #     dest: libs/shared-lib
+#     scm: git
+#   - name: svn-legacy
+#     url: https://svn.example.com/repos/shared
+#     dest: libs/svn-shared
+#     scm: svn
 
 # Optional: Workspace-level configuration
 workspace:

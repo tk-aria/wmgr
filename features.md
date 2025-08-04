@@ -184,6 +184,19 @@
 - [x] actコマンドを用いてdocs.yamlの実行をシミュレートしエラーが発生しなくなるまで問題を修正して
 - [x] dry-runは使用せずにactコマンドを用いて docs.yamlの実行を行い、エラーが発生しなくなるまで修正して
 
+## Linux向けmuslビルド対応
+
+- [x] Linux向けmuslビルドターゲットの追加
+  - [x] `.github/workflows/release.yml` にmuslターゲット追加
+    - [x] x86_64-unknown-linux-musl
+    - [x] aarch64-unknown-linux-musl
+  - [x] musl-toolsのインストール設定
+  - [x] muslビルド用の静的リンク設定
+- [x] インストールスクリプトでのmuslデフォルト対応
+  - [x] `scripts/install.sh` でLinux向けにmuslバイナリを優先選択
+  - [x] glibcとmuslの両方が利用可能な場合のフォールバック機能
+  - [x] musl利用時の適切なエラーハンドリング
+
 ## GitHub Actions CI/CD自動リリース
 
 - [x] GitHub Actionsワークフローでマルチプラットフォーム対応リリースビルドの作成
@@ -365,3 +378,14 @@ curl -sSLf https://get.wmgr.sh | WMGR_INSTALL_PATH=/usr/bin sh
 # デバッグモードで実行
 curl -sSLf https://get.wmgr.sh | DEBUG=1 sh
 ```
+
+## サブディレクトリからのsync実行サポート
+
+- [x] サブディレクトリのワークスペースからwmgr syncコマンドを実行できるように実装
+  - [x] `sync_repositories.rs`に再帰的な子ワークスペース同期機能を追加
+  - [x] `recursive`フラグによる子ワークスペースの再帰的同期制御
+  - [x] `--no-recursive`オプションで再帰同期を無効化可能
+  - [x] 無限ループ防止のため子ワークスペースでは`recursive=false`に設定
+  - [x] 子ワークスペースのマニフェストファイル検出と読み込み
+  - [x] 子ワークスペースの同期結果を親の結果にマージ
+  - [x] .gitignoreにtmp/ディレクトリを追加

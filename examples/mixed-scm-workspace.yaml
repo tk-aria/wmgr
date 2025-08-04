@@ -1,0 +1,135 @@
+# wmgr.yaml - Mixed SCM Environment Example
+# This example demonstrates how to manage repositories using Git, SVN, and Perforce
+
+# デフォルト設定
+defaults:
+  scm: git  # デフォルトはGitを使用
+  branch: main
+  shallow: false
+
+# ワークスペース設定
+workspace:
+  name: "Mixed SCM Development Environment"
+  description: "Enterprise development workspace with Git, SVN, and Perforce repositories"
+
+# リポジトリグループ
+groups:
+  # 現代的なGitリポジトリ群
+  - name: modern
+    description: "Modern Git-based projects"
+    repositories:
+      - name: web-frontend
+        url: https://github.com/company/web-frontend.git
+        dest: frontend
+        branch: develop
+        
+      - name: api-backend
+        url: git@github.com:company/api-backend.git
+        dest: backend
+        branch: main
+        
+      - name: shared-utils
+        url: https://github.com/company/shared-utils.git
+        dest: libs/utils
+        shallow: true  # 履歴の浅いクローン
+
+  # SVNレガシーシステム
+  - name: legacy-svn
+    description: "Legacy Subversion repositories"
+    repositories:
+      - name: legacy-cms
+        url: https://svn.company.com/repos/legacy-cms/trunk
+        dest: legacy/cms
+        scm: svn
+        # SVN認証情報（実際の運用では環境変数や設定ファイルで管理）
+        # username: developer
+        # password: ${SVN_PASSWORD}
+        
+      - name: shared-libraries
+        url: svn://svn.company.com/shared/libraries/trunk
+        dest: legacy/shared-libs
+        scm: svn
+        # 特定のリビジョンを指定
+        # revision: 12345
+        
+      - name: documentation
+        url: https://svn.company.com/repos/docs
+        dest: docs
+        scm: svn
+
+  # Perforce (P4) システム
+  - name: enterprise-p4
+    description: "Perforce managed enterprise projects"
+    repositories:
+      - name: main-product
+        url: perforce://p4server.company.com:1666//depot/products/main/...
+        dest: products/main
+        scm: p4
+        # P4固有の設定
+        # client: developer-main-workspace
+        # stream: //depot/products/main
+        
+      - name: build-system
+        url: p4://p4server.company.com:1666//depot/build/system/...
+        dest: build-tools
+        scm: p4
+        # 特定のチェンジリストを指定
+        # changelist: 45678
+        
+      - name: assets
+        url: ssl:p4server.company.com:1667//depot/assets/...
+        dest: shared/assets
+        scm: p4
+
+  # 開発ツール群（混合SCM）
+  - name: dev-tools
+    description: "Development tools from various SCM systems"
+    repositories:
+      # Git
+      - name: linter-config
+        url: https://github.com/company/linter-config.git
+        dest: tools/linters
+        scm: git
+        
+      # SVN
+      - name: build-scripts
+        url: svn+ssh://svn.company.com/tools/build-scripts
+        dest: tools/build
+        scm: svn
+        
+      # Perforce
+      - name: deployment-tools
+        url: tcp:p4server.company.com:1666//depot/tools/deploy/...
+        dest: tools/deploy
+        scm: p4
+
+# 環境別設定例
+# 開発環境
+# groups:
+#   - name: development
+#     repositories:
+#       - name: dev-config
+#         url: https://github.com/company/dev-config.git
+#         dest: config
+#         branch: development
+#         scm: git
+
+# ステージング環境  
+# groups:
+#   - name: staging
+#     repositories:
+#       - name: staging-config
+#         url: svn://svn.company.com/config/staging
+#         dest: config
+#         scm: svn
+#         revision: HEAD
+
+# プロダクション環境
+# groups:
+#   - name: production
+#     repositories:
+#       - name: prod-config
+#         url: perforce://p4server.company.com:1666//depot/config/prod/...
+#         dest: config
+#         scm: p4
+#         changelist: latest

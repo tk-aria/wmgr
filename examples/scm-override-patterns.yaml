@@ -1,0 +1,231 @@
+# wmgr.yaml - SCM Override Patterns
+# デフォルト設定を個別にオーバーライドするパターン集
+
+# グローバルデフォルト設定
+defaults:
+  scm: git      # 基本はGitを使用
+  branch: main  # デフォルトブランチ
+  shallow: false
+  remote: origin
+
+workspace:
+  name: "SCM Override Patterns Demo"
+  description: "Demonstrating various SCM override patterns"
+
+groups:
+  # パターン1: デフォルトGitの中に例外的にSVN/P4を混在
+  - name: mostly-git-with-exceptions
+    description: "Mostly Git repositories with some SVN/P4 exceptions"
+    repositories:
+      # デフォルト設定を使用（Git + main + origin）
+      - name: standard-git-repo
+        url: https://github.com/company/standard.git
+        dest: standard
+        # scm: git は省略（デフォルト使用）
+        # branch: main は省略（デフォルト使用）
+        
+      # Gitだが別ブランチ
+      - name: develop-branch-repo
+        url: https://github.com/company/develop.git
+        dest: develop
+        # scm: git は省略（デフォルト使用）
+        branch: develop  # デフォルトのmainをオーバーライド
+        
+      # 例外的にSVNを使用
+      - name: legacy-exception
+        url: https://svn.company.com/repos/legacy/trunk
+        dest: legacy
+        scm: svn  # デフォルトのgitをオーバーライド
+        # SVN固有の設定
+        username: svn-user
+        revision: HEAD
+        
+      # 例外的にPerforceを使用
+      - name: enterprise-exception
+        url: perforce://p4server:1666//depot/enterprise/...
+        dest: enterprise
+        scm: p4   # デフォルトのgitをオーバーライド
+        # P4固有の設定
+        client: exception-workspace
+
+  # パターン2: デフォルトSVNの中にGit/P4を混在
+  - name: mostly-svn-with-exceptions
+    description: "SVN-based group with Git/P4 exceptions"
+    # グループ内の暗黙のデフォルト（SVNリポジトリが多い場合）
+    repositories:
+      # SVN標準設定
+      - name: svn-standard
+        url: https://svn.company.com/repos/standard/trunk
+        dest: svn-standard
+        scm: svn  # 明示的に指定
+        
+      # SVN特定リビジョン
+      - name: svn-specific-revision
+        url: https://svn.company.com/repos/specific/trunk
+        dest: svn-specific
+        scm: svn
+        revision: 1234  # 特定リビジョン
+        
+      # 例外的にGitを使用
+      - name: modern-git-exception
+        url: https://github.com/company/modern.git
+        dest: modern
+        scm: git  # SVN環境でのGit例外
+        branch: develop
+        
+      # 例外的にPerforceを使用
+      - name: p4-exception
+        url: p4://p4server:1666//depot/exception/...
+        dest: p4-exception
+        scm: p4   # SVN環境でのP4例外
+
+  # パターン3: 環境別・プロジェクト別の個別設定
+  - name: environment-specific
+    description: "Environment-specific repository configurations"
+    repositories:
+      # 開発環境 - Git開発ブランチ
+      - name: app-development
+        url: https://github.com/company/app.git
+        dest: app-dev
+        scm: git
+        branch: develop
+        shallow: true  # 開発環境は軽量
+        
+      # ステージング環境 - SVN安定版
+      - name: app-staging
+        url: https://svn.company.com/repos/app/branches/staging
+        dest: app-staging
+        scm: svn
+        revision: HEAD
+        
+      # プロダクション環境 - Perforce承認済み
+      - name: app-production
+        url: perforce://p4server:1666//depot/app/release/...
+        dest: app-prod
+        scm: p4
+        changelist: 123456  # 承認済みチェンジリスト
+
+  # パターン4: 認証情報の個別設定
+  - name: individual-auth
+    description: "Individual authentication configurations"
+    repositories:
+      # 公開Gitリポジトリ（認証不要）
+      - name: public-repo
+        url: https://github.com/opensource/project.git
+        dest: public
+        scm: git
+        
+      # プライベートGitリポジトリ（SSH認証）
+      - name: private-git
+        url: git@github.com:company/private.git
+        dest: private
+        scm: git
+        # SSH鍵認証（追加設定不要）
+        
+      # SVN（ユーザー認証）
+      - name: authenticated-svn
+        url: https://svn.company.com/repos/auth/trunk
+        dest: auth-svn
+        scm: svn
+        username: svn-user-1
+        password: ${SVN_USER1_PASS}
+        
+      # 別のSVNユーザー
+      - name: different-svn-user
+        url: https://svn.company.com/repos/other/trunk
+        dest: other-svn
+        scm: svn
+        username: svn-user-2
+        password: ${SVN_USER2_PASS}
+        
+      # Perforce（個別クライアント）
+      - name: p4-client-1
+        url: perforce://p4server:1666//depot/client1/...
+        dest: p4-client1
+        scm: p4
+        client: developer-client-1
+        username: p4-user-1
+        password: ${P4_USER1_PASS}
+        
+      # 別のPerforceクライアント
+      - name: p4-client-2
+        url: ssl:p4server:1667//depot/client2/...
+        dest: p4-client2
+        scm: p4
+        client: developer-client-2
+        username: p4-user-2
+        password: ${P4_USER2_PASS}
+
+  # パターン5: 高度なオプション個別設定
+  - name: advanced-options
+    description: "Advanced individual option configurations"
+    repositories:
+      # Git高度なオプション
+      - name: git-advanced
+        url: https://github.com/company/advanced.git
+        dest: git-advanced
+        scm: git
+        branch: feature/advanced
+        remote: upstream
+        shallow: false
+        extra_options:
+          - "--recurse-submodules"
+          - "--depth=100"
+          - "--single-branch"
+          
+      # SVN高度なオプション
+      - name: svn-advanced
+        url: https://svn.company.com/repos/advanced/trunk
+        dest: svn-advanced
+        scm: svn
+        revision: 5000
+        username: advanced-user
+        password: ${SVN_ADVANCED_PASS}
+        extra_options:
+          - "--depth=infinity"
+          - "--ignore-externals"
+          - "--force"
+          - "--non-interactive"
+          
+      # Perforce高度なオプション
+      - name: p4-advanced
+        url: perforce://p4server:1666//depot/advanced/main/...
+        dest: p4-advanced
+        scm: p4
+        client: advanced-workspace
+        stream: //depot/advanced/main
+        changelist: 777777
+        username: p4-advanced
+        password: ${P4_ADVANCED_PASS}
+        extra_options:
+          - "-f"  # force
+          - "-m50"  # max files
+          - "-q"   # quiet
+
+# フラット構造での個別オーバーライド例
+# repositories:
+#   # デフォルト設定使用
+#   - name: default-git
+#     url: https://github.com/company/default.git
+#     dest: default
+#     
+#   # ブランチのみオーバーライド
+#   - name: branch-override
+#     url: https://github.com/company/branch.git
+#     dest: branch
+#     branch: develop
+#     
+#   # SCM完全オーバーライド
+#   - name: scm-override
+#     url: https://svn.company.com/repos/override/trunk
+#     dest: override
+#     scm: svn
+#     username: override-user
+#     
+#   # 全設定オーバーライド
+#   - name: full-override
+#     url: perforce://p4server:1666//depot/full/...
+#     dest: full
+#     scm: p4
+#     client: full-workspace
+#     changelist: 999999

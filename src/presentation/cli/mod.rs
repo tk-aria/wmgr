@@ -72,6 +72,10 @@ pub enum Commands {
         /// Number of parallel jobs
         #[arg(short, long)]
         jobs: Option<usize>,
+
+        /// Disable recursive sync of child workspaces
+        #[arg(long)]
+        no_recursive: bool,
     },
 
     /// Show repository status
@@ -234,8 +238,9 @@ impl CliApp {
                 force,
                 no_correct_branch,
                 jobs,
+                no_recursive,
             } => {
-                self.handle_sync_command(group, *force, *no_correct_branch, *jobs)
+                self.handle_sync_command(group, *force, *no_correct_branch, *jobs, *no_recursive)
                     .await
             }
             Commands::Status {
@@ -318,6 +323,7 @@ impl CliApp {
         force: bool,
         no_correct_branch: bool,
         jobs: Option<usize>,
+        no_recursive: bool,
     ) -> anyhow::Result<()> {
         // Load workspace
         let mut workspace = self.load_workspace().await?;
@@ -336,6 +342,7 @@ impl CliApp {
             no_correct_branch,
             parallel_jobs: jobs,
             verbose: self.cli.verbose,
+            recursive: !no_recursive,
         };
 
         // Execute the use case
@@ -575,22 +582,23 @@ impl CliApp {
         command.execute().await
     }
 
-    /// Load workspace from the current directory
+    /// Load workspace from the current directory or any parent directory
     async fn load_workspace(&self) -> anyhow::Result<Workspace> {
         let current_dir = env::current_dir()?;
 
-        // Try to find manifest.yml in current directory first, then .wmgr/
-        let manifest_file = if current_dir.join("manifest.yml").exists() {
-            current_dir.join("manifest.yml")
-        } else if current_dir.join(".wmgr").join("manifest.yml").exists() {
-            current_dir.join(".wmgr").join("manifest.yml")
+        // Discover workspace root by searching upward for manifest files
+        let workspace_root = if let Some(root) = Workspace::discover_workspace_root(&current_dir) {
+            root
         } else {
             return Err(anyhow::anyhow!(
-                "Manifest file not found at: {} or {}",
-                current_dir.join("manifest.yml").display(),
-                current_dir.join(".wmgr").join("manifest.yml").display()
+                "No wmgr workspace found. Searched upward from {} for wmgr.yml, wmgr.yaml, manifest.yml, or manifest.yaml files.",
+                current_dir.display()
             ));
         };
+
+        // Create workspace and find manifest file
+        let workspace = Workspace::new(workspace_root.clone(), WorkspaceConfig::default_local());
+        let manifest_file = workspace.manifest_file_path();
 
         // Load manifest file
         use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
@@ -601,10 +609,10 @@ impl CliApp {
             .await
             .map_err(|e| anyhow::anyhow!("Failed to load manifest: {}", e))?;
 
-        // Create a simple workspace configuration
+        // Create a workspace configuration
         let workspace_config = WorkspaceConfig::new(&manifest_file.display().to_string(), "main");
 
-        let workspace = Workspace::new(current_dir, workspace_config)
+        let workspace = Workspace::new(workspace_root, workspace_config)
             .with_status(WorkspaceStatus::Initialized)
             .with_manifest(processed_manifest.manifest);
         Ok(workspace)

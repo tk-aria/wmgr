@@ -1,6 +1,6 @@
 [package]
 name = "wmgr"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.70.0"
 authors = ["wmgr contributors"]
@@ -75,6 +75,16 @@ chrono = { version = "0.4", features = ["serde"] }
 # Windows-specific dependencies
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winbase", "winnt", "processthreadsapi"] }
+
+# x86_64 musl-specific dependencies (static linking with vendored OpenSSL)
+[target.'cfg(all(target_env = "musl", target_arch = "x86_64"))'.dependencies]
+git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl", "vendored-libgit2"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls"], default-features = false }
+
+# aarch64 glibc-specific dependencies (compatible with older glibc versions)
+[target.'cfg(all(target_env = "gnu", target_arch = "aarch64"))'.dependencies]
+git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "native-tls"], default-features = false }
 
 [dev-dependencies]
 # Testing
