@@ -84,6 +84,12 @@ pub enum TsrcError {
     #[error("Operation timed out after {timeout_secs} seconds")]
     Timeout { timeout_secs: u64 },
 
+    #[error("IO error: {0}")]
+    IoError(String),
+
+    #[error("Unsupported operation: {0}")]
+    UnsupportedOperation(String),
+
     #[error("Internal error: {message}")]
     InternalError {
         message: String,

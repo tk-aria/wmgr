@@ -6,7 +6,9 @@ pub mod filesystem;
 /// - Git operations (clone, fetch, push, etc.)
 /// - File system operations (config files, manifests)
 /// - Process execution (command runners, parallel execution)
+/// - HTTP downloads and archive extraction
 pub mod git;
+pub mod http;
 pub mod process;
 pub mod scm;
 

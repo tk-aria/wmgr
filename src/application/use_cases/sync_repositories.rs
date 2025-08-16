@@ -335,6 +335,15 @@ impl SyncRepositoriesUseCase {
     ) -> Result<SyncOperation, SyncRepositoriesError> {
         let repo_path = workspace.repo_path(&repo.dest);
 
+        // Check if URL is HTTP/HTTPS for direct download
+        if repo.url.starts_with("http://") || repo.url.starts_with("https://") {
+            // Check if it's a git repository URL (contains .git or is a known git host)
+            if !self.is_git_repository_url(&repo.url) {
+                // Handle as HTTP download
+                return self.download_http_resource(repo, &repo_path).await;
+            }
+        }
+
         if !repo_path.exists() {
             // リポジトリが存在しない場合はクローン
             self.clone_repository(repo, &repo_path).await?;
@@ -344,6 +353,45 @@ impl SyncRepositoriesUseCase {
             self.update_repository(repo, &repo_path).await?;
             Ok(SyncOperation::Updated)
         }
+    }
+
+    /// Check if URL is a git repository
+    fn is_git_repository_url(&self, url: &str) -> bool {
+        url.contains(".git") 
+            || url.contains("github.com")
+            || url.contains("gitlab.com")
+            || url.contains("bitbucket.org")
+            || url.contains("git.")
+    }
+
+    /// Download HTTP resource (file or archive)
+    async fn download_http_resource(
+        &self,
+        repo: &ManifestRepo,
+        target_path: &PathBuf,
+    ) -> Result<SyncOperation, SyncRepositoriesError> {
+        use crate::infrastructure::http::HttpDownloader;
+
+        if self.config.verbose {
+            println!("Downloading HTTP resource: {} to {}", repo.url, target_path.display());
+        }
+
+        let downloader = HttpDownloader::new();
+        
+        // Download and extract if it's an archive, otherwise just download
+        downloader.download_and_extract(&repo.url, target_path)
+            .map_err(|e| {
+                SyncRepositoriesError::RepositoryCloneFailed(format!(
+                    "Failed to download {}: {}",
+                    repo.url, e
+                ))
+            })?;
+
+        if self.config.verbose {
+            println!("Successfully downloaded: {} -> {}", repo.url, target_path.display());
+        }
+
+        Ok(SyncOperation::Cloned)
     }
 
     /// リポジトリのクローン（SCM対応）
