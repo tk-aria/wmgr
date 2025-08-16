@@ -2,11 +2,13 @@ use crate::common::error::TsrcError;
 use crate::common::result::TsrcResult;
 use flate2::read::GzDecoder;
 use reqwest::blocking::Client;
+use reqwest::redirect::Policy;
 use std::fs::{self, File};
 use std::io::{self, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use tar::Archive;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use zip::ZipArchive;
 
 /// HTTP download manager for handling file downloads and extraction
@@ -15,11 +17,16 @@ pub struct HttpDownloader {
 }
 
 impl HttpDownloader {
-    /// Create a new HTTP downloader
+    /// Create a new HTTP downloader with redirect support
     pub fn new() -> Self {
-        Self {
-            client: Client::new(),
-        }
+        let client = Client::builder()
+            .redirect(Policy::limited(10)) // Follow up to 10 redirects
+            .timeout(Duration::from_secs(300)) // 5 minutes timeout
+            .user_agent("wmgr/1.0")
+            .build()
+            .unwrap_or_else(|_| Client::new());
+            
+        Self { client }
     }
 
     /// Download a file from URL and optionally extract if it's an archive
@@ -42,16 +49,25 @@ impl HttpDownloader {
             )
         })?;
 
+        // Log redirect information if URL changed
+        let final_url = response.url().clone();
+        let final_url_str = final_url.as_str();
+        if final_url_str != url {
+            info!("Redirected to: {}", final_url_str);
+        }
+
         if !response.status().is_success() {
             return Err(TsrcError::network_error(
                 format!("HTTP request failed with status: {}", response.status()),
-                Some(url.to_string())
+                Some(final_url_str.to_string())
             ));
         }
 
         // Get file extension from URL to determine if extraction is needed
-        let url_path = url.split('?').next().unwrap_or(url);
-        let needs_extraction = self.is_archive(url_path);
+        // Check both original and final URL (after redirect) for archive detection
+        let original_url_path = url.split('?').next().unwrap_or(url);
+        let final_url_path = final_url_str.split('?').next().unwrap_or(final_url_str);
+        let needs_extraction = self.is_archive(original_url_path) || self.is_archive(final_url_path);
 
         if needs_extraction {
             // Download to temporary file and extract
@@ -81,8 +97,8 @@ impl HttpDownloader {
 
             drop(temp_file_write);
 
-            // Extract based on file type
-            self.extract_archive(temp_file.path(), url_path, dest_path)?;
+            // Extract based on file type (use final URL for detection)
+            self.extract_archive(temp_file.path(), final_url_path, dest_path)?;
             
             info!("Successfully extracted archive to: {}", dest_path.display());
         } else {
@@ -249,10 +265,17 @@ impl HttpDownloader {
             )
         })?;
 
+        // Log redirect information if URL changed
+        let final_url = response.url().clone();
+        let final_url_str = final_url.as_str();
+        if final_url_str != url {
+            info!("Redirected to: {}", final_url_str);
+        }
+
         if !response.status().is_success() {
             return Err(TsrcError::network_error(
                 format!("HTTP request failed with status: {}", response.status()),
-                Some(url.to_string())
+                Some(final_url_str.to_string())
             ));
         }
 

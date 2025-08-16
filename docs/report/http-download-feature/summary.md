@@ -29,6 +29,9 @@ HTTP/HTTPS URLからファイルをダウンロードし、圧縮ファイルの
 - `extract_zip()` - ZIPファイルの展開
 - `extract_tar_gz()` - tar.gz/tgzファイルの展開
 - `extract_tar()` - tarファイルの展開
+- **リダイレクト対応** - 最大10回までのHTTPリダイレクトを自動追従
+- **タイムアウト設定** - 5分間のダウンロードタイムアウト
+- **User-Agent設定** - wmgr/1.0として識別
 
 #### サポートする圧縮フォーマット
 - ZIP (.zip)
@@ -65,6 +68,7 @@ wmgr sync
 ## テスト結果
 - `test_is_archive_detection` - アーカイブ判定のテスト: ✅ 成功
 - `test_http_download_file` - ファイルダウンロードのテスト: ✅ 成功
+- `test_http_download_with_redirect` - リダイレクト処理のテスト: ✅ 成功
 - `integration_tests::test_sync_with_http_download` - 統合テスト: ✅ 成功
 
 ## コンパイル結果

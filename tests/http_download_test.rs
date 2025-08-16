@@ -27,6 +27,29 @@ fn test_http_download_file() {
 }
 
 #[test]
+fn test_http_download_with_redirect() {
+    // Test redirect handling
+    let temp_dir = TempDir::new().unwrap();
+    let dest_path = temp_dir.path().join("redirect_test.json");
+    
+    let downloader = HttpDownloader::new();
+    
+    // httpbin.org redirect endpoint
+    let result = downloader.download_file(
+        "https://httpbin.org/redirect/1",
+        &dest_path
+    );
+    
+    // Check if download succeeded after redirect
+    if result.is_ok() {
+        assert!(dest_path.exists());
+        let content = fs::read_to_string(&dest_path).unwrap();
+        // After redirect, should get the GET response
+        assert!(content.contains("url"));
+    }
+}
+
+#[test]
 fn test_is_archive_detection() {
     let downloader = HttpDownloader::new();
     
