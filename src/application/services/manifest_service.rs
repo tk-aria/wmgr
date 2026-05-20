@@ -254,8 +254,10 @@ impl ManifestService {
                 )));
             }
 
-            // URL検証
-            GitUrl::new(&repo.url)?;
+            // URL検証 (Git リポジトリの場合のみ Git URL バリデーション)
+            if repo.scm == crate::domain::value_objects::scm_type::ScmType::Git {
+                GitUrl::new(&repo.url)?;
+            }
         }
 
         // グループ検証
