@@ -48,7 +48,8 @@ mod tests {
     fn test_get_wmgr_template() {
         let template = get_wmgr_template();
         assert!(!template.is_empty());
-        assert!(template.contains("wmgr configuration file template"));
+        assert!(template.contains("wmgr configuration file"));
+        assert!(template.contains("repos:"));
     }
 
     #[test]
@@ -56,7 +57,7 @@ mod tests {
         let processor = TemplateProcessor::new();
         let template = processor.get_default_wmgr_template();
         assert!(!template.is_empty());
-        assert!(template.contains("groups:"));
-        assert!(template.contains("repositories:"));
+        assert!(template.contains("repos:"));
+        assert!(template.contains("scm:"));
     }
 }

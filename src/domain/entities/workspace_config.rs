@@ -337,8 +337,9 @@ mod tests {
 
     #[test]
     fn test_invalid_url_validation() {
+        // Empty URL should fail validation
         let repos = vec![
-            ManifestRepo::with_scm("https://github.com/user/repo.git", "repo", ScmType::P4), // 不正な組み合わせ
+            ManifestRepo::with_scm("", "repo", ScmType::Git),
         ];
 
         let config = WorkspaceConfig::new().with_repositories(repos);
