@@ -3,6 +3,7 @@ use crate::domain::entities::{
     workspace::{Workspace, WorkspaceStatus},
 };
 use crate::domain::value_objects::branch_name::BranchName;
+use crate::domain::value_objects::scm_type::ScmType;
 use crate::infrastructure::scm::{ScmFactory, ScmError};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -335,13 +336,8 @@ impl SyncRepositoriesUseCase {
     ) -> Result<SyncOperation, SyncRepositoriesError> {
         let repo_path = workspace.repo_path(&repo.dest);
 
-        // Check if URL is HTTP/HTTPS for direct download
-        if repo.url.starts_with("http://") || repo.url.starts_with("https://") {
-            // Check if it's a git repository URL (contains .git or is a known git host)
-            if !self.is_git_repository_url(&repo.url) {
-                // Handle as HTTP download
-                return self.download_http_resource(repo, &repo_path).await;
-            }
+        if repo.scm == ScmType::Http {
+            return self.download_http_resource(repo, &repo_path).await;
         }
 
         if !repo_path.exists() {
@@ -353,15 +349,6 @@ impl SyncRepositoriesUseCase {
             self.update_repository(repo, &repo_path).await?;
             Ok(SyncOperation::Updated)
         }
-    }
-
-    /// Check if URL is a git repository
-    fn is_git_repository_url(&self, url: &str) -> bool {
-        url.contains(".git")
-            || url.contains("github.com")
-            || url.contains("gitlab.com")
-            || url.contains("bitbucket.org")
-            || url.contains("git.")
     }
 
     /// Download HTTP resource (file or archive)
@@ -376,17 +363,27 @@ impl SyncRepositoriesUseCase {
             println!("Downloading HTTP resource: {} to {}", repo.url, target_path.display());
         }
 
-        let downloader = HttpDownloader::new();
+        let url = repo.url.clone();
+        let dest = target_path.clone();
+        let verbose = self.config.verbose;
 
-        downloader.download_and_extract(&repo.url, target_path)
-            .map_err(|e| {
-                SyncRepositoriesError::RepositoryCloneFailed(format!(
-                    "Failed to download {}: {}",
-                    repo.url, e
-                ))
-            })?;
+        tokio::task::spawn_blocking(move || {
+            let downloader = HttpDownloader::new();
+            downloader.download_and_extract(&url, &dest)
+        })
+        .await
+        .map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "Download task failed: {}", e
+            ))
+        })?
+        .map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "Failed to download {}: {}", repo.url, e
+            ))
+        })?;
 
-        if self.config.verbose {
+        if verbose {
             println!("Successfully downloaded: {} -> {}", repo.url, target_path.display());
         }
 

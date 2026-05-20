@@ -12,6 +12,8 @@ pub enum ScmType {
     Svn,
     /// Perforce (P4) version control system
     P4,
+    /// HTTP download (not a VCS, downloads files/archives via HTTP)
+    Http,
 }
 
 impl Default for ScmType {
@@ -26,6 +28,7 @@ impl fmt::Display for ScmType {
             ScmType::Git => write!(f, "git"),
             ScmType::Svn => write!(f, "svn"),
             ScmType::P4 => write!(f, "p4"),
+            ScmType::Http => write!(f, "http"),
         }
     }
 }
@@ -38,6 +41,7 @@ impl FromStr for ScmType {
             "git" => Ok(ScmType::Git),
             "svn" | "subversion" => Ok(ScmType::Svn),
             "p4" | "perforce" => Ok(ScmType::P4),
+            "http" | "https" | "download" => Ok(ScmType::Http),
             _ => Err(ScmTypeError::UnsupportedScmType(s.to_string())),
         }
     }
@@ -50,6 +54,7 @@ impl ScmType {
             ScmType::Git => true,
             ScmType::Svn => false, // SVN uses trunk/branches/tags structure
             ScmType::P4 => false,  // Perforce uses different branching model
+            ScmType::Http => false,
         }
     }
 
@@ -59,6 +64,7 @@ impl ScmType {
             ScmType::Git => true,
             ScmType::Svn => false, // SVN repositories are centralized
             ScmType::P4 => false,  // Perforce is centralized
+            ScmType::Http => false,
         }
     }
 
@@ -68,6 +74,7 @@ impl ScmType {
             ScmType::Git => true,
             ScmType::Svn => false, // SVN doesn't have shallow clone concept
             ScmType::P4 => false,  // P4 sync is different from clone
+            ScmType::Http => false,
         }
     }
 
@@ -77,6 +84,7 @@ impl ScmType {
             ScmType::Git => vec![".gitignore"],
             ScmType::Svn => vec![".svnignore"],
             ScmType::P4 => vec![".p4ignore"],
+            ScmType::Http => vec![],
         }
     }
 
@@ -86,6 +94,7 @@ impl ScmType {
             ScmType::Git => ".git",
             ScmType::Svn => ".svn",
             ScmType::P4 => ".p4",
+            ScmType::Http => "",
         }
     }
 
@@ -95,6 +104,7 @@ impl ScmType {
             ScmType::Git => "git",
             ScmType::Svn => "svn",
             ScmType::P4 => "p4",
+            ScmType::Http => "",
         }
     }
 
@@ -123,6 +133,9 @@ impl ScmType {
                     || url.starts_with("tcp:")
                     || url.contains(":") // P4 server:port format
             }
+            ScmType::Http => {
+                url.starts_with("https://") || url.starts_with("http://")
+            }
         }
     }
 }
@@ -142,7 +155,7 @@ impl fmt::Display for ScmTypeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ScmTypeError::UnsupportedScmType(scm) => {
-                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4", scm)
+                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4, http", scm)
             }
             ScmTypeError::InvalidUrlScheme { scm, url } => {
                 write!(f, "Invalid URL scheme for {}: '{}'", scm, url)

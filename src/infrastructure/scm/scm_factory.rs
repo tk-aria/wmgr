@@ -15,6 +15,10 @@ impl ScmFactory {
             ScmType::Git => Ok(Arc::new(GitScm::new())),
             ScmType::Svn => Ok(Arc::new(SvnScm::new())),
             ScmType::P4 => Ok(Arc::new(P4Scm::new())),
+            ScmType::Http => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::Http,
+                operation: "create_scm: HTTP downloads are handled directly, not via SCM interface".to_string(),
+            }),
         }
     }
 
@@ -27,6 +31,10 @@ impl ScmFactory {
             ScmType::Git => Ok(Arc::new(GitScm::with_executable(executable_path))),
             ScmType::Svn => Ok(Arc::new(SvnScm::with_executable(executable_path))),
             ScmType::P4 => Ok(Arc::new(P4Scm::with_executable(executable_path))),
+            ScmType::Http => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::Http,
+                operation: "create_scm_with_executable: HTTP downloads do not use an executable".to_string(),
+            }),
         }
     }
 
@@ -69,6 +77,7 @@ impl ScmFactory {
                     Ok(false)
                 }
             }
+            ScmType::Http => Ok(true),
         }
     }
 

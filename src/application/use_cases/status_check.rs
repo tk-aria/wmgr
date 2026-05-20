@@ -1,4 +1,5 @@
 use crate::domain::entities::{manifest::ManifestRepo, workspace::Workspace};
+use crate::domain::value_objects::scm_type::ScmType;
 use crate::infrastructure::git::repository::{GitRepository, GitRepositoryError};
 use crate::infrastructure::scm::{ScmFactory, ScmError, StatusResult as ScmStatusResult};
 use serde::{Deserialize, Serialize};
@@ -331,6 +332,11 @@ impl StatusCheckUseCase {
 
         if !repo_path.exists() {
             status.state = RepositoryState::Missing;
+            return Ok(status);
+        }
+
+        if repo.scm == ScmType::Http {
+            status.state = RepositoryState::Clean;
             return Ok(status);
         }
 
