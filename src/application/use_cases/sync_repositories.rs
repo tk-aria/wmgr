@@ -65,6 +65,12 @@ pub struct SyncRepositoriesConfig {
 
     /// 子ディレクトリのワークスペースも再帰的に同期するか
     pub recursive: bool,
+
+    /// クレデンシャルプロファイル名（CLIから）
+    pub credential_profile: Option<String>,
+
+    /// クレデンシャルファイルパス（CLIから）
+    pub credential_file: Option<std::path::PathBuf>,
 }
 
 impl Default for SyncRepositoriesConfig {
@@ -76,6 +82,8 @@ impl Default for SyncRepositoriesConfig {
             parallel_jobs: None,
             verbose: false,
             recursive: true,
+            credential_profile: None,
+            credential_file: None,
         }
     }
 }
@@ -909,7 +917,9 @@ impl SyncRepositoriesUseCase {
             no_correct_branch: self.config.no_correct_branch,
             parallel_jobs: self.config.parallel_jobs,
             verbose: self.config.verbose,
-            recursive: false, // 子ワークスペースでは再帰を無効化
+            recursive: false,
+            credential_profile: self.config.credential_profile.clone(),
+            credential_file: self.config.credential_file.clone(),
         };
 
         // 子ワークスペースの同期実行

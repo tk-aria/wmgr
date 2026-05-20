@@ -91,6 +91,10 @@ pub struct ManifestRepo {
     /// 追加のSCM固有オプション
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extra_options: Option<Vec<String>>,
+
+    /// クレデンシャルプロファイル名（~/.config/wmgr/credential.yml のプロファイル参照）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
 }
 
 /// ファイルコピー操作
@@ -200,6 +204,7 @@ impl ManifestRepo {
             username: None,
             password: None,
             extra_options: None,
+            profile: None,
         }
     }
 
@@ -221,6 +226,7 @@ impl ManifestRepo {
             username: None,
             password: None,
             extra_options: None,
+            profile: None,
         }
     }
 
@@ -401,6 +407,10 @@ pub struct Manifest {
     /// デフォルトのSCM種別（オプション）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_scm: Option<ScmType>,
+
+    /// クレデンシャルヘルパーコマンド（git credential-helper パターン）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_helper: Option<String>,
 }
 
 impl Manifest {
@@ -411,6 +421,7 @@ impl Manifest {
             groups: None,
             default_branch: None,
             default_scm: None,
+            credential_helper: None,
         }
     }
 

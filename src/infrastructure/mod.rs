@@ -1,3 +1,4 @@
+pub mod credential;
 pub mod filesystem;
 /// Infrastructure layer modules
 ///

@@ -15,6 +15,8 @@ pub struct SyncCommand {
     pub jobs: Option<usize>,
     pub verbose: bool,
     pub no_recursive: bool,
+    pub credential_profile: Option<String>,
+    pub credential_file: Option<std::path::PathBuf>,
 }
 
 impl SyncCommand {
@@ -25,6 +27,8 @@ impl SyncCommand {
         jobs: Option<usize>,
         verbose: bool,
         no_recursive: bool,
+        credential_profile: Option<String>,
+        credential_file: Option<std::path::PathBuf>,
     ) -> Self {
         Self {
             groups,
@@ -33,6 +37,8 @@ impl SyncCommand {
             jobs,
             verbose,
             no_recursive,
+            credential_profile,
+            credential_file,
         }
     }
 
@@ -55,6 +61,8 @@ impl SyncCommand {
             parallel_jobs: self.jobs,
             verbose: self.verbose,
             recursive: !self.no_recursive,
+            credential_profile: self.credential_profile.clone(),
+            credential_file: self.credential_file.clone(),
         };
 
         // Execute the use case

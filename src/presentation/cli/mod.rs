@@ -50,6 +50,14 @@ pub struct Cli {
     #[arg(short = 'C', long, global = true)]
     pub directory: Option<String>,
 
+    /// Credential profile name (overrides WMGR_PROFILE and per-repo profile settings)
+    #[arg(long, global = true, env = "WMGR_PROFILE")]
+    pub profile: Option<String>,
+
+    /// Path to credential file (overrides default ~/.config/wmgr/credential.yml)
+    #[arg(long, global = true)]
+    pub credential_file: Option<std::path::PathBuf>,
+
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -364,6 +372,8 @@ impl CliApp {
             parallel_jobs: jobs,
             verbose: self.cli.verbose,
             recursive: !no_recursive,
+            credential_profile: self.cli.profile.clone(),
+            credential_file: self.cli.credential_file.clone(),
         };
 
         // Execute the use case
