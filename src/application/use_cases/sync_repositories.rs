@@ -348,6 +348,18 @@ impl SyncRepositoriesUseCase {
             return self.download_http_resource(repo, &repo_path).await;
         }
 
+        if repo.scm == ScmType::Symlink {
+            return self.create_or_update_symlink(repo, &repo_path, workspace).await;
+        }
+
+        if repo.scm == ScmType::S3 {
+            return self.sync_s3_resource(repo, &repo_path).await;
+        }
+
+        if repo.scm == ScmType::GDrive {
+            return self.sync_gdrive_resource(repo, &repo_path).await;
+        }
+
         if !repo_path.exists() {
             // リポジトリが存在しない場合はクローン
             self.clone_repository(repo, &repo_path).await?;
@@ -396,6 +408,217 @@ impl SyncRepositoriesUseCase {
         }
 
         Ok(SyncOperation::Cloned)
+    }
+
+    /// Create or update symlink for symlink SCM type
+    async fn create_or_update_symlink(
+        &self,
+        repo: &ManifestRepo,
+        link_path: &PathBuf,
+        workspace: &Workspace,
+    ) -> Result<SyncOperation, SyncRepositoriesError> {
+        let target = std::path::Path::new(&repo.url);
+        let resolved_target = if target.is_absolute() {
+            target.to_path_buf()
+        } else {
+            workspace.root_path.join(target)
+        };
+
+        if self.config.verbose {
+            println!(
+                "Symlink: {} -> {}",
+                link_path.display(),
+                resolved_target.display()
+            );
+        }
+
+        if !resolved_target.exists() {
+            return Err(SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "Symlink target does not exist: {}",
+                resolved_target.display()
+            )));
+        }
+
+        if link_path.exists() || link_path.is_symlink() {
+            let current_target = std::fs::read_link(link_path).ok();
+            if current_target.as_deref() == Some(&resolved_target) {
+                return Ok(SyncOperation::Updated);
+            }
+            if link_path.is_symlink() {
+                std::fs::remove_file(link_path)?;
+            } else {
+                return Err(SyncRepositoriesError::RepositoryCloneFailed(format!(
+                    "Path {} already exists and is not a symlink",
+                    link_path.display()
+                )));
+            }
+        }
+
+        if let Some(parent) = link_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&resolved_target, link_path).map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "Failed to create symlink: {}",
+                e
+            ))
+        })?;
+
+        #[cfg(windows)]
+        {
+            if resolved_target.is_dir() {
+                std::os::windows::fs::symlink_dir(&resolved_target, link_path)
+            } else {
+                std::os::windows::fs::symlink_file(&resolved_target, link_path)
+            }
+            .map_err(|e| {
+                SyncRepositoriesError::RepositoryCloneFailed(format!(
+                    "Failed to create symlink: {}",
+                    e
+                ))
+            })?;
+        }
+
+        Ok(SyncOperation::Cloned)
+    }
+
+    /// Sync resource from Amazon S3
+    async fn sync_s3_resource(
+        &self,
+        repo: &ManifestRepo,
+        target_path: &PathBuf,
+    ) -> Result<SyncOperation, SyncRepositoriesError> {
+        use crate::application::services::credential_service::CredentialService;
+
+        if self.config.verbose {
+            println!("S3 sync: {} -> {}", repo.url, target_path.display());
+        }
+
+        if let Some(parent) = target_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        let credential_service = CredentialService::new(
+            self.config.credential_profile.clone(),
+            self.config.credential_file.clone(),
+        );
+        let creds = credential_service
+            .get_credentials_for_repo(repo, None)
+            .await;
+
+        let mut cmd = tokio::process::Command::new("aws");
+        cmd.arg("s3").arg("sync").arg(&repo.url).arg(target_path);
+
+        if let Some(ref access_key) = creds.profile.aws_access_key_id {
+            cmd.env("AWS_ACCESS_KEY_ID", access_key);
+        }
+        if let Some(ref secret_key) = creds.profile.aws_secret_access_key {
+            cmd.env("AWS_SECRET_ACCESS_KEY", secret_key);
+        }
+        if let Some(ref session_token) = creds.profile.aws_session_token {
+            cmd.env("AWS_SESSION_TOKEN", session_token);
+        }
+
+        // Apply S3-specific options from scm_options
+        if let Some(crate::domain::entities::manifest::ScmOptions::S3 {
+            region,
+            endpoint_url,
+        }) = &repo.scm_options
+        {
+            if let Some(r) = region {
+                cmd.arg("--region").arg(r);
+            }
+            if let Some(e) = endpoint_url {
+                cmd.arg("--endpoint-url").arg(e);
+            }
+        }
+
+        cmd.stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+
+        let output = cmd.output().await.map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "Failed to run aws s3 sync: {}",
+                e
+            ))
+        })?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "aws s3 sync failed: {}",
+                stderr
+            )));
+        }
+
+        let operation = if target_path.exists() {
+            SyncOperation::Updated
+        } else {
+            SyncOperation::Cloned
+        };
+        Ok(operation)
+    }
+
+    /// Sync resource from Google Drive via rclone
+    async fn sync_gdrive_resource(
+        &self,
+        repo: &ManifestRepo,
+        target_path: &PathBuf,
+    ) -> Result<SyncOperation, SyncRepositoriesError> {
+        if self.config.verbose {
+            println!("GDrive sync: {} -> {}", repo.url, target_path.display());
+        }
+
+        if let Some(parent) = target_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+
+        let existed = target_path.exists();
+
+        let mut cmd = tokio::process::Command::new("rclone");
+        cmd.arg("copy").arg(&repo.url).arg(target_path);
+
+        // Apply GDrive-specific options
+        if let Some(crate::domain::entities::manifest::ScmOptions::GDrive {
+            rclone_remote,
+        }) = &repo.scm_options
+        {
+            if let Some(remote) = rclone_remote {
+                let source = if repo.url.contains(':') {
+                    repo.url.clone()
+                } else {
+                    format!("{}:{}", remote, repo.url)
+                };
+                cmd = tokio::process::Command::new("rclone");
+                cmd.arg("copy").arg(&source).arg(target_path);
+            }
+        }
+
+        cmd.stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+
+        let output = cmd.output().await.map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "Failed to run rclone: {}",
+                e
+            ))
+        })?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "rclone copy failed: {}",
+                stderr
+            )));
+        }
+
+        Ok(if existed {
+            SyncOperation::Updated
+        } else {
+            SyncOperation::Cloned
+        })
     }
 
     /// リポジトリのクローン（SCM対応）

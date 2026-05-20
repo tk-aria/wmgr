@@ -16,6 +16,12 @@ pub enum ScmType {
     Hg,
     /// HTTP download (not a VCS, downloads files/archives via HTTP)
     Http,
+    /// Symlink (creates symbolic links to local paths)
+    Symlink,
+    /// Amazon S3 (downloads files via aws s3 CLI)
+    S3,
+    /// Google Drive (downloads files via rclone)
+    GDrive,
 }
 
 impl Default for ScmType {
@@ -32,6 +38,9 @@ impl fmt::Display for ScmType {
             ScmType::P4 => write!(f, "p4"),
             ScmType::Hg => write!(f, "hg"),
             ScmType::Http => write!(f, "http"),
+            ScmType::Symlink => write!(f, "symlink"),
+            ScmType::S3 => write!(f, "s3"),
+            ScmType::GDrive => write!(f, "gdrive"),
         }
     }
 }
@@ -46,6 +55,9 @@ impl FromStr for ScmType {
             "p4" | "perforce" => Ok(ScmType::P4),
             "hg" | "mercurial" => Ok(ScmType::Hg),
             "http" | "https" | "download" => Ok(ScmType::Http),
+            "symlink" | "link" => Ok(ScmType::Symlink),
+            "s3" | "aws-s3" => Ok(ScmType::S3),
+            "gdrive" | "googledrive" | "google-drive" => Ok(ScmType::GDrive),
             _ => Err(ScmTypeError::UnsupportedScmType(s.to_string())),
         }
     }
@@ -59,7 +71,7 @@ impl ScmType {
             ScmType::Svn => false,
             ScmType::P4 => false,
             ScmType::Hg => true,
-            ScmType::Http => false,
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => false,
         }
     }
 
@@ -70,7 +82,7 @@ impl ScmType {
             ScmType::Svn => false,
             ScmType::P4 => false,
             ScmType::Hg => true,
-            ScmType::Http => false,
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => false,
         }
     }
 
@@ -78,10 +90,8 @@ impl ScmType {
     pub fn supports_shallow_clone(&self) -> bool {
         match self {
             ScmType::Git => true,
-            ScmType::Svn => false,
-            ScmType::P4 => false,
-            ScmType::Hg => false,
-            ScmType::Http => false,
+            ScmType::Svn | ScmType::P4 | ScmType::Hg => false,
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => false,
         }
     }
 
@@ -92,7 +102,7 @@ impl ScmType {
             ScmType::Svn => vec![".svnignore"],
             ScmType::P4 => vec![".p4ignore"],
             ScmType::Hg => vec![".hgignore"],
-            ScmType::Http => vec![],
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => vec![],
         }
     }
 
@@ -103,7 +113,7 @@ impl ScmType {
             ScmType::Svn => ".svn",
             ScmType::P4 => ".p4",
             ScmType::Hg => ".hg",
-            ScmType::Http => "",
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => "",
         }
     }
 
@@ -114,7 +124,9 @@ impl ScmType {
             ScmType::Svn => "svn",
             ScmType::P4 => "p4",
             ScmType::Hg => "hg",
-            ScmType::Http => "",
+            ScmType::Http | ScmType::Symlink => "",
+            ScmType::S3 => "aws",
+            ScmType::GDrive => "rclone",
         }
     }
 
@@ -153,6 +165,11 @@ impl ScmType {
             ScmType::Http => {
                 url.starts_with("https://") || url.starts_with("http://")
             }
+            ScmType::Symlink => true,
+            ScmType::S3 => url.starts_with("s3://"),
+            ScmType::GDrive => {
+                url.contains(':') || url.starts_with("gdrive://")
+            }
         }
     }
 }
@@ -172,7 +189,7 @@ impl fmt::Display for ScmTypeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ScmTypeError::UnsupportedScmType(scm) => {
-                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4, hg, http", scm)
+                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4, hg, http, symlink, s3, gdrive", scm)
             }
             ScmTypeError::InvalidUrlScheme { scm, url } => {
                 write!(f, "Invalid URL scheme for {}: '{}'", scm, url)

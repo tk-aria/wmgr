@@ -335,8 +335,30 @@ impl StatusCheckUseCase {
             return Ok(status);
         }
 
-        if repo.scm == ScmType::Http {
+        if repo.scm == ScmType::Http || repo.scm == ScmType::S3 || repo.scm == ScmType::GDrive {
             status.state = RepositoryState::Clean;
+            return Ok(status);
+        }
+
+        if repo.scm == ScmType::Symlink {
+            if repo_path.is_symlink() {
+                if let Ok(target) = std::fs::read_link(&repo_path) {
+                    let resolved = if target.is_absolute() {
+                        target
+                    } else {
+                        repo_path.parent().unwrap_or(std::path::Path::new(".")).join(&target)
+                    };
+                    if resolved.exists() {
+                        status.state = RepositoryState::Clean;
+                    } else {
+                        status.state = RepositoryState::Dirty;
+                    }
+                } else {
+                    status.state = RepositoryState::Dirty;
+                }
+            } else {
+                status.state = RepositoryState::Dirty;
+            }
             return Ok(status);
         }
 

@@ -21,6 +21,18 @@ impl ScmFactory {
                 scm_type: ScmType::Http,
                 operation: "create_scm: HTTP downloads are handled directly, not via SCM interface".to_string(),
             }),
+            ScmType::Symlink => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::Symlink,
+                operation: "create_scm: Symlinks are handled directly, not via SCM interface".to_string(),
+            }),
+            ScmType::S3 => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::S3,
+                operation: "create_scm: S3 downloads are handled directly, not via SCM interface".to_string(),
+            }),
+            ScmType::GDrive => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::GDrive,
+                operation: "create_scm: Google Drive downloads are handled directly, not via SCM interface".to_string(),
+            }),
         }
     }
 
@@ -37,6 +49,18 @@ impl ScmFactory {
             ScmType::Http => Err(ScmError::UnsupportedOperation {
                 scm_type: ScmType::Http,
                 operation: "create_scm_with_executable: HTTP downloads do not use an executable".to_string(),
+            }),
+            ScmType::Symlink => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::Symlink,
+                operation: "create_scm_with_executable: Symlinks do not use an executable".to_string(),
+            }),
+            ScmType::S3 => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::S3,
+                operation: "create_scm_with_executable: S3 is handled directly".to_string(),
+            }),
+            ScmType::GDrive => Err(ScmError::UnsupportedOperation {
+                scm_type: ScmType::GDrive,
+                operation: "create_scm_with_executable: Google Drive is handled directly".to_string(),
             }),
         }
     }
@@ -59,7 +83,13 @@ impl ScmFactory {
     /// Check if an SCM type is available on the system
     pub async fn check_scm_availability(scm_type: ScmType) -> Result<bool, ScmError> {
         match &scm_type {
-            ScmType::Http => return Ok(true),
+            ScmType::Http | ScmType::Symlink => return Ok(true),
+            ScmType::S3 => {
+                return Self::check_command_availability("aws", &["--version"]).await;
+            }
+            ScmType::GDrive => {
+                return Self::check_command_availability("rclone", &["--version"]).await;
+            }
             _ => {}
         }
 
@@ -94,7 +124,24 @@ impl ScmFactory {
                     Ok(false)
                 }
             }
-            ScmType::Http => unreachable!(),
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => unreachable!(),
+        }
+    }
+
+    async fn check_command_availability(command: &str, args: &[&str]) -> Result<bool, ScmError> {
+        use std::process::Stdio;
+        use tokio::process::Command;
+
+        let result = Command::new(command)
+            .args(args)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .await;
+
+        match result {
+            Ok(status) => Ok(status.success()),
+            Err(_) => Ok(false),
         }
     }
 
@@ -137,6 +184,15 @@ mod tests {
 
         let http_scm = ScmFactory::create_scm(ScmType::Http);
         assert!(http_scm.is_err());
+
+        let symlink_scm = ScmFactory::create_scm(ScmType::Symlink);
+        assert!(symlink_scm.is_err());
+
+        let s3_scm = ScmFactory::create_scm(ScmType::S3);
+        assert!(s3_scm.is_err());
+
+        let gdrive_scm = ScmFactory::create_scm(ScmType::GDrive);
+        assert!(gdrive_scm.is_err());
     }
 
     #[test]

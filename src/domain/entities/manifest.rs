@@ -173,6 +173,24 @@ pub enum ScmOptions {
         #[serde(skip_serializing_if = "Option::is_none")]
         password: Option<String>,
     },
+
+    /// S3固有のオプション
+    S3 {
+        /// AWSリージョン
+        #[serde(skip_serializing_if = "Option::is_none")]
+        region: Option<String>,
+
+        /// S3互換ストレージのエンドポイントURL
+        #[serde(skip_serializing_if = "Option::is_none")]
+        endpoint_url: Option<String>,
+    },
+
+    /// Google Drive固有のオプション
+    GDrive {
+        /// rcloneリモート名
+        #[serde(skip_serializing_if = "Option::is_none")]
+        rclone_remote: Option<String>,
+    },
 }
 
 impl Default for ScmOptions {
