@@ -7,12 +7,37 @@ repos:
     dest: example-repo
     # branch: main
     # shallow: false
-    # scm: git          # git (default), svn, p4, or http
+    # scm: git          # git (default), svn, p4, hg, http, symlink, s3, gdrive
 
   # HTTP download example (archives are auto-extracted)
   # - url: https://example.com/tool/v1.0/tool.tar.gz
   #   dest: tools/tool
   #   scm: http
+
+  # Symlink example (relative paths resolved from this file's directory)
+  # - url: ../shared-configs
+  #   dest: configs
+  #   scm: symlink
+
+  # S3 example
+  # - url: s3://my-bucket/assets/v2
+  #   dest: assets
+  #   scm: s3
+  #   profile: work
+  #   scm_options:
+  #     type: S3
+  #     region: ap-northeast-1
+
+  # Google Drive example (via rclone)
+  # - url: gdrive:project-files/resources
+  #   dest: resources
+  #   scm: gdrive
+  #   scm_options:
+  #     type: GDrive
+  #     rclone_remote: mygdrive
+
+# Credential helper (optional, git credential-helper compatible)
+# credential_helper: "my-credential-helper"
 
 # Group definitions (optional)
 # Groups organize repos for selective sync: wmgr sync -g core
