@@ -72,6 +72,14 @@ regex = "1.10"
 # Date/time handling
 chrono = { version = "0.4", features = ["serde"] }
 
+# Archive extraction
+tar = "0.4"
+flate2 = "1.0"
+zip = "0.6"
+
+# Temporary files
+tempfile = "3.10"
+
 # Windows-specific dependencies
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winbase", "winnt", "processthreadsapi"] }

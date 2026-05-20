@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 use tempfile::TempDir;
-use tsrc::{
+use wmgr::{
     application::use_cases::{
         init_workspace::{InitWorkspaceConfig, InitWorkspaceUseCase},
         status_check::{StatusCheckConfig, StatusCheckUseCase},

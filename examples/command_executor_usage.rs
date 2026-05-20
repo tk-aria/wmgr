@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use tsrc::infrastructure::process::{
+use wmgr::infrastructure::process::{
     CommandExecutor, ExecutionConfig, ExecutionTask, ParallelConfig,
 };
 

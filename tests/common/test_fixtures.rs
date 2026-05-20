@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
-use tsrc::domain::{
+use wmgr::domain::{
     entities::{
         manifest::{Group, Manifest, ManifestRepo},
         repository::{Remote, Repository},

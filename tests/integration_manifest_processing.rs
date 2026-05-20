@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::TempDir;
-use tsrc::{
+use wmgr::{
     application::services::manifest_service::{
         ManifestProcessingOptions, ManifestService, ProcessedManifest,
     },

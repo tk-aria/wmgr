@@ -5,7 +5,7 @@
 
 use std::path::Path;
 use std::time::Duration;
-use tsrc::domain::{
+use wmgr::domain::{
     entities::{manifest::Manifest, repository::Repository, workspace::Workspace},
     value_objects::git_url::GitUrl,
 };

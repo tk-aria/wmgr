@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 use tempfile::TempDir;
-use tsrc::{
+use wmgr::{
     application::use_cases::foreach_command::{
         CommandStatus, ForeachCommandConfig, ForeachCommandUseCase, ForeachResult,
     },

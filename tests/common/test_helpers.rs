@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tempfile::TempDir;
 use tokio::time::sleep;
-use tsrc::domain::{
+use wmgr::domain::{
     entities::{manifest::Manifest, workspace::Workspace},
     value_objects::git_url::GitUrl,
 };
