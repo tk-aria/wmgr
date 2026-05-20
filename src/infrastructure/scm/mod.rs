@@ -7,6 +7,7 @@ pub mod scm_interface;
 pub mod git_scm;
 pub mod svn_scm;
 pub mod p4_scm;
+pub mod hg_scm;
 pub mod scm_factory;
 
 pub use scm_interface::{ScmOperations, ScmError, CloneOptions, SyncOptions, StatusResult};
