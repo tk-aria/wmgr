@@ -12,6 +12,8 @@ pub enum ScmType {
     Svn,
     /// Perforce (P4) version control system
     P4,
+    /// Mercurial (Hg) version control system
+    Hg,
 }
 
 impl Default for ScmType {
@@ -26,6 +28,7 @@ impl fmt::Display for ScmType {
             ScmType::Git => write!(f, "git"),
             ScmType::Svn => write!(f, "svn"),
             ScmType::P4 => write!(f, "p4"),
+            ScmType::Hg => write!(f, "hg"),
         }
     }
 }
@@ -38,6 +41,7 @@ impl FromStr for ScmType {
             "git" => Ok(ScmType::Git),
             "svn" | "subversion" => Ok(ScmType::Svn),
             "p4" | "perforce" => Ok(ScmType::P4),
+            "hg" | "mercurial" => Ok(ScmType::Hg),
             _ => Err(ScmTypeError::UnsupportedScmType(s.to_string())),
         }
     }
@@ -50,6 +54,7 @@ impl ScmType {
             ScmType::Git => true,
             ScmType::Svn => false, // SVN uses trunk/branches/tags structure
             ScmType::P4 => false,  // Perforce uses different branching model
+            ScmType::Hg => true,   // Mercurial supports branches like Git
         }
     }
 
@@ -59,6 +64,7 @@ impl ScmType {
             ScmType::Git => true,
             ScmType::Svn => false, // SVN repositories are centralized
             ScmType::P4 => false,  // Perforce is centralized
+            ScmType::Hg => true,   // Mercurial supports distributed development
         }
     }
 
@@ -68,6 +74,7 @@ impl ScmType {
             ScmType::Git => true,
             ScmType::Svn => false, // SVN doesn't have shallow clone concept
             ScmType::P4 => false,  // P4 sync is different from clone
+            ScmType::Hg => false,  // Mercurial doesn't support shallow clones
         }
     }
 
@@ -77,6 +84,7 @@ impl ScmType {
             ScmType::Git => vec![".gitignore"],
             ScmType::Svn => vec![".svnignore"],
             ScmType::P4 => vec![".p4ignore"],
+            ScmType::Hg => vec![".hgignore"],
         }
     }
 
@@ -86,6 +94,7 @@ impl ScmType {
             ScmType::Git => ".git",
             ScmType::Svn => ".svn",
             ScmType::P4 => ".p4",
+            ScmType::Hg => ".hg",
         }
     }
 
@@ -95,6 +104,7 @@ impl ScmType {
             ScmType::Git => "git",
             ScmType::Svn => "svn",
             ScmType::P4 => "p4",
+            ScmType::Hg => "hg",
         }
     }
 
@@ -123,6 +133,13 @@ impl ScmType {
                     || url.starts_with("tcp:")
                     || url.contains(":") // P4 server:port format
             }
+            ScmType::Hg => {
+                url.starts_with("https://")
+                    || url.starts_with("http://")
+                    || url.starts_with("hg://")
+                    || url.starts_with("ssh://")
+                    || url.starts_with("file://")
+            }
         }
     }
 }
@@ -142,7 +159,7 @@ impl fmt::Display for ScmTypeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ScmTypeError::UnsupportedScmType(scm) => {
-                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4", scm)
+                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4, hg", scm)
             }
             ScmTypeError::InvalidUrlScheme { scm, url } => {
                 write!(f, "Invalid URL scheme for {}: '{}'", scm, url)
@@ -167,6 +184,8 @@ mod tests {
         assert_eq!("subversion".parse::<ScmType>().unwrap(), ScmType::Svn);
         assert_eq!("p4".parse::<ScmType>().unwrap(), ScmType::P4);
         assert_eq!("perforce".parse::<ScmType>().unwrap(), ScmType::P4);
+        assert_eq!("hg".parse::<ScmType>().unwrap(), ScmType::Hg);
+        assert_eq!("mercurial".parse::<ScmType>().unwrap(), ScmType::Hg);
         
         assert!("unknown".parse::<ScmType>().is_err());
     }
@@ -176,6 +195,7 @@ mod tests {
         assert_eq!(ScmType::Git.to_string(), "git");
         assert_eq!(ScmType::Svn.to_string(), "svn");
         assert_eq!(ScmType::P4.to_string(), "p4");
+        assert_eq!(ScmType::Hg.to_string(), "hg");
     }
 
     #[test]
@@ -183,14 +203,17 @@ mod tests {
         assert!(ScmType::Git.supports_branches());
         assert!(!ScmType::Svn.supports_branches());
         assert!(!ScmType::P4.supports_branches());
+        assert!(ScmType::Hg.supports_branches());
 
         assert!(ScmType::Git.supports_remotes());
         assert!(!ScmType::Svn.supports_remotes());
         assert!(!ScmType::P4.supports_remotes());
+        assert!(ScmType::Hg.supports_remotes());
 
         assert!(ScmType::Git.supports_shallow_clone());
         assert!(!ScmType::Svn.supports_shallow_clone());
         assert!(!ScmType::P4.supports_shallow_clone());
+        assert!(!ScmType::Hg.supports_shallow_clone());
     }
 
     #[test]
@@ -198,6 +221,7 @@ mod tests {
         assert_eq!(ScmType::Git.metadata_dir(), ".git");
         assert_eq!(ScmType::Svn.metadata_dir(), ".svn");
         assert_eq!(ScmType::P4.metadata_dir(), ".p4");
+        assert_eq!(ScmType::Hg.metadata_dir(), ".hg");
     }
 
     #[test]
@@ -217,6 +241,12 @@ mod tests {
         assert!(ScmType::P4.is_valid_url_scheme("p4://server:1666"));
         assert!(ScmType::P4.is_valid_url_scheme("ssl:server:1666"));
         assert!(ScmType::P4.is_valid_url_scheme("server:1666"));
+        
+        // Hg URLs
+        assert!(ScmType::Hg.is_valid_url_scheme("https://hg.example.com/repo"));
+        assert!(ScmType::Hg.is_valid_url_scheme("hg://server/repo"));
+        assert!(ScmType::Hg.is_valid_url_scheme("ssh://hg@server/repo"));
+        assert!(ScmType::Hg.is_valid_url_scheme("file:///path/to/repo"));
     }
 
     #[test]
@@ -227,5 +257,13 @@ mod tests {
         
         let deserialized: ScmType = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized, ScmType::Git);
+        
+        // Test Hg serialization
+        let hg = ScmType::Hg;
+        let hg_json = serde_json::to_string(&hg).unwrap();
+        assert_eq!(hg_json, "\"hg\"");
+        
+        let hg_deserialized: ScmType = serde_json::from_str(&hg_json).unwrap();
+        assert_eq!(hg_deserialized, ScmType::Hg);
     }
 }

@@ -1,4 +1,5 @@
 use super::git_scm::GitScm;
+use super::hg_scm::HgScm;
 use super::p4_scm::P4Scm;
 use super::scm_interface::{ScmError, ScmOperations};
 use super::svn_scm::SvnScm;
@@ -15,6 +16,7 @@ impl ScmFactory {
             ScmType::Git => Ok(Arc::new(GitScm::new())),
             ScmType::Svn => Ok(Arc::new(SvnScm::new())),
             ScmType::P4 => Ok(Arc::new(P4Scm::new())),
+            ScmType::Hg => Ok(Arc::new(HgScm::new())),
         }
     }
 
@@ -27,6 +29,7 @@ impl ScmFactory {
             ScmType::Git => Ok(Arc::new(GitScm::with_executable(executable_path))),
             ScmType::Svn => Ok(Arc::new(SvnScm::with_executable(executable_path))),
             ScmType::P4 => Ok(Arc::new(P4Scm::with_executable(executable_path))),
+            ScmType::Hg => Ok(Arc::new(HgScm::with_executable(executable_path))),
         }
     }
 
@@ -38,6 +41,8 @@ impl ScmFactory {
             Some(ScmType::Svn)
         } else if repo_path.join(".p4").exists() {
             Some(ScmType::P4)
+        } else if repo_path.join(".hg").exists() {
+            Some(ScmType::Hg)
         } else {
             None
         }
@@ -69,6 +74,13 @@ impl ScmFactory {
                     Ok(false)
                 }
             }
+            ScmType::Hg => {
+                if let Some(hg_scm) = scm.as_any().downcast_ref::<HgScm>() {
+                    hg_scm.check_availability().await.map(|_| true).or(Ok(false))
+                } else {
+                    Ok(false)
+                }
+            }
         }
     }
 
@@ -76,7 +88,7 @@ impl ScmFactory {
     pub async fn get_available_scm_types() -> Vec<ScmType> {
         let mut available = Vec::new();
         
-        for scm_type in [ScmType::Git, ScmType::Svn, ScmType::P4] {
+        for scm_type in [ScmType::Git, ScmType::Svn, ScmType::P4, ScmType::Hg] {
             if Self::check_scm_availability(scm_type.clone()).await.unwrap_or(false) {
                 available.push(scm_type);
             }
@@ -104,6 +116,10 @@ mod tests {
         let p4_scm = ScmFactory::create_scm(ScmType::P4);
         assert!(p4_scm.is_ok());
         assert_eq!(p4_scm.unwrap().scm_type(), ScmType::P4);
+
+        let hg_scm = ScmFactory::create_scm(ScmType::Hg);
+        assert!(hg_scm.is_ok());
+        assert_eq!(hg_scm.unwrap().scm_type(), ScmType::Hg);
     }
 
     #[test]
