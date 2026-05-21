@@ -11,6 +11,7 @@ pub mod filesystem;
 pub mod git;
 pub mod http;
 pub mod process;
+pub mod s3;
 pub mod scm;
 
 // Re-export commonly used types

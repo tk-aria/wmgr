@@ -83,10 +83,7 @@ impl ScmFactory {
     /// Check if an SCM type is available on the system
     pub async fn check_scm_availability(scm_type: ScmType) -> Result<bool, ScmError> {
         match &scm_type {
-            ScmType::Http | ScmType::Symlink => return Ok(true),
-            ScmType::S3 => {
-                return Self::check_command_availability("aws", &["--version"]).await;
-            }
+            ScmType::Http | ScmType::Symlink | ScmType::S3 => return Ok(true),
             ScmType::GDrive => {
                 return Self::check_command_availability("rclone", &["--version"]).await;
             }

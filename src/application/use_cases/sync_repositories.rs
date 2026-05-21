@@ -484,21 +484,20 @@ impl SyncRepositoriesUseCase {
         Ok(SyncOperation::Cloned)
     }
 
-    /// Sync resource from Amazon S3
+    /// Sync resource from Amazon S3 via AWS SDK
     async fn sync_s3_resource(
         &self,
         repo: &ManifestRepo,
         target_path: &PathBuf,
     ) -> Result<SyncOperation, SyncRepositoriesError> {
         use crate::application::services::credential_service::CredentialService;
+        use crate::infrastructure::s3::{S3Config, S3Downloader};
 
         if self.config.verbose {
             println!("S3 sync: {} -> {}", repo.url, target_path.display());
         }
 
-        if let Some(parent) = target_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
+        let existed = target_path.exists();
 
         let credential_service = CredentialService::new(
             self.config.credential_profile.clone(),
@@ -508,57 +507,49 @@ impl SyncRepositoriesUseCase {
             .get_credentials_for_repo(repo, None)
             .await;
 
-        let mut cmd = tokio::process::Command::new("aws");
-        cmd.arg("s3").arg("sync").arg(&repo.url).arg(target_path);
+        let mut s3_config = S3Config {
+            access_key_id: creds.profile.aws_access_key_id,
+            secret_access_key: creds.profile.aws_secret_access_key,
+            session_token: creds.profile.aws_session_token,
+            ..Default::default()
+        };
 
-        if let Some(ref access_key) = creds.profile.aws_access_key_id {
-            cmd.env("AWS_ACCESS_KEY_ID", access_key);
-        }
-        if let Some(ref secret_key) = creds.profile.aws_secret_access_key {
-            cmd.env("AWS_SECRET_ACCESS_KEY", secret_key);
-        }
-        if let Some(ref session_token) = creds.profile.aws_session_token {
-            cmd.env("AWS_SESSION_TOKEN", session_token);
-        }
-
-        // Apply S3-specific options from scm_options
         if let Some(crate::domain::entities::manifest::ScmOptions::S3 {
             region,
             endpoint_url,
         }) = &repo.scm_options
         {
-            if let Some(r) = region {
-                cmd.arg("--region").arg(r);
-            }
-            if let Some(e) = endpoint_url {
-                cmd.arg("--endpoint-url").arg(e);
-            }
+            s3_config.region = region.clone();
+            s3_config.endpoint_url = endpoint_url.clone();
         }
 
-        cmd.stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped());
-
-        let output = cmd.output().await.map_err(|e| {
+        let downloader = S3Downloader::new(s3_config).await.map_err(|e| {
             SyncRepositoriesError::RepositoryCloneFailed(format!(
-                "Failed to run aws s3 sync: {}",
+                "Failed to initialize S3 client: {}",
                 e
             ))
         })?;
 
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(SyncRepositoriesError::RepositoryCloneFailed(format!(
-                "aws s3 sync failed: {}",
-                stderr
-            )));
+        let result = downloader.sync(&repo.url, target_path).await.map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(format!(
+                "S3 sync failed for {}: {}",
+                repo.url, e
+            ))
+        })?;
+
+        if self.config.verbose {
+            println!(
+                "S3 sync complete: {} files downloaded to {}",
+                result.downloaded,
+                target_path.display()
+            );
         }
 
-        let operation = if target_path.exists() {
+        Ok(if existed {
             SyncOperation::Updated
         } else {
             SyncOperation::Cloned
-        };
-        Ok(operation)
+        })
     }
 
     /// Sync resource from Google Drive via rclone

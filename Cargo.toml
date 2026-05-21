@@ -77,6 +77,11 @@ tar = "0.4"
 flate2 = "1.0"
 zip = "0.6"
 
+# AWS S3
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1"
+aws-credential-types = "1"
+
 # Temporary files
 tempfile = "3.10"
 

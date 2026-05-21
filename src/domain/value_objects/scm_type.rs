@@ -124,8 +124,7 @@ impl ScmType {
             ScmType::Svn => "svn",
             ScmType::P4 => "p4",
             ScmType::Hg => "hg",
-            ScmType::Http | ScmType::Symlink => "",
-            ScmType::S3 => "aws",
+            ScmType::Http | ScmType::Symlink | ScmType::S3 => "",
             ScmType::GDrive => "rclone",
         }
     }
