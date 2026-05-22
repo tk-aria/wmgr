@@ -558,9 +558,27 @@ impl SyncRepositoriesUseCase {
         repo: &ManifestRepo,
         target_path: &PathBuf,
     ) -> Result<SyncOperation, SyncRepositoriesError> {
-        if self.config.verbose {
-            println!("GDrive sync: {} -> {}", repo.url, target_path.display());
+        use crate::infrastructure::rclone::RcloneManager;
+
+        if !RcloneManager::check_installed().await {
+            return Err(SyncRepositoriesError::RepositoryCloneFailed(
+                "rclone is not installed. Install it from https://rclone.org/install/".to_string(),
+            ));
         }
+
+        let rclone = RcloneManager::new();
+
+        // Determine remote name and source path
+        let (remote_name, source) = Self::resolve_gdrive_source(repo);
+
+        if self.config.verbose {
+            println!("GDrive sync: {} -> {} (remote: {})", source, target_path.display(), remote_name);
+        }
+
+        // Auto-authenticate if needed
+        rclone.ensure_remote(&remote_name).await.map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(e.to_string())
+        })?;
 
         if let Some(parent) = target_path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -568,33 +586,8 @@ impl SyncRepositoriesUseCase {
 
         let existed = target_path.exists();
 
-        let mut cmd = tokio::process::Command::new("rclone");
-        cmd.arg("copy").arg(&repo.url).arg(target_path);
-
-        // Apply GDrive-specific options
-        if let Some(crate::domain::entities::manifest::ScmOptions::GDrive {
-            rclone_remote,
-        }) = &repo.scm_options
-        {
-            if let Some(remote) = rclone_remote {
-                let source = if repo.url.contains(':') {
-                    repo.url.clone()
-                } else {
-                    format!("{}:{}", remote, repo.url)
-                };
-                cmd = tokio::process::Command::new("rclone");
-                cmd.arg("copy").arg(&source).arg(target_path);
-            }
-        }
-
-        cmd.stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped());
-
-        let output = cmd.output().await.map_err(|e| {
-            SyncRepositoriesError::RepositoryCloneFailed(format!(
-                "Failed to run rclone: {}",
-                e
-            ))
+        let output = rclone.copy(&source, target_path).await.map_err(|e| {
+            SyncRepositoriesError::RepositoryCloneFailed(e.to_string())
         })?;
 
         if !output.status.success() {
@@ -610,6 +603,28 @@ impl SyncRepositoriesUseCase {
         } else {
             SyncOperation::Cloned
         })
+    }
+
+    fn resolve_gdrive_source(repo: &ManifestRepo) -> (String, String) {
+        if let Some(crate::domain::entities::manifest::ScmOptions::GDrive {
+            rclone_remote,
+        }) = &repo.scm_options
+        {
+            if let Some(remote) = rclone_remote {
+                let source = if repo.url.contains(':') {
+                    repo.url.clone()
+                } else {
+                    format!("{}:{}", remote, repo.url)
+                };
+                return (remote.clone(), source);
+            }
+        }
+        // Extract remote name from URL like "remote-name:path/to/files"
+        if let Some(colon_pos) = repo.url.find(':') {
+            let remote = repo.url[..colon_pos].to_string();
+            return (remote, repo.url.clone());
+        }
+        ("gdrive".to_string(), repo.url.clone())
     }
 
     /// リポジトリのクローン（SCM対応）
