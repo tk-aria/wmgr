@@ -7,15 +7,15 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use tsrc::application::services::manifest_service::{
+use wmgr::application::services::manifest_service::{
     ManifestService, ManifestServiceError, ProcessedManifest,
 };
-use tsrc::domain::{
+use wmgr::domain::{
     entities::{manifest::Manifest, repository::Repository, workspace::Workspace},
     value_objects::git_url::GitUrl,
 };
 // Note: These would be actual imports in a real implementation
-// use tsrc::infrastructure::git::repository::{GitRepository, CloneConfig, FetchConfig, ResetMode};
+// use wmgr::infrastructure::git::repository::{GitRepository, CloneConfig, FetchConfig, ResetMode};
 
 // For now, we'll create mock types
 pub struct CloneConfig;

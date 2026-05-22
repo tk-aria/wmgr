@@ -1,4 +1,4 @@
-# tsrc Rust実装 TODOリスト
+# wmgr Rust実装 TODOリスト
 
 ## プロジェクト設定とディレクトリ構造
 
@@ -35,7 +35,7 @@
 
 - [x] `application/use_cases/init_workspace.rs` - ワークスペース初期化ユースケース
   - [x] ローカルマニフェストファイルからの初期化（URLクローン処理を削除）
-  - [x] .tsrc/config.yml の作成
+  - [x] .wmgr/config.yml の作成
   - [x] グループ指定のサポート
   - [x] ローカルファイルベースのワークスペース設定
 - [x] `application/use_cases/sync_repositories.rs` - リポジトリ同期ユースケース
@@ -158,7 +158,7 @@
 
 ## 互換性とマイグレーション
 
-- [ ] Python版tsrcとの設定ファイル互換性確保
+- [ ] Python版wmgr(tsrc)との設定ファイル互換性確保
 - [ ] マイグレーションスクリプトの作成
 - [ ] 後方互換性の維持
 
@@ -389,3 +389,15 @@ curl -sSLf https://get.wmgr.sh | DEBUG=1 sh
   - [x] 子ワークスペースのマニフェストファイル検出と読み込み
   - [x] 子ワークスペースの同期結果を親の結果にマージ
   - [x] .gitignoreにtmp/ディレクトリを追加
+
+## wmgr statusコマンドのJSON/YAML出力対応
+
+- [x] statusコマンドに複数の出力形式をサポート
+  - [x] `--output`オプション（`-o`）を追加
+  - [x] `text`（デフォルト）、`json`、`yaml`の3つの出力形式をサポート
+  - [x] `RepositoryStatus`と`StatusResult`にSerialize traitを追加
+  - [x] JSON出力用の`print_json_status`メソッドを実装
+  - [x] YAML出力用の`print_yaml_status`メソッドを実装
+  - [x] 既存のテキスト出力機能は変更なしで維持
+  - [x] CLIでの`OutputFormat` enumを`ValueEnum`で実装
+  - [x] JSON/YAML出力のテスト完了

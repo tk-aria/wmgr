@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use tempfile::TempDir;
 use tokio;
-use tsrc::domain::entities::manifest::{FileCopy, FileSymlink, Group, Manifest, ManifestRepo};
-use tsrc::infrastructure::filesystem::manifest_store::{
+use wmgr::domain::entities::manifest::{FileCopy, FileSymlink, Group, Manifest, ManifestRepo};
+use wmgr::infrastructure::filesystem::manifest_store::{
     FileOperationConfig, ManifestProcessingOptions, ManifestStore,
 };
 

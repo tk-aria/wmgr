@@ -1,5 +1,5 @@
-use tsrc::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
-use tsrc::domain::entities::manifest::{Group, Manifest, ManifestRepo};
+use wmgr::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
+use wmgr::domain::entities::manifest::{Group, Manifest, ManifestRepo};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

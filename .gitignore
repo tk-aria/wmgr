@@ -18,3 +18,7 @@ settings.local.json
 
 tmp/
 
+# Temporary/log files
+*.bak
+excalidraw.log
+

@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 use tempfile::TempDir;
-use tsrc::{
+use wmgr::{
     domain::{
         entities::repository::{Remote, Repository},
         value_objects::{branch_name::BranchName, git_url::GitUrl},

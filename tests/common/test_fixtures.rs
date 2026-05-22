@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
-use tsrc::domain::{
+use wmgr::domain::{
     entities::{
         manifest::{Group, Manifest, ManifestRepo},
         repository::{Remote, Repository},
@@ -176,8 +176,8 @@ pub struct FileSystemFixture;
 impl FileSystemFixture {
     /// Create a basic workspace directory structure
     pub fn create_workspace_structure(workspace_path: &Path) -> std::io::Result<()> {
-        let tsrc_dir = workspace_path.join(".tsrc");
-        std::fs::create_dir_all(&tsrc_dir)?;
+        let wmgr_dir = workspace_path.join(".wmgr");
+        std::fs::create_dir_all(&wmgr_dir)?;
 
         // Create basic config and manifest files
         let config_content = r#"manifest_url: https://github.com/example/manifest.git
@@ -185,14 +185,14 @@ manifest_branch: main
 groups: []
 shallow: false
 "#;
-        std::fs::write(tsrc_dir.join("config.yml"), config_content)?;
+        std::fs::write(wmgr_dir.join("config.yml"), config_content)?;
 
         let manifest_content = r#"repos:
   - dest: example-repo
     url: https://github.com/example/repo.git
     branch: main
 "#;
-        std::fs::write(tsrc_dir.join("manifest.yml"), manifest_content)?;
+        std::fs::write(wmgr_dir.join("manifest.yml"), manifest_content)?;
 
         Ok(())
     }
@@ -372,9 +372,9 @@ mod tests {
 
         FileSystemFixture::create_workspace_structure(workspace_path).unwrap();
 
-        assert!(workspace_path.join(".tsrc").exists());
-        assert!(workspace_path.join(".tsrc").join("config.yml").exists());
-        assert!(workspace_path.join(".tsrc").join("manifest.yml").exists());
+        assert!(workspace_path.join(".wmgr").exists());
+        assert!(workspace_path.join(".wmgr").join("config.yml").exists());
+        assert!(workspace_path.join(".wmgr").join("manifest.yml").exists());
     }
 
     #[test]

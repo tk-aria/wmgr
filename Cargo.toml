@@ -1,101 +1,12 @@
-[package]
-name = "wmgr"
-version = "1.0.0"
-edition = "2021"
-rust-version = "1.70.0"
-authors = ["wmgr contributors"]
-description = "Manage groups of git repositories"
+[workspace]
+members = [
+    "crates/wmgr",
+    "crates/wmgr-cli",
+]
+resolver = "2"
+
+[workspace.metadata]
 repository = "https://github.com/tk-aria/wmgr"
-license = "BSD-3-Clause"
-documentation = "https://docs.rs/wmgr"
-readme = "README.md"
-keywords = ["git", "repository", "management", "cli", "tools"]
-categories = ["command-line-utilities", "development-tools"]
-
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
-[dependencies]
-# CLI framework
-clap = { version = "4.5", features = ["derive", "env"] }
-
-# Async runtime
-tokio = { version = "1.36", features = ["full"] }
-
-# Git operations
-git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl"] }
-
-# Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-serde_json = "1.0"
-
-# Error handling
-anyhow = "1.0"
-thiserror = "1.0"
-
-# Logging
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-# Terminal UI
-console = "0.15"
-indicatif = "0.17"
-colored = "2.1"
-atty = "0.2"
-
-# Path handling
-pathdiff = "0.2"
-walkdir = "2.4"
-
-# HTTP client (for downloading manifests)
-reqwest = { version = "0.11", features = ["blocking", "json", "native-tls"], default-features = false }
-
-# URL parsing
-url = "2.5"
-
-# Parallel processing
-rayon = "1.8"
-futures = "0.3"
-num_cpus = "1.16"
-
-# Async utilities
-async-trait = "0.1"
-
-# Configuration validation
-validator = { version = "0.18", features = ["derive"] }
-
-# Regular expressions
-regex = "1.10"
-
-# Date/time handling
-chrono = { version = "0.4", features = ["serde"] }
-
-# Windows-specific dependencies
-[target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["winbase", "winnt", "processthreadsapi"] }
-
-# x86_64 musl-specific dependencies (static linking with vendored OpenSSL)
-[target.'cfg(all(target_env = "musl", target_arch = "x86_64"))'.dependencies]
-git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl", "vendored-libgit2"] }
-reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls"], default-features = false }
-
-# aarch64 glibc-specific dependencies (compatible with older glibc versions)
-[target.'cfg(all(target_env = "gnu", target_arch = "aarch64"))'.dependencies]
-git2 = { version = "0.18", default-features = false, features = ["https", "vendored-openssl"] }
-reqwest = { version = "0.11", features = ["blocking", "json", "native-tls"], default-features = false }
-
-[dev-dependencies]
-# Testing
-assert_cmd = "2.0"
-predicates = "3.1"
-tempfile = "3.10"
-mockall = "0.12"
-pretty_assertions = "1.4"
-
-[build-dependencies]
-chrono = "0.4"
 
 [profile.release]
 opt-level = 3
@@ -126,15 +37,3 @@ debug = false
 lto = "thin"
 codegen-units = 1
 strip = true
-
-[[example]]
-name = "manifest_service_usage"
-path = "examples/manifest_service_usage.rs"
-
-[[example]]
-name = "manifest_store_usage"
-path = "examples/manifest_store_usage.rs"
-
-[[example]]
-name = "command_executor_usage"
-path = "examples/command_executor_usage.rs"

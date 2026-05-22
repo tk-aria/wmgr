@@ -1,49 +1,48 @@
-# wmgr configuration file template
-# This file defines the repositories and groups for wmgr management
+# wmgr configuration file
+# Documentation: https://github.com/tk-aria/wmgr
 
-# Optional: Specify defaults for repository configuration
-defaults:
-  # Default remote name (optional)
-  remote: origin
-  # Default branch for cloning (optional)  
-  branch: main
-  # Enable shallow clones by default (optional)
-  shallow: false
+# Repository list (required)
+repos:
+  - url: https://github.com/user/example-repo.git
+    dest: example-repo
+    # branch: main
+    # shallow: false
+    # scm: git          # git (default), svn, p4, hg, http, symlink, s3, gdrive
 
-# Repository groups - organize repositories into logical groups
-groups:
-  # Example group: core repositories
-  - name: core
-    description: "Core application repositories"
-    repositories:
-      - name: example-repo
-        url: https://github.com/user/example-repo.git
-        dest: example-repo
-        # Optional: specify different branch
-        # branch: develop
-        # Optional: specify different remote name
-        # remote: upstream
+  # HTTP download example (archives are auto-extracted)
+  # - url: https://example.com/tool/v1.0/tool.tar.gz
+  #   dest: tools/tool
+  #   scm: http
 
-  # Example group: tools and utilities
-  - name: tools
-    description: "Development tools and utilities"
-    repositories:
-      - name: build-tools
-        url: https://github.com/user/build-tools.git
-        dest: tools/build-tools
+  # Symlink example (relative paths resolved from this file's directory)
+  # - url: ../shared-configs
+  #   dest: configs
+  #   scm: symlink
 
-# Alternative flat repository list (without groups)
-# repositories:
-#   - name: my-project
-#     url: https://github.com/user/my-project.git
-#     dest: my-project
-#   - name: shared-lib
-#     url: https://github.com/user/shared-lib.git
-#     dest: libs/shared-lib
+  # S3 example
+  # - url: s3://my-bucket/assets/v2
+  #   dest: assets
+  #   scm: s3
+  #   profile: work
+  #   scm_options:
+  #     type: S3
+  #     region: ap-northeast-1
 
-# Optional: Workspace-level configuration
-workspace:
-  # Name of this workspace (optional)
-  name: "My Development Workspace"
-  # Description of this workspace (optional)
-  description: "Main development environment with all project repositories"
+  # Google Drive example (via rclone)
+  # - url: gdrive:project-files/resources
+  #   dest: resources
+  #   scm: gdrive
+  #   scm_options:
+  #     type: GDrive
+  #     rclone_remote: mygdrive
+
+# Credential helper (optional, git credential-helper compatible)
+# credential_helper: "my-credential-helper"
+
+# Group definitions (optional)
+# Groups organize repos for selective sync: wmgr sync -g core
+# groups:
+#   core:
+#     repos:
+#       - example-repo
+#     description: "Core repositories"

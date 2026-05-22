@@ -4,7 +4,7 @@ This document provides a high-level overview of the tsrc API structure.
 
 ## Modules
 
-### Domain Layer (`tsrc::domain`)
+### Domain Layer (`wmgr::domain`)
 
 The domain layer contains the core business logic and entities:
 
@@ -18,7 +18,7 @@ The domain layer contains the core business logic and entities:
   - `branch_name::BranchName`: Branch name representation
   - `file_path::FilePath`: File path representation
 
-### Application Layer (`tsrc::application`)
+### Application Layer (`wmgr::application`)
 
 The application layer contains use cases and services:
 
@@ -31,7 +31,7 @@ The application layer contains use cases and services:
 - `services/`: Application services
   - `manifest_service`: Manifest parsing and validation
 
-### Infrastructure Layer (`tsrc::infrastructure`)
+### Infrastructure Layer (`wmgr::infrastructure`)
 
 The infrastructure layer provides concrete implementations:
 
@@ -39,13 +39,13 @@ The infrastructure layer provides concrete implementations:
 - `filesystem/`: File system operations and storage
 - `process/`: External process execution
 
-### Presentation Layer (`tsrc::presentation`)
+### Presentation Layer (`wmgr::presentation`)
 
 The presentation layer handles user interaction:
 
 - `cli/`: Command-line interface implementation
 
-### Common (`tsrc::common`)
+### Common (`wmgr::common`)
 
 Shared utilities and cross-cutting concerns:
 
@@ -57,7 +57,7 @@ Shared utilities and cross-cutting concerns:
 
 ### Error Handling
 
-All operations return `tsrc::Result<T>` which is an alias for `Result<T, TsrcError>`.
+All operations return `wmgr::Result<T>` which is an alias for `Result<T, TsrcError>`.
 
 ### Configuration
 

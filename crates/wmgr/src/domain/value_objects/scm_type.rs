@@ -1,0 +1,312 @@
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::str::FromStr;
+
+/// SCM (Source Control Management) system type
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ScmType {
+    /// Git version control system
+    Git,
+    /// Subversion (SVN) version control system
+    Svn,
+    /// Perforce (P4) version control system
+    P4,
+    /// Mercurial (Hg) version control system
+    Hg,
+    /// HTTP download (not a VCS, downloads files/archives via HTTP)
+    Http,
+    /// Symlink (creates symbolic links to local paths)
+    Symlink,
+    /// Amazon S3 (downloads files via AWS SDK for Rust)
+    S3,
+    /// Google Drive (downloads files via rclone)
+    GDrive,
+}
+
+impl Default for ScmType {
+    fn default() -> Self {
+        Self::Git
+    }
+}
+
+impl fmt::Display for ScmType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ScmType::Git => write!(f, "git"),
+            ScmType::Svn => write!(f, "svn"),
+            ScmType::P4 => write!(f, "p4"),
+            ScmType::Hg => write!(f, "hg"),
+            ScmType::Http => write!(f, "http"),
+            ScmType::Symlink => write!(f, "symlink"),
+            ScmType::S3 => write!(f, "s3"),
+            ScmType::GDrive => write!(f, "gdrive"),
+        }
+    }
+}
+
+impl FromStr for ScmType {
+    type Err = ScmTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "git" => Ok(ScmType::Git),
+            "svn" | "subversion" => Ok(ScmType::Svn),
+            "p4" | "perforce" => Ok(ScmType::P4),
+            "hg" | "mercurial" => Ok(ScmType::Hg),
+            "http" | "https" | "download" => Ok(ScmType::Http),
+            "symlink" | "link" => Ok(ScmType::Symlink),
+            "s3" | "aws-s3" => Ok(ScmType::S3),
+            "gdrive" | "googledrive" | "google-drive" => Ok(ScmType::GDrive),
+            _ => Err(ScmTypeError::UnsupportedScmType(s.to_string())),
+        }
+    }
+}
+
+impl ScmType {
+    /// Check if this SCM type supports branches
+    pub fn supports_branches(&self) -> bool {
+        match self {
+            ScmType::Git => true,
+            ScmType::Svn => false,
+            ScmType::P4 => false,
+            ScmType::Hg => true,
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => false,
+        }
+    }
+
+    /// Check if this SCM type supports remotes
+    pub fn supports_remotes(&self) -> bool {
+        match self {
+            ScmType::Git => true,
+            ScmType::Svn => false,
+            ScmType::P4 => false,
+            ScmType::Hg => true,
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => false,
+        }
+    }
+
+    /// Check if this SCM type supports shallow clones
+    pub fn supports_shallow_clone(&self) -> bool {
+        match self {
+            ScmType::Git => true,
+            ScmType::Svn | ScmType::P4 | ScmType::Hg => false,
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => false,
+        }
+    }
+
+    /// Get the typical file extensions for ignore files
+    pub fn ignore_file_patterns(&self) -> Vec<&'static str> {
+        match self {
+            ScmType::Git => vec![".gitignore"],
+            ScmType::Svn => vec![".svnignore"],
+            ScmType::P4 => vec![".p4ignore"],
+            ScmType::Hg => vec![".hgignore"],
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => vec![],
+        }
+    }
+
+    /// Get the metadata directory name for this SCM
+    pub fn metadata_dir(&self) -> &'static str {
+        match self {
+            ScmType::Git => ".git",
+            ScmType::Svn => ".svn",
+            ScmType::P4 => ".p4",
+            ScmType::Hg => ".hg",
+            ScmType::Http | ScmType::Symlink | ScmType::S3 | ScmType::GDrive => "",
+        }
+    }
+
+    /// Get the standard executable name for this SCM
+    pub fn executable_name(&self) -> &'static str {
+        match self {
+            ScmType::Git => "git",
+            ScmType::Svn => "svn",
+            ScmType::P4 => "p4",
+            ScmType::Hg => "hg",
+            ScmType::Http | ScmType::Symlink | ScmType::S3 => "",
+            ScmType::GDrive => "rclone",
+        }
+    }
+
+    /// Check if the URL scheme is appropriate for this SCM type
+    pub fn is_valid_url_scheme(&self, url: &str) -> bool {
+        match self {
+            ScmType::Git => {
+                url.starts_with("https://")
+                    || url.starts_with("http://")
+                    || url.starts_with("git://")
+                    || url.starts_with("ssh://")
+                    || url.starts_with("git@")
+                    || url.starts_with("file://")
+            }
+            ScmType::Svn => {
+                url.starts_with("https://")
+                    || url.starts_with("http://")
+                    || url.starts_with("svn://")
+                    || url.starts_with("svn+ssh://")
+                    || url.starts_with("file://")
+            }
+            ScmType::P4 => {
+                url.starts_with("perforce://")
+                    || url.starts_with("p4://")
+                    || url.starts_with("ssl:")
+                    || url.starts_with("tcp:")
+                    || url.contains(":")
+            }
+            ScmType::Hg => {
+                url.starts_with("https://")
+                    || url.starts_with("http://")
+                    || url.starts_with("hg://")
+                    || url.starts_with("ssh://")
+                    || url.starts_with("file://")
+            }
+            ScmType::Http => {
+                url.starts_with("https://") || url.starts_with("http://")
+            }
+            ScmType::Symlink => true,
+            ScmType::S3 => url.starts_with("s3://"),
+            ScmType::GDrive => {
+                url.contains(':') || url.starts_with("gdrive://")
+            }
+        }
+    }
+}
+
+/// Errors that can occur when working with SCM types
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScmTypeError {
+    /// The specified SCM type is not supported
+    UnsupportedScmType(String),
+    /// The URL scheme is not valid for the SCM type
+    InvalidUrlScheme { scm: ScmType, url: String },
+    /// Operation not supported by this SCM type
+    UnsupportedOperation { scm: ScmType, operation: String },
+}
+
+impl fmt::Display for ScmTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ScmTypeError::UnsupportedScmType(scm) => {
+                write!(f, "Unsupported SCM type: '{}'. Supported types are: git, svn, p4, hg, http, symlink, s3, gdrive", scm)
+            }
+            ScmTypeError::InvalidUrlScheme { scm, url } => {
+                write!(f, "Invalid URL scheme for {}: '{}'", scm, url)
+            }
+            ScmTypeError::UnsupportedOperation { scm, operation } => {
+                write!(f, "Operation '{}' is not supported by {}", operation, scm)
+            }
+        }
+    }
+}
+
+impl std::error::Error for ScmTypeError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_scm_type_from_str() {
+        assert_eq!("git".parse::<ScmType>().unwrap(), ScmType::Git);
+        assert_eq!("svn".parse::<ScmType>().unwrap(), ScmType::Svn);
+        assert_eq!("subversion".parse::<ScmType>().unwrap(), ScmType::Svn);
+        assert_eq!("p4".parse::<ScmType>().unwrap(), ScmType::P4);
+        assert_eq!("perforce".parse::<ScmType>().unwrap(), ScmType::P4);
+        assert_eq!("hg".parse::<ScmType>().unwrap(), ScmType::Hg);
+        assert_eq!("mercurial".parse::<ScmType>().unwrap(), ScmType::Hg);
+        assert_eq!("http".parse::<ScmType>().unwrap(), ScmType::Http);
+        assert_eq!("download".parse::<ScmType>().unwrap(), ScmType::Http);
+
+        assert!("unknown".parse::<ScmType>().is_err());
+    }
+
+    #[test]
+    fn test_scm_type_display() {
+        assert_eq!(ScmType::Git.to_string(), "git");
+        assert_eq!(ScmType::Svn.to_string(), "svn");
+        assert_eq!(ScmType::P4.to_string(), "p4");
+        assert_eq!(ScmType::Hg.to_string(), "hg");
+        assert_eq!(ScmType::Http.to_string(), "http");
+    }
+
+    #[test]
+    fn test_scm_capabilities() {
+        assert!(ScmType::Git.supports_branches());
+        assert!(!ScmType::Svn.supports_branches());
+        assert!(!ScmType::P4.supports_branches());
+        assert!(ScmType::Hg.supports_branches());
+        assert!(!ScmType::Http.supports_branches());
+
+        assert!(ScmType::Git.supports_remotes());
+        assert!(!ScmType::Svn.supports_remotes());
+        assert!(!ScmType::P4.supports_remotes());
+        assert!(ScmType::Hg.supports_remotes());
+        assert!(!ScmType::Http.supports_remotes());
+
+        assert!(ScmType::Git.supports_shallow_clone());
+        assert!(!ScmType::Svn.supports_shallow_clone());
+        assert!(!ScmType::P4.supports_shallow_clone());
+        assert!(!ScmType::Hg.supports_shallow_clone());
+        assert!(!ScmType::Http.supports_shallow_clone());
+    }
+
+    #[test]
+    fn test_scm_metadata_dirs() {
+        assert_eq!(ScmType::Git.metadata_dir(), ".git");
+        assert_eq!(ScmType::Svn.metadata_dir(), ".svn");
+        assert_eq!(ScmType::P4.metadata_dir(), ".p4");
+        assert_eq!(ScmType::Hg.metadata_dir(), ".hg");
+        assert_eq!(ScmType::Http.metadata_dir(), "");
+    }
+
+    #[test]
+    fn test_url_scheme_validation() {
+        // Git URLs
+        assert!(ScmType::Git.is_valid_url_scheme("https://github.com/user/repo.git"));
+        assert!(ScmType::Git.is_valid_url_scheme("git@github.com:user/repo.git"));
+        assert!(ScmType::Git.is_valid_url_scheme("ssh://git@server/repo.git"));
+
+        // SVN URLs
+        assert!(ScmType::Svn.is_valid_url_scheme("https://svn.example.com/repo"));
+        assert!(ScmType::Svn.is_valid_url_scheme("svn://server/repo"));
+        assert!(ScmType::Svn.is_valid_url_scheme("svn+ssh://server/repo"));
+
+        // P4 URLs
+        assert!(ScmType::P4.is_valid_url_scheme("perforce://server:1666"));
+        assert!(ScmType::P4.is_valid_url_scheme("p4://server:1666"));
+        assert!(ScmType::P4.is_valid_url_scheme("ssl:server:1666"));
+        assert!(ScmType::P4.is_valid_url_scheme("server:1666"));
+
+        // Hg URLs
+        assert!(ScmType::Hg.is_valid_url_scheme("https://hg.example.com/repo"));
+        assert!(ScmType::Hg.is_valid_url_scheme("hg://server/repo"));
+        assert!(ScmType::Hg.is_valid_url_scheme("ssh://hg@server/repo"));
+        assert!(ScmType::Hg.is_valid_url_scheme("file:///path/to/repo"));
+
+        // Http URLs
+        assert!(ScmType::Http.is_valid_url_scheme("https://example.com/file.tar.gz"));
+        assert!(ScmType::Http.is_valid_url_scheme("http://example.com/file.zip"));
+    }
+
+    #[test]
+    fn test_serde() {
+        let git = ScmType::Git;
+        let json = serde_json::to_string(&git).unwrap();
+        assert_eq!(json, "\"git\"");
+
+        let deserialized: ScmType = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized, ScmType::Git);
+
+        let hg = ScmType::Hg;
+        let hg_json = serde_json::to_string(&hg).unwrap();
+        assert_eq!(hg_json, "\"hg\"");
+
+        let hg_deserialized: ScmType = serde_json::from_str(&hg_json).unwrap();
+        assert_eq!(hg_deserialized, ScmType::Hg);
+
+        let http = ScmType::Http;
+        let http_json = serde_json::to_string(&http).unwrap();
+        assert_eq!(http_json, "\"http\"");
+    }
+}

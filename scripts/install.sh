@@ -96,16 +96,16 @@ _try_download_with_fallback() {
   
   local targets=""
   
-  # Linuxの場合、優先順位を設定
+  # Linuxの場合、優先順位を設定（デフォルトでmuslを優先）
   if [ "$base_os" = "linux" ]; then
     if _is_musl_available; then
       # muslシステムの場合：musl -> glibc
       targets="linux-musl linux"
       echo "Detected musl system, trying musl build first..."
     else
-      # glibcシステムの場合：glibc -> musl
-      targets="linux linux-musl"
-      echo "Detected glibc system, trying glibc build first..."
+      # glibcシステムの場合でもmuslを先に試行（互換性のため）
+      targets="linux-musl linux"
+      echo "Detected glibc system, trying musl build first (fallback to glibc)..."
     fi
   else
     targets="$base_os"

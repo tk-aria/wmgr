@@ -5,7 +5,7 @@
 
 use std::path::Path;
 use std::time::Duration;
-use tsrc::domain::{
+use wmgr::domain::{
     entities::{manifest::Manifest, repository::Repository, workspace::Workspace},
     value_objects::git_url::GitUrl,
 };
@@ -183,7 +183,7 @@ impl AssertionHelpers {
         }
 
         // Check directory structure
-        assert_file_exists!(workspace.tsrc_dir(), "tsrc directory should exist");
+        assert_file_exists!(workspace.wmgr_dir(), "wmgr directory should exist");
         assert_file_exists!(workspace.config_path(), "config file should exist");
 
         if workspace.manifest.is_some() {
@@ -434,7 +434,7 @@ mod tests {
         let workspace = WorkspaceFixture::basic(&temp_dir);
 
         // Create the required structure
-        std::fs::create_dir_all(workspace.tsrc_dir()).unwrap();
+        std::fs::create_dir_all(workspace.wmgr_dir()).unwrap();
         std::fs::write(workspace.config_path(), "test config").unwrap();
         std::fs::write(workspace.manifest_file_path(), "test manifest").unwrap();
 

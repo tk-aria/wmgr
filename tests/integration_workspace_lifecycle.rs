@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 use tempfile::TempDir;
-use tsrc::{
+use wmgr::{
     application::use_cases::{
         init_workspace::{InitWorkspaceConfig, InitWorkspaceUseCase},
         status_check::{StatusCheckConfig, StatusCheckUseCase},
@@ -39,8 +39,8 @@ fn create_test_workspace(temp_dir: &TempDir) -> Workspace {
 
 /// テスト用のマニフェストファイルを作成するヘルパー関数
 fn create_test_manifest_file(workspace_path: &PathBuf) -> std::io::Result<()> {
-    let tsrc_dir = workspace_path.join(".tsrc");
-    std::fs::create_dir_all(&tsrc_dir)?;
+    let wmgr_dir = workspace_path.join(".wmgr");
+    std::fs::create_dir_all(&wmgr_dir)?;
 
     let manifest_content = r#"repos:
   - dest: repo1
@@ -51,7 +51,7 @@ fn create_test_manifest_file(workspace_path: &PathBuf) -> std::io::Result<()> {
     branch: develop
 "#;
 
-    let manifest_file = tsrc_dir.join("manifest.yml");
+    let manifest_file = wmgr_dir.join("manifest.yml");
     std::fs::write(manifest_file, manifest_content)?;
 
     Ok(())
@@ -91,9 +91,9 @@ async fn test_workspace_initialization_workflow() {
     );
     assert_eq!(workspace.config.manifest_branch, "main");
 
-    // .tsrcディレクトリが作成されていることを確認
-    let tsrc_dir = workspace.tsrc_dir();
-    assert!(tsrc_dir.exists(), ".tsrc directory should be created");
+    // .wmgrディレクトリが作成されていることを確認
+    let wmgr_dir = workspace.wmgr_dir();
+    assert!(wmgr_dir.exists(), ".wmgr directory should be created");
 
     // マニフェストファイルが作成されていることを確認
     let manifest_file = workspace.manifest_file_path();
@@ -237,8 +237,8 @@ async fn test_end_to_end_workflow() {
 
     // ワークスペースの構造を確認
     assert!(
-        workspace.tsrc_dir().exists(),
-        ".tsrc directory should exist"
+        workspace.wmgr_dir().exists(),
+        ".wmgr directory should exist"
     );
     assert!(workspace.config_path().exists(), "config.yml should exist");
     assert!(
@@ -302,13 +302,13 @@ async fn test_workspace_configuration_consistency() {
     assert_eq!(workspace.config.manifest_branch, "develop");
 
     // ワークスペースのパス関連メソッドをテスト
-    let tsrc_dir = workspace.tsrc_dir();
+    let wmgr_dir = workspace.wmgr_dir();
     let config_path = workspace.config_path();
     let manifest_dir = workspace.manifest_dir();
     let repo_path = workspace.repo_path("test-repo");
 
-    assert!(tsrc_dir.ends_with(".tsrc"));
+    assert!(wmgr_dir.ends_with(".wmgr"));
     assert!(config_path.ends_with("config.yml"));
-    assert_eq!(tsrc_dir, manifest_dir); // local-first implementation
+    assert_eq!(wmgr_dir, manifest_dir); // local-first implementation
     assert!(repo_path.ends_with("test-repo"));
 }

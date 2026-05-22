@@ -1,0 +1,46 @@
+# Example manifest demonstrating HTTP download functionality
+# This manifest shows how to download files and archives from HTTP URLs
+
+repos:
+  # Example 1: Download and extract a .tgz archive
+  - dest: "GooglePackages/Firebase.Core"
+    url: "https://dl.google.com/games/registry/unity/com.google.android.appbundle/com.google.android.appbundle-1.9.0.tgz?hl=ja"
+    groups: ["core", "packages"]
+
+  # Example 2: Download a single file (SVG logo)
+  - dest: "assets/logo.svg"
+    url: "https://corp.granizm.net/logo.svg"
+    groups: ["assets"]
+
+  # Example 3: Regular git repository (for comparison)
+  - dest: "example-repo"
+    url: "https://github.com/example/repo.git"
+    branch: "main"
+    groups: ["git"]
+
+  # Example 4: Download a zip archive (will be extracted)
+  - dest: "downloaded/archive"
+    url: "https://example.com/archive.zip"
+    groups: ["archives"]
+
+# Group definitions
+groups:
+  core:
+    repos: ["GooglePackages/Firebase.Core"]
+    description: "Core packages from Google"
+  
+  assets:
+    repos: ["assets/logo.svg"]
+    description: "Static assets and resources"
+  
+  git:
+    repos: ["example-repo"]
+    description: "Git repositories"
+  
+  archives:
+    repos: ["downloaded/archive"]
+    description: "Downloaded archives"
+  
+  packages:
+    repos: ["GooglePackages/Firebase.Core"]
+    description: "Third-party packages"

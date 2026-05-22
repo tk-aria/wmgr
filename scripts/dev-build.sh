@@ -76,7 +76,7 @@ case "${MODE}" in
         echo -e "${GREEN}✓ All checks passed!${NC}"
         ;;
     "install")
-        echo -e "${BLUE}Installing tsrc locally...${NC}"
+        echo -e "${BLUE}Installing wmgr locally...${NC}"
         cargo install --path . --force
         ;;
     *)
