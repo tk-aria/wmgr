@@ -9,7 +9,7 @@
 
 ---
 
-## Overview
+## 📖 Overview
 
 `wmgr` lets you define, sync, and operate on collections of repositories using a single YAML manifest. It supports **Git, SVN, Perforce, Mercurial, HTTP archives, S3, Google Drive**, and **symlinks** — all from one unified workflow.
 
@@ -23,16 +23,16 @@ wmgr.yml          wmgr sync           your workspace
 +-----------+                       +------------------+
 ```
 
-## Features
+## ✨ Features
 
-- **Multi-SCM support** — Git, SVN, Perforce, Mercurial, HTTP, S3, Google Drive, Symlink
-- **Group filtering** — Organize repos into groups; sync or operate on subsets
-- **Parallel execution** — Run commands across repos concurrently
-- **Credential management** — 4-level credential resolution (env, manifest, profile, system)
-- **Recursive workspaces** — Nested workspace support with child manifest discovery
-- **Multiple output formats** — Text, JSON, YAML for CI/scripting integration
+- 🔀 **Multi-SCM support** — Git, SVN, Perforce, Mercurial, HTTP, S3, Google Drive, Symlink
+- 🏷️ **Group filtering** — Organize repos into groups; sync or operate on subsets
+- ⚡ **Parallel execution** — Run commands across repos concurrently
+- 🔐 **Credential management** — 4-level credential resolution (env, manifest, profile, system)
+- 📂 **Recursive workspaces** — Nested workspace support with child manifest discovery
+- 📊 **Multiple output formats** — Text, JSON, YAML for CI/scripting integration
 
-## Installation
+## 🚀 Installation
 
 ### Quick Install (Recommended)
 
@@ -83,7 +83,7 @@ sudo cp target/release/wmgr /usr/local/bin/
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
 **1. Create a manifest** (`wmgr.yml`):
 
@@ -121,7 +121,7 @@ wmgr status
 
 ---
 
-## Commands
+## 🛠️ Commands
 
 | Command | Description |
 |---|---|
@@ -152,7 +152,7 @@ wmgr sync --force
 
 ---
 
-## Manifest Format
+## 📝 Manifest Format
 
 ### Basic (flat list)
 
@@ -216,7 +216,7 @@ repos:
 
 ---
 
-## Credential Management
+## 🔐 Credential Management
 
 wmgr supports a 4-level credential resolution system:
 
@@ -246,7 +246,7 @@ repos:
 
 ---
 
-## CI/CD Integration
+## 🔄 CI/CD Integration
 
 ### GitHub Actions
 
@@ -264,7 +264,7 @@ repos:
 
 ---
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 wmgr/
@@ -278,7 +278,7 @@ wmgr/
 └── docs/              # Documentation
 ```
 
-## Development
+## 🧑‍💻 Development
 
 ```bash
 git clone https://github.com/tk-aria/wmgr.git
@@ -289,11 +289,11 @@ cargo clippy           # Lint
 cargo fmt              # Format
 ```
 
-## License
+## 📄 License
 
 [BSD-3-Clause](LICENSE)
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - Inspired by [tsrc](https://github.com/TankerHQ/tsrc) (Python)
 - Built with Rust
