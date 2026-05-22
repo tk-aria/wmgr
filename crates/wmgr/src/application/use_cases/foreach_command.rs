@@ -412,17 +412,17 @@ impl ForeachCommandUseCase {
 
         // ワークスペース関連の環境変数を設定
         env_vars.insert(
-            "TSRC_WORKSPACE_ROOT".to_string(),
+            "WMGR_WORKSPACE_ROOT".to_string(),
             workspace.root_path.display().to_string(),
         );
 
         if let Some(_manifest) = &workspace.manifest {
             env_vars.insert(
-                "TSRC_MANIFEST_URL".to_string(),
+                "WMGR_MANIFEST_URL".to_string(),
                 workspace.config.manifest_url.clone(),
             );
             env_vars.insert(
-                "TSRC_MANIFEST_BRANCH".to_string(),
+                "WMGR_MANIFEST_BRANCH".to_string(),
                 workspace.config.manifest_branch.clone(),
             );
         }
@@ -594,15 +594,15 @@ impl ForeachCommandUseCase {
 
         // リポジトリ固有の環境変数を追加
         let mut repo_env_vars = env_vars.clone();
-        repo_env_vars.insert("TSRC_REPO_DEST".to_string(), repo.dest.clone());
-        repo_env_vars.insert("TSRC_REPO_URL".to_string(), repo.url.clone());
+        repo_env_vars.insert("WMGR_REPO_DEST".to_string(), repo.dest.clone());
+        repo_env_vars.insert("WMGR_REPO_URL".to_string(), repo.url.clone());
         repo_env_vars.insert(
-            "TSRC_REPO_PATH".to_string(),
+            "WMGR_REPO_PATH".to_string(),
             repo_path.display().to_string(),
         );
 
         if let Some(branch) = &repo.branch {
-            repo_env_vars.insert("TSRC_REPO_BRANCH".to_string(), branch.clone());
+            repo_env_vars.insert("WMGR_REPO_BRANCH".to_string(), branch.clone());
         }
 
         // コマンド実行
@@ -826,15 +826,15 @@ mod tests {
 
         let env_vars = use_case.prepare_environment_variables(&workspace).unwrap();
 
-        assert!(env_vars.contains_key("TSRC_WORKSPACE_ROOT"));
-        assert!(env_vars.contains_key("TSRC_MANIFEST_URL"));
-        assert!(env_vars.contains_key("TSRC_MANIFEST_BRANCH"));
+        assert!(env_vars.contains_key("WMGR_WORKSPACE_ROOT"));
+        assert!(env_vars.contains_key("WMGR_MANIFEST_URL"));
+        assert!(env_vars.contains_key("WMGR_MANIFEST_BRANCH"));
         assert_eq!(
             env_vars.get("CUSTOM_VAR"),
             Some(&"custom_value".to_string())
         );
         assert_eq!(
-            env_vars.get("TSRC_MANIFEST_URL"),
+            env_vars.get("WMGR_MANIFEST_URL"),
             Some(&"https://example.com/manifest.git".to_string())
         );
     }
