@@ -59,6 +59,7 @@ jobs:
     needs: docs
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    continue-on-error: true
     permissions:
       contents: read
       pages: write
