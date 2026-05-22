@@ -18,7 +18,7 @@ pub enum ScmType {
     Http,
     /// Symlink (creates symbolic links to local paths)
     Symlink,
-    /// Amazon S3 (downloads files via aws s3 CLI)
+    /// Amazon S3 (downloads files via AWS SDK for Rust)
     S3,
     /// Google Drive (downloads files via rclone)
     GDrive,

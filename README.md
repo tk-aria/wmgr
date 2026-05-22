@@ -79,7 +79,7 @@ cargo build --release
 sudo cp target/release/wmgr /usr/local/bin/
 ```
 
-**Requirements:** Rust 1.70+, Git 2.0+
+**Requirements:** Rust 1.78+, Git 2.0+
 
 ---
 

@@ -22,10 +22,6 @@ fn main() {
     // Generate completion files if needed
     generate_shell_completions();
 
-    // Set version information
-    let version = env::var("CARGO_PKG_VERSION").unwrap();
-    println!("cargo:rustc-env=WMGR_VERSION={version}");
-
     // Enable static linking for specific targets
     let target = env::var("TARGET").unwrap();
     if target.contains("musl") {

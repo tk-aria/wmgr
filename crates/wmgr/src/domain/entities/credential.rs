@@ -56,30 +56,16 @@ impl CredentialProfile {
     }
 
     pub fn merge_from(&mut self, other: &CredentialProfile) {
-        if self.username.is_none() {
-            self.username = other.username.clone();
+        macro_rules! fill {
+            ($($field:ident),+) => {
+                $(if self.$field.is_none() { self.$field = other.$field.clone(); })+
+            };
         }
-        if self.password.is_none() {
-            self.password = other.password.clone();
-        }
-        if self.token.is_none() {
-            self.token = other.token.clone();
-        }
-        if self.aws_access_key_id.is_none() {
-            self.aws_access_key_id = other.aws_access_key_id.clone();
-        }
-        if self.aws_secret_access_key.is_none() {
-            self.aws_secret_access_key = other.aws_secret_access_key.clone();
-        }
-        if self.aws_session_token.is_none() {
-            self.aws_session_token = other.aws_session_token.clone();
-        }
-        if self.gdrive_client_id.is_none() {
-            self.gdrive_client_id = other.gdrive_client_id.clone();
-        }
-        if self.gdrive_client_secret.is_none() {
-            self.gdrive_client_secret = other.gdrive_client_secret.clone();
-        }
+        fill!(
+            username, password, token,
+            aws_access_key_id, aws_secret_access_key, aws_session_token,
+            gdrive_client_id, gdrive_client_secret
+        );
     }
 }
 

@@ -2,7 +2,7 @@
 name = "wmgr-cli"
 version = "1.0.0"
 edition = "2021"
-rust-version = "1.70.0"
+rust-version = "1.78.0"
 authors = ["wmgr contributors"]
 description = "CLI for wmgr - manage groups of git repositories"
 repository = "https://github.com/tk-aria/wmgr"

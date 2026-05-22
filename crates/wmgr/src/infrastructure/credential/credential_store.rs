@@ -98,12 +98,12 @@ impl CredentialStore {
             if let Ok(metadata) = std::fs::metadata(path) {
                 let mode = metadata.permissions().mode() & 0o777;
                 if mode & 0o077 != 0 {
-                    eprintln!(
-                        "Warning: Credential file {} has insecure permissions {:o}. Consider running: chmod 600 {}",
+                    return Err(CredentialError::PermissionDenied(format!(
+                        "Credential file {} has insecure permissions {:o}. Run: chmod 600 {}",
                         path.display(),
                         mode,
                         path.display()
-                    );
+                    )));
                 }
             }
         }

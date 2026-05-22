@@ -2,6 +2,7 @@ use aws_config::BehaviorVersion;
 use aws_credential_types::Credentials;
 use aws_sdk_s3::Client;
 use std::path::Path;
+use tokio::fs;
 
 pub struct S3Downloader {
     client: Client,
@@ -56,7 +57,8 @@ impl S3Downloader {
     pub async fn sync(&self, s3_url: &str, dest: &Path) -> Result<SyncResult, S3Error> {
         let (bucket, prefix) = Self::parse_s3_url(s3_url)?;
 
-        std::fs::create_dir_all(dest)
+        fs::create_dir_all(dest)
+            .await
             .map_err(|e| S3Error::IoError(format!("Failed to create dest dir: {}", e)))?;
 
         let mut continuation_token: Option<String> = None;
@@ -88,7 +90,7 @@ impl S3Downloader {
 
                     let file_path = dest.join(relative);
                     if let Some(parent) = file_path.parent() {
-                        std::fs::create_dir_all(parent).map_err(|e| {
+                        fs::create_dir_all(parent).await.map_err(|e| {
                             S3Error::IoError(format!("Failed to create dir: {}", e))
                         })?;
                     }
@@ -129,7 +131,8 @@ impl S3Downloader {
             .await
             .map_err(|e| S3Error::ApiError(format!("Failed to read body: {}", e)))?;
 
-        std::fs::write(dest, body.into_bytes())
+        fs::write(dest, body.into_bytes())
+            .await
             .map_err(|e| S3Error::IoError(format!("Failed to write {}: {}", dest.display(), e)))?;
 
         Ok(())
