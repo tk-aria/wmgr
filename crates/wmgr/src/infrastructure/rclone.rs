@@ -106,37 +106,30 @@ impl RcloneManager {
                 .map_err(|e| RcloneError::IoError(e.to_string()))?;
         }
 
-        let output = Command::new("rclone")
-            .args([
-                "config", "create",
-                remote_name, "drive",
-                "--config", &self.config_path.display().to_string(),
-            ])
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .output()
+        let config_content = format!("[{}]\ntype = drive\n", remote_name);
+        tokio::fs::write(&self.config_path, config_content)
             .await
-            .map_err(|e| RcloneError::IoError(e.to_string()))?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(RcloneError::CommandFailed(format!("Failed to create remote: {}", stderr)));
-        }
+            .map_err(|e| RcloneError::IoError(format!("Failed to write rclone config: {}", e)))?;
 
         Ok(())
     }
 
     async fn authorize_remote(&self, remote_name: &str) -> Result<(), RcloneError> {
-        if Self::is_headless() {
+        if Self::is_ci() {
             return Err(RcloneError::AuthRequired(format!(
-                "{}. Run 'rclone config --config {}' manually to authenticate.",
+                "{}. Set WMGR_GDRIVE_TOKEN or run 'wmgr sync' locally first.",
                 remote_name,
-                self.config_path.display()
             )));
         }
 
-        eprintln!("Google Drive authentication required for remote '{}'.", remote_name);
-        eprintln!("A browser window will open for OAuth authorization...");
+        if Self::has_local_browser() {
+            eprintln!("Google Drive authentication required for remote '{}'.", remote_name);
+            eprintln!("A browser window will open for OAuth authorization...");
+        } else {
+            eprintln!("Google Drive authentication required for remote '{}'.", remote_name);
+            eprintln!("No local browser detected — remote device authorization will be used.");
+            eprintln!("A URL will be shown. Open it on any device with a browser.");
+        }
 
         let output = Command::new("rclone")
             .args(["config", "reconnect", &format!("{}:", remote_name),
@@ -156,10 +149,26 @@ impl RcloneManager {
         Ok(())
     }
 
-    fn is_headless() -> bool {
+    fn is_ci() -> bool {
         std::env::var("CI").is_ok()
             || std::env::var("GITHUB_ACTIONS").is_ok()
-            || std::env::var("WMGR_HEADLESS").is_ok()
+    }
+
+    fn has_local_browser() -> bool {
+        if std::env::var("WMGR_HEADLESS").is_ok() {
+            return false;
+        }
+        if std::env::var("SSH_CONNECTION").is_ok() || std::env::var("SSH_TTY").is_ok() {
+            return false;
+        }
+        #[cfg(target_os = "linux")]
+        {
+            return std::env::var("DISPLAY").is_ok() || std::env::var("WAYLAND_DISPLAY").is_ok();
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            true
+        }
     }
 
     pub async fn copy(
@@ -200,10 +209,16 @@ mod tests {
     }
 
     #[test]
-    fn test_is_headless() {
+    fn test_is_ci() {
         std::env::remove_var("CI");
         std::env::remove_var("GITHUB_ACTIONS");
+        assert!(!RcloneManager::is_ci());
+    }
+
+    #[test]
+    fn test_has_local_browser_headless_override() {
+        std::env::set_var("WMGR_HEADLESS", "1");
+        assert!(!RcloneManager::has_local_browser());
         std::env::remove_var("WMGR_HEADLESS");
-        assert!(!RcloneManager::is_headless());
     }
 }
