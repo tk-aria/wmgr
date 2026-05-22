@@ -45,7 +45,7 @@
 //! - [`domain`]: Core business logic and entities
 //! - [`application`]: Use cases and business workflows  
 //! - [`infrastructure`]: External dependencies and I/O operations
-//! - [`presentation`]: CLI interface and user interaction
+//! - `presentation` (in `wmgr-cli` crate): CLI interface and user interaction
 //! - [`common`]: Shared utilities and error handling
 //!
 //! ## Domain Model
