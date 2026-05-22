@@ -24,7 +24,7 @@ fn main() {
 
     // Set version information
     let version = env::var("CARGO_PKG_VERSION").unwrap();
-    println!("cargo:rustc-env=TSRC_VERSION={version}");
+    println!("cargo:rustc-env=WMGR_VERSION={version}");
 
     // Enable static linking for specific targets
     let target = env::var("TARGET").unwrap();

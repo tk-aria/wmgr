@@ -300,8 +300,8 @@ wmgr status --branch
 ### Getting Help
 
 ```bash
-tsrc --help
-tsrc <command> --help
+wmgr --help
+wmgr <command> --help
 ```
 
 ## Development
@@ -525,7 +525,7 @@ TSRC_CONFIG_PATH=/custom/config.yml wmgr status
 
 ### GitHub Actions
 
-Example workflow for using tsrc in CI:
+Example workflow for using wmgr in CI:
 
 ```yaml
 name: Multi-repo CI
@@ -537,10 +537,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install tsrc
+    - name: Install wmgr
       run: |
-        curl -L https://github.com/tk-aria/wmgr/releases/latest/download/tsrc-linux-x86_64.tar.gz | tar xz
-        sudo mv tsrc /usr/local/bin/
+        curl -L https://github.com/tk-aria/wmgr/releases/latest/download/wmgr-linux-x86_64.tar.gz | tar xz
+        sudo mv wmgr /usr/local/bin/
     
     - name: Initialize workspace
       run: wmgr init manifest.yml
@@ -564,8 +564,8 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/tsrc /usr/local/bin/
-ENTRYPOINT ["tsrc"]
+COPY --from=builder /app/target/release/wmgr /usr/local/bin/
+ENTRYPOINT ["wmgr"]
 ```
 
 ## Troubleshooting
@@ -609,9 +609,9 @@ RUST_LOG=trace wmgr init manifest.yml  # Very verbose
 ### Getting Help
 
 ```bash
-tsrc --help                    # General help
-tsrc <command> --help         # Command-specific help
-tsrc --version                # Show version information
+wmgr --help                    # General help
+wmgr <command> --help         # Command-specific help
+wmgr --version                # Show version information
 ```
 
 ## Contributing
@@ -666,6 +666,6 @@ This project is licensed under the BSD-3-Clause License. See [LICENSE](LICENSE) 
 
 ## Acknowledgments
 
-- Inspired by [tsrc](https://github.com/TankerHQ/tsrc) (Python implementation)
+- Inspired by [tsrc](https://github.com/TankerHQ/wmgr) (Python implementation)
 - Built with the amazing Rust ecosystem
 - Thanks to all contributors and users

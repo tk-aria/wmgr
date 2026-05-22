@@ -80,7 +80,7 @@ impl InitWorkspaceUseCase {
         // 3. マニフェストファイルの読み込み
         let manifest = self.read_manifest(&manifest_path).await?;
 
-        // 4. .tsrc/config.yml の作成
+        // 4. .wmgr/config.yml の作成
         self.create_workspace_config(&manifest).await?;
 
         // 5. ワークスペースエンティティを作成
@@ -117,11 +117,11 @@ impl InitWorkspaceUseCase {
     /// マニフェストリポジトリをクローン
     async fn clone_manifest_repository(&self) -> Result<PathBuf, InitWorkspaceError> {
         let workspace_path = self.config.workspace_path.to_path_buf();
-        let manifest_dir = workspace_path.join(".tsrc").join("manifest");
+        let manifest_dir = workspace_path.join(".wmgr").join("manifest");
 
-        // .tsrcディレクトリを作成
-        let tsrc_dir = workspace_path.join(".tsrc");
-        std::fs::create_dir_all(&tsrc_dir)?;
+        // .wmgrディレクトリを作成
+        let wmgr_dir = workspace_path.join(".wmgr");
+        std::fs::create_dir_all(&wmgr_dir)?;
 
         // Git clone実行（実際のGit操作は別途実装予定）
         // ここでは疑似的な実装
@@ -182,10 +182,10 @@ impl InitWorkspaceUseCase {
         Ok(Manifest::new(vec![]))
     }
 
-    /// .tsrc/config.yml の作成
+    /// .wmgr/config.yml の作成
     async fn create_workspace_config(&self, manifest: &Manifest) -> Result<(), InitWorkspaceError> {
         let workspace_path = self.config.workspace_path.to_path_buf();
-        let config_dir = workspace_path.join(".tsrc");
+        let config_dir = workspace_path.join(".wmgr");
         let config_file = config_dir.join("config.yml");
 
         // 設定ファイルの内容を作成

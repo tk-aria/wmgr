@@ -143,20 +143,20 @@ impl Workspace {
         self
     }
 
-    /// .tsrcディレクトリのパスを取得
-    pub fn tsrc_dir(&self) -> PathBuf {
-        self.root_path.join(".tsrc")
+    /// .wmgrディレクトリのパスを取得
+    pub fn wmgr_dir(&self) -> PathBuf {
+        self.root_path.join(".wmgr")
     }
 
     /// config.ymlファイルのパスを取得
     pub fn config_path(&self) -> PathBuf {
-        self.tsrc_dir().join("config.yml")
+        self.wmgr_dir().join("config.yml")
     }
 
     /// マニフェストディレクトリのパスを取得
-    /// Note: For local-first implementation, this points to .tsrc directory
+    /// Note: For local-first implementation, this points to .wmgr directory
     pub fn manifest_dir(&self) -> PathBuf {
-        self.tsrc_dir()
+        self.wmgr_dir()
     }
 
     /// マニフェストファイル（wmgr.yml、manifest.yml）のパスを取得
@@ -239,10 +239,10 @@ impl Workspace {
         }
     }
 
-    /// 旧マニフェストファイル（.tsrc/manifest.yml）のパスを取得
+    /// 旧マニフェストファイル（.tsrc/manifest.yml）からの移行用
     /// レガシーサポート用
     pub fn legacy_manifest_file_path(&self) -> PathBuf {
-        self.tsrc_dir().join("manifest.yml")
+        self.wmgr_dir().join("manifest.yml")
     }
 
     /// 特定のリポジトリのパスを取得
@@ -360,16 +360,16 @@ mod tests {
         let workspace = Workspace::new(PathBuf::from("/path/to/workspace"), config);
 
         assert_eq!(
-            workspace.tsrc_dir(),
-            PathBuf::from("/path/to/workspace/.tsrc")
+            workspace.wmgr_dir(),
+            PathBuf::from("/path/to/workspace/.wmgr")
         );
         assert_eq!(
             workspace.config_path(),
-            PathBuf::from("/path/to/workspace/.tsrc/config.yml")
+            PathBuf::from("/path/to/workspace/.wmgr/config.yml")
         );
         assert_eq!(
             workspace.manifest_dir(),
-            PathBuf::from("/path/to/workspace/.tsrc")
+            PathBuf::from("/path/to/workspace/.wmgr")
         );
         assert_eq!(
             workspace.repo_path("repo1"),

@@ -35,7 +35,7 @@
 
 - [x] `application/use_cases/init_workspace.rs` - ワークスペース初期化ユースケース
   - [x] ローカルマニフェストファイルからの初期化（URLクローン処理を削除）
-  - [x] .tsrc/config.yml の作成
+  - [x] .wmgr/config.yml の作成
   - [x] グループ指定のサポート
   - [x] ローカルファイルベースのワークスペース設定
 - [x] `application/use_cases/sync_repositories.rs` - リポジトリ同期ユースケース

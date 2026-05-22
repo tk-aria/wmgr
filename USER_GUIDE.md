@@ -1,6 +1,6 @@
-# tsrc User Guide
+# wmgr User Guide
 
-Comprehensive guide for using tsrc to manage multiple git repositories.
+Comprehensive guide for using wmgr to manage multiple git repositories.
 
 ## Table of Contents
 
@@ -45,24 +45,24 @@ repos:
 ```bash
 mkdir my-workspace
 cd my-workspace
-tsrc init manifest.yml
+wmgr init manifest.yml
 ```
 
 3. **Verify the setup**:
 
 ```bash
-tsrc status
+wmgr status
 ```
 
 ## Commands Reference
 
-### `tsrc init`
+### `wmgr init`
 
 Initialize a new workspace from a manifest file.
 
 **Syntax:**
 ```bash
-tsrc init <manifest_path> [OPTIONS]
+wmgr init <manifest_path> [OPTIONS]
 ```
 
 **Options:**
@@ -73,31 +73,31 @@ tsrc init <manifest_path> [OPTIONS]
 
 ```bash
 # Initialize all repositories
-tsrc init manifest.yml
+wmgr init manifest.yml
 
 # Initialize only web repositories
-tsrc init manifest.yml --group web
+wmgr init manifest.yml --group web
 
 # Initialize multiple groups
-tsrc init manifest.yml --group web --group api
+wmgr init manifest.yml --group web --group api
 
 # Force re-initialization
-tsrc init manifest.yml --force
+wmgr init manifest.yml --force
 ```
 
 **What it does:**
-- Creates `.tsrc/config.yml` in your workspace
+- Creates `.wmgr/config.yml` in your workspace
 - Clones all specified repositories
 - Sets up configured remotes
 - Checks out specified branches
 
-### `tsrc sync`
+### `wmgr sync`
 
 Synchronize all repositories in the workspace.
 
 **Syntax:**
 ```bash
-tsrc sync [OPTIONS]
+wmgr sync [OPTIONS]
 ```
 
 **Options:**
@@ -109,16 +109,16 @@ tsrc sync [OPTIONS]
 
 ```bash
 # Sync all repositories
-tsrc sync
+wmgr sync
 
 # Sync only API repositories
-tsrc sync --group api
+wmgr sync --group api
 
 # Force sync with uncommitted changes
-tsrc sync --force
+wmgr sync --force
 
 # Sync without switching branches
-tsrc sync --no-correct-branch
+wmgr sync --no-correct-branch
 ```
 
 **What it does:**
@@ -127,13 +127,13 @@ tsrc sync --no-correct-branch
 - Switches to configured branch
 - Updates remote configurations
 
-### `tsrc status`
+### `wmgr status`
 
 Show the status of all repositories in the workspace.
 
 **Syntax:**
 ```bash
-tsrc status [OPTIONS]
+wmgr status [OPTIONS]
 ```
 
 **Options:**
@@ -144,13 +144,13 @@ tsrc status [OPTIONS]
 
 ```bash
 # Basic status
-tsrc status
+wmgr status
 
 # Status with branch information
-tsrc status --branch
+wmgr status --branch
 
 # Compact output
-tsrc status --compact
+wmgr status --compact
 ```
 
 **Output example:**
@@ -160,13 +160,13 @@ backend: dirty (feature/auth) - 2 files modified
 shared: ahead 3 commits (develop)
 ```
 
-### `tsrc foreach`
+### `wmgr foreach`
 
 Execute a command in each repository.
 
 **Syntax:**
 ```bash
-tsrc foreach <command> [OPTIONS]
+wmgr foreach <command> [OPTIONS]
 ```
 
 **Options:**
@@ -177,16 +177,16 @@ tsrc foreach <command> [OPTIONS]
 
 ```bash
 # Pull all repositories
-tsrc foreach "git pull"
+wmgr foreach "git pull"
 
 # Install dependencies in web repositories
-tsrc foreach "npm install" --group web
+wmgr foreach "npm install" --group web
 
 # Run tests in parallel
-tsrc foreach "make test" --parallel
+wmgr foreach "make test" --parallel
 
 # Check Git status
-tsrc foreach "git status --porcelain"
+wmgr foreach "git status --porcelain"
 ```
 
 **Environment Variables:**
@@ -195,32 +195,32 @@ The foreach command sets these environment variables:
 - `TSRC_REPO_PATH`: Full path to the repository
 - `TSRC_WORKSPACE_PATH`: Path to the workspace root
 
-### `tsrc log`
+### `wmgr log`
 
 Show commit logs across repositories.
 
 **Syntax:**
 ```bash
-tsrc log [OPTIONS]
+wmgr log [OPTIONS]
 ```
 
 **Examples:**
 
 ```bash
 # Show recent commits
-tsrc log
+wmgr log
 
 # Show commits for specific group
-tsrc log --group web
+wmgr log --group web
 ```
 
-### `tsrc dump-manifest`
+### `wmgr dump-manifest`
 
 Output the current workspace manifest.
 
 **Syntax:**
 ```bash
-tsrc dump-manifest
+wmgr dump-manifest
 ```
 
 **Use cases:**
@@ -228,20 +228,20 @@ tsrc dump-manifest
 - Generate manifest templates
 - Debug configuration issues
 
-### `tsrc apply-manifest`
+### `wmgr apply-manifest`
 
 Apply a new manifest to the current workspace.
 
 **Syntax:**
 ```bash
-tsrc apply-manifest <manifest_path>
+wmgr apply-manifest <manifest_path>
 ```
 
 **Examples:**
 
 ```bash
 # Apply updated manifest
-tsrc apply-manifest updated-manifest.yml
+wmgr apply-manifest updated-manifest.yml
 ```
 
 ## Manifest Configuration
@@ -319,16 +319,16 @@ repos:
 
 ```bash
 # Initialize only web repositories
-tsrc init manifest.yml --group web
+wmgr init manifest.yml --group web
 
 # Sync only API repositories
-tsrc sync --group api
+wmgr sync --group api
 
 # Run tests in client repositories
-tsrc foreach "npm test" --group client
+wmgr foreach "npm test" --group client
 
 # Multiple groups
-tsrc sync --group web --group api
+wmgr sync --group web --group api
 ```
 
 ### Group Strategies
@@ -361,13 +361,13 @@ Most commands support parallel execution:
 
 ```bash
 # Parallel sync
-tsrc sync --parallel
+wmgr sync --parallel
 
 # Parallel command execution
-tsrc foreach "git pull" --parallel
+wmgr foreach "git pull" --parallel
 
 # Parallel with specific group
-tsrc foreach "make build" --group web --parallel
+wmgr foreach "make build" --group web --parallel
 ```
 
 ### Complex Workflows
@@ -375,49 +375,49 @@ tsrc foreach "make build" --group web --parallel
 **Multi-stage deployment:**
 ```bash
 # Stage 1: Update all repositories
-tsrc sync
+wmgr sync
 
 # Stage 2: Build services
-tsrc foreach "make build" --group services --parallel
+wmgr foreach "make build" --group services --parallel
 
 # Stage 3: Run tests
-tsrc foreach "make test" --parallel
+wmgr foreach "make test" --parallel
 
 # Stage 4: Deploy
-tsrc foreach "make deploy" --group production
+wmgr foreach "make deploy" --group production
 ```
 
 **Development workflow:**
 ```bash
 # Check current state
-tsrc status --branch
+wmgr status --branch
 
 # Create feature branches
-tsrc foreach "git checkout -b feature/new-feature" --group core
+wmgr foreach "git checkout -b feature/new-feature" --group core
 
 # Work on changes...
 
 # Check status before commit
-tsrc status
+wmgr status
 
 # Commit changes
-tsrc foreach "git add . && git commit -m 'Add new feature'"
+wmgr foreach "git add . && git commit -m 'Add new feature'"
 
 # Push changes
-tsrc foreach "git push origin feature/new-feature"
+wmgr foreach "git push origin feature/new-feature"
 ```
 
 ### Environment Variables in foreach
 
 ```bash
 # Use environment variables in commands
-tsrc foreach 'echo "Working on $TSRC_REPO_NAME in $TSRC_REPO_PATH"'
+wmgr foreach 'echo "Working on $TSRC_REPO_NAME in $TSRC_REPO_PATH"'
 
 # Conditional execution
-tsrc foreach 'if [ -f package.json ]; then npm install; fi'
+wmgr foreach 'if [ -f package.json ]; then npm install; fi'
 
 # Generate reports
-tsrc foreach 'echo "$TSRC_REPO_NAME,$(git rev-parse HEAD)" >> ../report.csv'
+wmgr foreach 'echo "$TSRC_REPO_NAME,$(git rev-parse HEAD)" >> ../report.csv'
 ```
 
 ## Best Practices
@@ -449,21 +449,21 @@ tsrc foreach 'echo "$TSRC_REPO_NAME,$(git rev-parse HEAD)" >> ../report.csv'
 1. **Regular synchronization**
    ```bash
    # Daily sync routine
-   tsrc sync
-   tsrc status
+   wmgr sync
+   wmgr status
    ```
 
 2. **Use groups for targeted operations**
    ```bash
    # Deploy only production services
-   tsrc foreach "make deploy" --group production
+   wmgr foreach "make deploy" --group production
    ```
 
 3. **Parallel execution for speed**
    ```bash
    # Faster operations
-   tsrc sync --parallel
-   tsrc foreach "make test" --parallel
+   wmgr sync --parallel
+   wmgr foreach "make test" --parallel
    ```
 
 ### Manifest Management
@@ -484,7 +484,7 @@ tsrc foreach 'echo "$TSRC_REPO_NAME,$(git rev-parse HEAD)" >> ../report.csv'
    # Test in a separate directory
    mkdir test-workspace
    cd test-workspace
-   tsrc init ../new-manifest.yml
+   wmgr init ../new-manifest.yml
    ```
 
 ## Troubleshooting
@@ -527,7 +527,7 @@ Error: Cannot fast-forward, merge conflicts detected
 **Solutions:**
 1. Use `--force` flag to override (careful!)
 2. Resolve conflicts manually in each repository
-3. Use `tsrc status` to identify problematic repositories
+3. Use `wmgr status` to identify problematic repositories
 
 #### Workspace Corruption
 
@@ -537,21 +537,21 @@ Error: Invalid workspace configuration
 ```
 
 **Solutions:**
-1. Check `.tsrc/config.yml` file
-2. Re-initialize workspace: `tsrc init manifest.yml --force`
+1. Check `.wmgr/config.yml` file
+2. Re-initialize workspace: `wmgr init manifest.yml --force`
 3. Verify manifest file syntax
 
 ### Debugging Commands
 
 **Check workspace state:**
 ```bash
-tsrc status --branch
-cat .tsrc/config.yml
+wmgr status --branch
+cat .wmgr/config.yml
 ```
 
 **Verbose output:**
 ```bash
-RUST_LOG=debug tsrc sync
+RUST_LOG=debug wmgr sync
 ```
 
 **Manual verification:**
@@ -579,17 +579,17 @@ git branch -a
 
 **Command-line help:**
 ```bash
-tsrc --help
-tsrc <command> --help
+wmgr --help
+wmgr <command> --help
 ```
 
 **Check version:**
 ```bash
-tsrc --version
+wmgr --version
 ```
 
 **Enable debug logging:**
 ```bash
 export RUST_LOG=debug
-tsrc sync
+wmgr sync
 ```

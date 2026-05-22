@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum TsrcError {
+pub enum WmgrError {
     #[error("Git operation failed: {message}")]
     GitError {
         message: String,
@@ -98,7 +98,7 @@ pub enum TsrcError {
     },
 }
 
-impl TsrcError {
+impl WmgrError {
     pub fn git_error(message: impl Into<String>) -> Self {
         Self::GitError {
             message: message.into(),
@@ -295,37 +295,37 @@ impl TsrcError {
     }
 }
 
-impl From<git2::Error> for TsrcError {
+impl From<git2::Error> for WmgrError {
     fn from(error: git2::Error) -> Self {
         Self::git_error_with_source("Git operation failed", error)
     }
 }
 
-impl From<std::io::Error> for TsrcError {
+impl From<std::io::Error> for WmgrError {
     fn from(error: std::io::Error) -> Self {
         Self::filesystem_error_with_source("File system operation failed", None, error)
     }
 }
 
-impl From<serde_yaml::Error> for TsrcError {
+impl From<serde_yaml::Error> for WmgrError {
     fn from(error: serde_yaml::Error) -> Self {
         Self::serialization_error_with_source("YAML serialization failed", error)
     }
 }
 
-impl From<serde_json::Error> for TsrcError {
+impl From<serde_json::Error> for WmgrError {
     fn from(error: serde_json::Error) -> Self {
         Self::serialization_error_with_source("JSON serialization failed", error)
     }
 }
 
-impl From<reqwest::Error> for TsrcError {
+impl From<reqwest::Error> for WmgrError {
     fn from(error: reqwest::Error) -> Self {
         Self::network_error_with_source("Network request failed", None, error)
     }
 }
 
-impl From<anyhow::Error> for TsrcError {
+impl From<anyhow::Error> for WmgrError {
     fn from(error: anyhow::Error) -> Self {
         Self::internal_error(format!("Anyhow error: {}", error))
     }
@@ -338,16 +338,16 @@ mod tests {
 
     #[test]
     fn test_git_error_creation() {
-        let error = TsrcError::git_error("test message");
-        assert!(matches!(error, TsrcError::GitError { .. }));
+        let error = WmgrError::git_error("test message");
+        assert!(matches!(error, WmgrError::GitError { .. }));
         assert_eq!(error.to_string(), "Git operation failed: test message");
     }
 
     #[test]
     fn test_filesystem_error_with_path() {
         let path = PathBuf::from("/test/path");
-        let error = TsrcError::filesystem_error("test message", Some(path.clone()));
-        if let TsrcError::FileSystemError { path: Some(p), .. } = error {
+        let error = WmgrError::filesystem_error("test message", Some(path.clone()));
+        if let WmgrError::FileSystemError { path: Some(p), .. } = error {
             assert_eq!(p, path);
         } else {
             panic!("Expected FileSystemError with path");
@@ -356,20 +356,20 @@ mod tests {
 
     #[test]
     fn test_validation_error() {
-        let error = TsrcError::validation_error("field", "message", Some("value".to_string()));
+        let error = WmgrError::validation_error("field", "message", Some("value".to_string()));
         assert_eq!(error.to_string(), "Validation error: field - message");
     }
 
     #[test]
     fn test_timeout_error() {
-        let error = TsrcError::timeout(30);
+        let error = WmgrError::timeout(30);
         assert_eq!(error.to_string(), "Operation timed out after 30 seconds");
     }
 
     #[test]
     fn test_error_conversion_from_io_error() {
         let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
-        let tsrc_error: TsrcError = io_error.into();
-        assert!(matches!(tsrc_error, TsrcError::FileSystemError { .. }));
+        let wmgr_error: WmgrError = io_error.into();
+        assert!(matches!(wmgr_error, WmgrError::FileSystemError { .. }));
     }
 }

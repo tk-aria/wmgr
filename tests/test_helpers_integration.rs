@@ -76,9 +76,9 @@ fn test_filesystem_fixtures() {
 
     // Test workspace structure creation
     FileSystemFixture::create_workspace_structure(temp_dir.path()).unwrap();
-    assert!(temp_dir.path().join(".tsrc").exists());
-    assert!(temp_dir.path().join(".tsrc").join("config.yml").exists());
-    assert!(temp_dir.path().join(".tsrc").join("manifest.yml").exists());
+    assert!(temp_dir.path().join(".wmgr").exists());
+    assert!(temp_dir.path().join(".wmgr").join("config.yml").exists());
+    assert!(temp_dir.path().join(".wmgr").join("manifest.yml").exists());
 
     // Test repository structure creation
     let repo_path = temp_dir.path().join("test-repo");
@@ -150,7 +150,7 @@ fn test_workspace_helpers() {
 
     // Verify structure
     assert!(WorkspaceHelper::verify_workspace_structure(&workspace));
-    assert!(workspace.tsrc_dir().exists());
+    assert!(workspace.wmgr_dir().exists());
     assert!(workspace.config_path().exists());
     assert!(workspace.manifest_file_path().exists());
 

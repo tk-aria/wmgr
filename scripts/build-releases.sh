@@ -1,5 +1,5 @@
 #!/bin/bash
-# Cross-compilation script for tsrc releases
+# Cross-compilation script for wmgr releases
 
 set -e
 
@@ -22,7 +22,7 @@ TARGETS=(
 VERSION=${1:-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')}
 RELEASE_DIR="target/release-packages"
 
-echo -e "${BLUE}Building tsrc v${VERSION} for multiple targets${NC}"
+echo -e "${BLUE}Building wmgr v${VERSION} for multiple targets${NC}"
 
 # Clean and prepare
 echo -e "${YELLOW}Cleaning previous builds...${NC}"
@@ -64,8 +64,8 @@ echo -e "${GREEN}Release build process completed!${NC}"
 function package_binary() {
     local target=$1
     local version=$2
-    local binary_name="tsrc"
-    local package_name="tsrc-${version}-${target}"
+    local binary_name="wmgr"
+    local package_name="wmgr-${version}-${target}"
     
     if [[ "${target}" == *"windows"* ]]; then
         binary_name="${binary_name}.exe"
@@ -91,12 +91,12 @@ function package_binary() {
 function generate_install_script() {
     cat > "${RELEASE_DIR}/install.sh" << 'EOF'
 #!/bin/bash
-# tsrc installation script
+# wmgr installation script
 
 set -e
 
 REPO="tk-aria/wmgr"
-BINARY_NAME="tsrc"
+BINARY_NAME="wmgr"
 INSTALL_DIR="${HOME}/.local/bin"
 
 # Detect OS and architecture

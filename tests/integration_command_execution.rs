@@ -49,8 +49,8 @@ fn create_test_workspace_with_repos(temp_dir: &TempDir) -> Workspace {
 
 /// テスト用のマニフェストファイルを作成するヘルパー関数
 fn create_manifest_file(workspace: &Workspace) -> std::io::Result<()> {
-    let tsrc_dir = workspace.tsrc_dir();
-    std::fs::create_dir_all(&tsrc_dir)?;
+    let wmgr_dir = workspace.wmgr_dir();
+    std::fs::create_dir_all(&wmgr_dir)?;
 
     let manifest_content = r#"repos:
   - dest: repo1

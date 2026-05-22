@@ -79,8 +79,8 @@
 //!
 //! The crate uses a comprehensive error handling system:
 //!
-//! - [`common::error::TsrcError`]: Main error type with detailed context
-//! - [`common::result::TsrcResult`]: Type alias for `Result<T, TsrcError>`
+//! - [`common::error::WmgrError`]: Main error type with detailed context
+//! - [`common::result::WmgrResult`]: Type alias for `Result<T, WmgrError>`
 //!
 //! ## Examples
 //!
@@ -145,5 +145,5 @@ pub mod infrastructure;
 pub mod presentation;
 
 // Re-export commonly used types for convenience
-pub use crate::common::error::TsrcError;
-pub use crate::common::result::TsrcResult as Result;
+pub use crate::common::error::WmgrError;
+pub use crate::common::result::WmgrResult as Result;

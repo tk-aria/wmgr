@@ -95,9 +95,9 @@ impl WorkspaceHelper {
     pub fn setup_test_workspace(temp_dir: &TempDir, workspace: &Workspace) -> std::io::Result<()> {
         let workspace_path = workspace.root_path.as_path();
 
-        // Create .tsrc directory
-        let tsrc_dir = workspace.tsrc_dir();
-        std::fs::create_dir_all(&tsrc_dir)?;
+        // Create .wmgr directory
+        let wmgr_dir = workspace.wmgr_dir();
+        std::fs::create_dir_all(&wmgr_dir)?;
 
         // Create config.yml
         let config_content = format!(
@@ -133,7 +133,7 @@ shallow: false
 
     /// Verify workspace structure is correct
     pub fn verify_workspace_structure(workspace: &Workspace) -> bool {
-        let required_paths = vec![workspace.tsrc_dir(), workspace.config_path()];
+        let required_paths = vec![workspace.wmgr_dir(), workspace.config_path()];
 
         for path in required_paths {
             if !path.exists() {
@@ -404,7 +404,7 @@ mod tests {
         WorkspaceHelper::setup_test_workspace(&temp_dir, &workspace).unwrap();
 
         assert!(WorkspaceHelper::verify_workspace_structure(&workspace));
-        assert!(workspace.tsrc_dir().exists());
+        assert!(workspace.wmgr_dir().exists());
         assert!(workspace.config_path().exists());
         assert!(workspace.manifest_file_path().exists());
     }

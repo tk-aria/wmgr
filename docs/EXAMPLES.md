@@ -1,18 +1,18 @@
 # Code Examples
 
-This page contains practical examples of using the tsrc library.
+This page contains practical examples of using the wmgr library.
 
 ## Basic Workspace Operations
 
 ### Initialize a Workspace
 
 ```rust
-use tsrc::application::use_cases::init_workspace::{
+use wmgr::application::use_cases::init_workspace::{
     InitWorkspaceUseCase, InitWorkspaceConfig
 };
-use tsrc::domain::value_objects::{git_url::GitUrl, file_path::FilePath};
+use wmgr::domain::value_objects::{git_url::GitUrl, file_path::FilePath};
 
-async fn init_workspace() -> tsrc::Result<()> {
+async fn init_workspace() -> wmgr::Result<()> {
     let config = InitWorkspaceConfig {
         manifest_url: GitUrl::new("https://github.com/example/manifest.git")?,
         workspace_path: FilePath::new_absolute("/path/to/workspace")?,
@@ -33,11 +33,11 @@ async fn init_workspace() -> tsrc::Result<()> {
 ### Sync Repositories
 
 ```rust
-use tsrc::application::use_cases::sync_repositories::{
+use wmgr::application::use_cases::sync_repositories::{
     SyncRepositoriesUseCase, SyncRepositoriesConfig
 };
 
-async fn sync_repositories() -> tsrc::Result<()> {
+async fn sync_repositories() -> wmgr::Result<()> {
     let config = SyncRepositoriesConfig::new(".")
         .with_groups(vec!["web".to_string()])
         .with_force(false)
@@ -56,11 +56,11 @@ async fn sync_repositories() -> tsrc::Result<()> {
 ### Check Status
 
 ```rust
-use tsrc::application::use_cases::status_check::{
+use wmgr::application::use_cases::status_check::{
     StatusCheckUseCase, StatusCheckConfig
 };
 
-async fn check_status() -> tsrc::Result<()> {
+async fn check_status() -> wmgr::Result<()> {
     let config = StatusCheckConfig::new(".")
         .with_show_branch(true)
         .with_compact(false);
@@ -79,11 +79,11 @@ async fn check_status() -> tsrc::Result<()> {
 ### Execute Commands
 
 ```rust
-use tsrc::application::use_cases::foreach_command::{
+use wmgr::application::use_cases::foreach_command::{
     ForeachCommandUseCase, ForeachCommandConfig
 };
 
-async fn run_foreach() -> tsrc::Result<()> {
+async fn run_foreach() -> wmgr::Result<()> {
     let config = ForeachCommandConfig::new(".", "git status")
         .with_groups(vec!["core".to_string()])
         .with_parallel(true)
@@ -110,10 +110,10 @@ async fn run_foreach() -> tsrc::Result<()> {
 ### Parse Manifest from File
 
 ```rust
-use tsrc::application::services::manifest_service::ManifestService;
+use wmgr::application::services::manifest_service::ManifestService;
 use std::path::Path;
 
-async fn parse_manifest() -> tsrc::Result<()> {
+async fn parse_manifest() -> wmgr::Result<()> {
     let service = ManifestService::new();
     let processed = service.parse_from_file(Path::new("manifest.yml")).await?;
     
@@ -140,9 +140,9 @@ async fn parse_manifest() -> tsrc::Result<()> {
 ### Parse Manifest from URL
 
 ```rust
-use tsrc::application::services::manifest_service::ManifestService;
+use wmgr::application::services::manifest_service::ManifestService;
 
-async fn parse_remote_manifest() -> tsrc::Result<()> {
+async fn parse_remote_manifest() -> wmgr::Result<()> {
     let service = ManifestService::new();
     let processed = service.parse_from_url("https://example.com/manifest.yml").await?;
     
@@ -157,7 +157,7 @@ async fn parse_remote_manifest() -> tsrc::Result<()> {
 ### Basic Error Handling
 
 ```rust
-use tsrc::{TsrcError, Result};
+use wmgr::{TsrcError, Result};
 
 fn handle_errors() -> Result<()> {
     match some_operation() {
@@ -189,7 +189,7 @@ fn some_operation() -> Result<String> {
 ### Using ? Operator
 
 ```rust
-use tsrc::Result;
+use wmgr::Result;
 
 async fn chained_operations() -> Result<()> {
     // These operations will automatically propagate errors
@@ -222,9 +222,9 @@ async fn sync_repositories(workspace: &Workspace, manifest: &Manifest) -> Result
 ### Working with GitUrl
 
 ```rust
-use tsrc::domain::value_objects::git_url::GitUrl;
+use wmgr::domain::value_objects::git_url::GitUrl;
 
-fn git_url_examples() -> tsrc::Result<()> {
+fn git_url_examples() -> wmgr::Result<()> {
     // Create URLs
     let https_url = GitUrl::new("https://github.com/owner/repo.git")?;
     let ssh_url = GitUrl::new("git@github.com:owner/repo.git")?;
@@ -246,9 +246,9 @@ fn git_url_examples() -> tsrc::Result<()> {
 ### Working with BranchName
 
 ```rust
-use tsrc::domain::value_objects::branch_name::BranchName;
+use wmgr::domain::value_objects::branch_name::BranchName;
 
-fn branch_name_examples() -> tsrc::Result<()> {
+fn branch_name_examples() -> wmgr::Result<()> {
     let branch = BranchName::new("feature/new-functionality")?;
     
     println!("Branch name: {}", branch.as_str());

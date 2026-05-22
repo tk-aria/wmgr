@@ -273,7 +273,6 @@ impl FilePath {
                             ".gitignore",
                             ".gitmodules",
                             ".github",
-                            ".tsrc",
                             ".wmgr",
                             ".cargo",
                             ".rustfmt.toml",
@@ -628,7 +627,6 @@ mod tests {
         let allowed_hidden = [
             ".git/config",
             ".gitignore",
-            ".tsrc/manifest.yml",
             ".wmgr/manifest.yml",
             ".cargo/config",
         ];
@@ -697,7 +695,7 @@ mod tests {
             "Cargo.toml",
             "LICENSE",
             ".git/HEAD",        // Git files are allowed
-            ".tsrc/config.yml", // Tsrc files are allowed
+            ".wmgr/config.yml",
             "project-name/file.txt",
             "my_file.txt",
         ];

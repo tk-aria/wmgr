@@ -1,30 +1,30 @@
-use crate::common::error::TsrcError;
+use crate::common::error::WmgrError;
 
-/// tsrcプロジェクト全体で使用するResult型のエイリアス
+/// wmgrプロジェクト全体で使用するResult型のエイリアス
 ///
 /// このエイリアスにより、プロジェクト全体で一貫したエラーハンドリングが可能になる。
 ///
 /// # Examples
 ///
 /// ```
-/// use tsrc::common::result::TsrcResult;
-/// use tsrc::common::error::TsrcError;
+/// use wmgr::common::result::WmgrResult;
+/// use wmgr::common::error::WmgrError;
 ///
-/// fn example_function() -> TsrcResult<String> {
+/// fn example_function() -> WmgrResult<String> {
 ///     Ok("success".to_string())
 /// }
 ///
-/// fn example_with_error() -> TsrcResult<()> {
-///     Err(TsrcError::internal_error("Something went wrong"))
+/// fn example_with_error() -> WmgrResult<()> {
+///     Err(WmgrError::internal_error("Something went wrong"))
 /// }
 /// ```
-pub type TsrcResult<T> = Result<T, TsrcError>;
+pub type WmgrResult<T> = Result<T, WmgrError>;
 
 /// Optionのエラー変換ヘルパー
 ///
-/// OptionをTsrcResultに変換するためのヘルパー関数
+/// OptionをWmgrResultに変換するためのヘルパー関数
 pub trait OptionExt<T> {
-    /// OptionをTsrcResultに変換する
+    /// OptionをWmgrResultに変換する
     ///
     /// # Arguments
     ///
@@ -33,24 +33,24 @@ pub trait OptionExt<T> {
     /// # Examples
     ///
     /// ```
-    /// use tsrc::common::result::{TsrcResult, OptionExt};
-    /// use tsrc::common::error::TsrcError;
+    /// use wmgr::common::result::{WmgrResult, OptionExt};
+    /// use wmgr::common::error::WmgrError;
     ///
     /// let some_value: Option<String> = Some("value".to_string());
-    /// let result: TsrcResult<String> = some_value.ok_or_tsrc(
-    ///     TsrcError::internal_error("Value not found")
+    /// let result: WmgrResult<String> = some_value.ok_or_wmgr(
+    ///     WmgrError::internal_error("Value not found")
     /// );
     /// assert!(result.is_ok());
     ///
     /// let none_value: Option<String> = None;
-    /// let result: TsrcResult<String> = none_value.ok_or_tsrc(
-    ///     TsrcError::internal_error("Value not found")
+    /// let result: WmgrResult<String> = none_value.ok_or_wmgr(
+    ///     WmgrError::internal_error("Value not found")
     /// );
     /// assert!(result.is_err());
     /// ```
-    fn ok_or_tsrc(self, error: TsrcError) -> TsrcResult<T>;
+    fn ok_or_wmgr(self, error: WmgrError) -> WmgrResult<T>;
 
-    /// Optionをエラーメッセージ付きでTsrcResultに変換する
+    /// Optionをエラーメッセージ付きでWmgrResultに変換する
     ///
     /// # Arguments
     ///
@@ -59,13 +59,13 @@ pub trait OptionExt<T> {
     /// # Examples
     ///
     /// ```
-    /// use tsrc::common::result::{TsrcResult, OptionExt};
+    /// use wmgr::common::result::{WmgrResult, OptionExt};
     ///
     /// let none_value: Option<String> = None;
-    /// let result: TsrcResult<String> = none_value.ok_or_internal_error("Value not found");
+    /// let result: WmgrResult<String> = none_value.ok_or_internal_error("Value not found");
     /// assert!(result.is_err());
     /// ```
-    fn ok_or_internal_error(self, message: impl Into<String>) -> TsrcResult<T>;
+    fn ok_or_internal_error(self, message: impl Into<String>) -> WmgrResult<T>;
 
     /// Option値をValidationErrorに変換する
     ///
@@ -77,42 +77,42 @@ pub trait OptionExt<T> {
     /// # Examples
     ///
     /// ```
-    /// use tsrc::common::result::{TsrcResult, OptionExt};
+    /// use wmgr::common::result::{WmgrResult, OptionExt};
     ///
     /// let none_value: Option<String> = None;
-    /// let result: TsrcResult<String> = none_value.ok_or_validation_error("field", "required");
+    /// let result: WmgrResult<String> = none_value.ok_or_validation_error("field", "required");
     /// assert!(result.is_err());
     /// ```
     fn ok_or_validation_error(
         self,
         field: impl Into<String>,
         message: impl Into<String>,
-    ) -> TsrcResult<T>;
+    ) -> WmgrResult<T>;
 }
 
 impl<T> OptionExt<T> for Option<T> {
-    fn ok_or_tsrc(self, error: TsrcError) -> TsrcResult<T> {
+    fn ok_or_wmgr(self, error: WmgrError) -> WmgrResult<T> {
         self.ok_or(error)
     }
 
-    fn ok_or_internal_error(self, message: impl Into<String>) -> TsrcResult<T> {
-        self.ok_or_else(|| TsrcError::internal_error(message))
+    fn ok_or_internal_error(self, message: impl Into<String>) -> WmgrResult<T> {
+        self.ok_or_else(|| WmgrError::internal_error(message))
     }
 
     fn ok_or_validation_error(
         self,
         field: impl Into<String>,
         message: impl Into<String>,
-    ) -> TsrcResult<T> {
-        self.ok_or_else(|| TsrcError::validation_error(field, message, None))
+    ) -> WmgrResult<T> {
+        self.ok_or_else(|| WmgrError::validation_error(field, message, None))
     }
 }
 
 /// Resultのエラー変換ヘルパー
 ///
-/// 標準のResult型をTsrcResultに変換するためのヘルパー
+/// 標準のResult型をWmgrResultに変換するためのヘルパー
 pub trait ResultExt<T, E> {
-    /// ResultをTsrcResultに変換する
+    /// ResultをWmgrResultに変換する
     ///
     /// # Arguments
     ///
@@ -121,21 +121,21 @@ pub trait ResultExt<T, E> {
     /// # Examples
     ///
     /// ```
-    /// use tsrc::common::result::{TsrcResult, ResultExt};
-    /// use tsrc::common::error::TsrcError;
+    /// use wmgr::common::result::{WmgrResult, ResultExt};
+    /// use wmgr::common::error::WmgrError;
     /// use std::fs;
     ///
     /// let result: Result<String, std::io::Error> = Ok("content".to_string());
-    /// let tsrc_result: TsrcResult<String> = result.map_tsrc_err(|e| {
-    ///     TsrcError::filesystem_error_with_source("Failed to read", None, e)
+    /// let wmgr_result: WmgrResult<String> = result.map_wmgr_err(|e| {
+    ///     WmgrError::filesystem_error_with_source("Failed to read", None, e)
     /// });
-    /// assert!(tsrc_result.is_ok());
+    /// assert!(wmgr_result.is_ok());
     /// ```
-    fn map_tsrc_err<F>(self, f: F) -> TsrcResult<T>
+    fn map_wmgr_err<F>(self, f: F) -> WmgrResult<T>
     where
-        F: FnOnce(E) -> TsrcError;
+        F: FnOnce(E) -> WmgrError;
 
-    /// ResultをTsrcResultに変換（エラーメッセージ付き）
+    /// ResultをWmgrResultに変換（エラーメッセージ付き）
     ///
     /// # Arguments
     ///
@@ -144,58 +144,58 @@ pub trait ResultExt<T, E> {
     /// # Examples
     ///
     /// ```
-    /// use tsrc::common::result::{TsrcResult, ResultExt};
+    /// use wmgr::common::result::{WmgrResult, ResultExt};
     /// use std::fs;
     ///
     /// let result: Result<String, std::io::Error> = Err(std::io::Error::new(
     ///     std::io::ErrorKind::NotFound, "file not found"
     /// ));
-    /// let tsrc_result: TsrcResult<String> = result.with_internal_error("File operation failed");
-    /// assert!(tsrc_result.is_err());
+    /// let wmgr_result: WmgrResult<String> = result.with_internal_error("File operation failed");
+    /// assert!(wmgr_result.is_err());
     /// ```
-    fn with_internal_error(self, message: impl Into<String>) -> TsrcResult<T>
+    fn with_internal_error(self, message: impl Into<String>) -> WmgrResult<T>
     where
         E: std::error::Error + Send + Sync + 'static;
 
-    /// GitエラーとしてTsrcResultに変換
-    fn with_git_error(self, message: impl Into<String>) -> TsrcResult<T>
+    /// GitエラーとしてWmgrResultに変換
+    fn with_git_error(self, message: impl Into<String>) -> WmgrResult<T>
     where
-        E: Into<TsrcError>;
+        E: Into<WmgrError>;
 
-    /// ファイルシステムエラーとしてTsrcResultに変換
+    /// ファイルシステムエラーとしてWmgrResultに変換
     fn with_filesystem_error(
         self,
         message: impl Into<String>,
         path: Option<std::path::PathBuf>,
-    ) -> TsrcResult<T>
+    ) -> WmgrResult<T>
     where
         E: Into<std::io::Error>;
 }
 
 impl<T, E> ResultExt<T, E> for Result<T, E> {
-    fn map_tsrc_err<F>(self, f: F) -> TsrcResult<T>
+    fn map_wmgr_err<F>(self, f: F) -> WmgrResult<T>
     where
-        F: FnOnce(E) -> TsrcError,
+        F: FnOnce(E) -> WmgrError,
     {
         self.map_err(f)
     }
 
-    fn with_internal_error(self, message: impl Into<String>) -> TsrcResult<T>
+    fn with_internal_error(self, message: impl Into<String>) -> WmgrResult<T>
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        self.map_err(|e| TsrcError::internal_error_with_source(message, e))
+        self.map_err(|e| WmgrError::internal_error_with_source(message, e))
     }
 
-    fn with_git_error(self, message: impl Into<String>) -> TsrcResult<T>
+    fn with_git_error(self, message: impl Into<String>) -> WmgrResult<T>
     where
-        E: Into<TsrcError>,
+        E: Into<WmgrError>,
     {
         self.map_err(|e| {
-            let tsrc_error = e.into();
-            match tsrc_error {
-                TsrcError::GitError { .. } => tsrc_error,
-                _ => TsrcError::git_error(message),
+            let wmgr_error = e.into();
+            match wmgr_error {
+                WmgrError::GitError { .. } => wmgr_error,
+                _ => WmgrError::git_error(message),
             }
         })
     }
@@ -204,21 +204,21 @@ impl<T, E> ResultExt<T, E> for Result<T, E> {
         self,
         message: impl Into<String>,
         path: Option<std::path::PathBuf>,
-    ) -> TsrcResult<T>
+    ) -> WmgrResult<T>
     where
         E: Into<std::io::Error>,
     {
         self.map_err(|e| {
             let io_error = e.into();
-            TsrcError::filesystem_error_with_source(message, path, io_error)
+            WmgrError::filesystem_error_with_source(message, path, io_error)
         })
     }
 }
 
 /// チェーンオペレーション用のヘルパー
 ///
-/// 複数のTsrcResult操作を連鎖させるためのヘルパー
-pub trait TsrcResultExt<T> {
+/// 複数のWmgrResult操作を連鎖させるためのヘルパー
+pub trait WmgrResultExt<T> {
     /// エラー時にコンテキストを追加
     ///
     /// # Arguments
@@ -228,14 +228,14 @@ pub trait TsrcResultExt<T> {
     /// # Examples
     ///
     /// ```
-    /// use tsrc::common::result::{TsrcResult, TsrcResultExt};
-    /// use tsrc::common::error::TsrcError;
+    /// use wmgr::common::result::{WmgrResult, WmgrResultExt};
+    /// use wmgr::common::error::WmgrError;
     ///
-    /// let result: TsrcResult<String> = Err(TsrcError::internal_error("original error"));
+    /// let result: WmgrResult<String> = Err(WmgrError::internal_error("original error"));
     /// let with_context = result.with_context("operation failed");
     /// assert!(with_context.is_err());
     /// ```
-    fn with_context(self, context: impl Into<String>) -> TsrcResult<T>;
+    fn with_context(self, context: impl Into<String>) -> WmgrResult<T>;
 
     /// Optionに変換（エラーをログ出力）
     fn to_option_logged(self) -> Option<T>;
@@ -246,16 +246,16 @@ pub trait TsrcResultExt<T> {
         T: Default;
 }
 
-impl<T> TsrcResultExt<T> for TsrcResult<T> {
-    fn with_context(self, context: impl Into<String>) -> TsrcResult<T> {
-        self.map_err(|e| TsrcError::internal_error_with_source(context, e))
+impl<T> WmgrResultExt<T> for WmgrResult<T> {
+    fn with_context(self, context: impl Into<String>) -> WmgrResult<T> {
+        self.map_err(|e| WmgrError::internal_error_with_source(context, e))
     }
 
     fn to_option_logged(self) -> Option<T> {
         match self {
             Ok(value) => Some(value),
             Err(e) => {
-                tracing::error!("TsrcResult error: {}", e);
+                tracing::error!("WmgrResult error: {}", e);
                 None
             }
         }
@@ -268,7 +268,7 @@ impl<T> TsrcResultExt<T> for TsrcResult<T> {
         match self {
             Ok(value) => value,
             Err(e) => {
-                tracing::error!("TsrcResult error, using default: {}", e);
+                tracing::error!("WmgrResult error, using default: {}", e);
                 T::default()
             }
         }
@@ -277,19 +277,19 @@ impl<T> TsrcResultExt<T> for TsrcResult<T> {
 
 /// async関数用のヘルパー
 pub mod async_helpers {
-    use super::{TsrcError, TsrcResult};
+    use super::{WmgrError, WmgrResult};
     use std::future::Future;
 
     /// タイムアウト付きasync実行
-    pub async fn with_timeout<F, T>(f: F, timeout_secs: u64) -> TsrcResult<T>
+    pub async fn with_timeout<F, T>(f: F, timeout_secs: u64) -> WmgrResult<T>
     where
-        F: Future<Output = TsrcResult<T>>,
+        F: Future<Output = WmgrResult<T>>,
     {
         let timeout_duration = std::time::Duration::from_secs(timeout_secs);
 
         match tokio::time::timeout(timeout_duration, f).await {
             Ok(result) => result,
-            Err(_) => Err(TsrcError::timeout(timeout_secs)),
+            Err(_) => Err(WmgrError::timeout(timeout_secs)),
         }
     }
 }
@@ -300,14 +300,14 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    fn test_option_ext_ok_or_tsrc() {
+    fn test_option_ext_ok_or_wmgr() {
         let some_value = Some("test".to_string());
-        let result = some_value.ok_or_tsrc(TsrcError::internal_error("error"));
+        let result = some_value.ok_or_wmgr(WmgrError::internal_error("error"));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "test");
 
         let none_value: Option<String> = None;
-        let result = none_value.ok_or_tsrc(TsrcError::internal_error("error"));
+        let result = none_value.ok_or_wmgr(WmgrError::internal_error("error"));
         assert!(result.is_err());
     }
 
@@ -317,7 +317,7 @@ mod tests {
         let result = none_value.ok_or_internal_error("test error");
         assert!(result.is_err());
 
-        if let Err(TsrcError::InternalError { message, .. }) = result {
+        if let Err(WmgrError::InternalError { message, .. }) = result {
             assert_eq!(message, "test error");
         } else {
             panic!("Expected InternalError");
@@ -330,7 +330,7 @@ mod tests {
         let result = none_value.ok_or_validation_error("field", "required");
         assert!(result.is_err());
 
-        if let Err(TsrcError::ValidationError { field, message, .. }) = result {
+        if let Err(WmgrError::ValidationError { field, message, .. }) = result {
             assert_eq!(field, "field");
             assert_eq!(message, "required");
         } else {
@@ -339,14 +339,14 @@ mod tests {
     }
 
     #[test]
-    fn test_result_ext_map_tsrc_err() {
+    fn test_result_ext_map_wmgr_err() {
         let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let result: Result<String, std::io::Error> = Err(io_error);
 
-        let tsrc_result =
-            result.map_tsrc_err(|e| TsrcError::filesystem_error_with_source("test", None, e));
+        let wmgr_result =
+            result.map_wmgr_err(|e| WmgrError::filesystem_error_with_source("test", None, e));
 
-        assert!(tsrc_result.is_err());
+        assert!(wmgr_result.is_err());
     }
 
     #[test]
@@ -355,33 +355,33 @@ mod tests {
         let result: Result<String, std::io::Error> = Err(io_error);
         let path = Some(PathBuf::from("/test/path"));
 
-        let tsrc_result = result.with_filesystem_error("test operation", path);
-        assert!(tsrc_result.is_err());
+        let wmgr_result = result.with_filesystem_error("test operation", path);
+        assert!(wmgr_result.is_err());
     }
 
     #[test]
-    fn test_tsrc_result_ext_with_context() {
-        let result: TsrcResult<String> = Err(TsrcError::internal_error("original"));
+    fn test_wmgr_result_ext_with_context() {
+        let result: WmgrResult<String> = Err(WmgrError::internal_error("original"));
         let with_context = result.with_context("additional context");
 
         assert!(with_context.is_err());
     }
 
     #[test]
-    fn test_tsrc_result_ext_to_option_logged() {
-        let ok_result: TsrcResult<String> = Ok("test".to_string());
+    fn test_wmgr_result_ext_to_option_logged() {
+        let ok_result: WmgrResult<String> = Ok("test".to_string());
         assert_eq!(ok_result.to_option_logged(), Some("test".to_string()));
 
-        let err_result: TsrcResult<String> = Err(TsrcError::internal_error("error"));
+        let err_result: WmgrResult<String> = Err(WmgrError::internal_error("error"));
         assert_eq!(err_result.to_option_logged(), None);
     }
 
     #[test]
-    fn test_tsrc_result_ext_unwrap_or_default_logged() {
-        let ok_result: TsrcResult<String> = Ok("test".to_string());
+    fn test_wmgr_result_ext_unwrap_or_default_logged() {
+        let ok_result: WmgrResult<String> = Ok("test".to_string());
         assert_eq!(ok_result.unwrap_or_default_logged(), "test");
 
-        let err_result: TsrcResult<String> = Err(TsrcError::internal_error("error"));
+        let err_result: WmgrResult<String> = Err(WmgrError::internal_error("error"));
         assert_eq!(err_result.unwrap_or_default_logged(), String::default());
     }
 
@@ -402,7 +402,7 @@ mod tests {
         let result = with_timeout(slow_future, 1).await;
         assert!(result.is_err());
 
-        if let Err(TsrcError::Timeout { timeout_secs }) = result {
+        if let Err(WmgrError::Timeout { timeout_secs }) = result {
             assert_eq!(timeout_secs, 1);
         } else {
             panic!("Expected Timeout error");

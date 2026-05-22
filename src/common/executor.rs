@@ -1,5 +1,5 @@
-use crate::common::error::TsrcError;
-use crate::common::result::TsrcResult;
+use crate::common::error::WmgrError;
+use crate::common::result::WmgrResult;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -30,7 +30,7 @@ pub struct TaskResult<T> {
     /// タスクID
     pub task_id: String,
     /// 実行結果
-    pub result: Result<T, TsrcError>,
+    pub result: Result<T, WmgrError>,
     /// 実行開始時刻
     pub started_at: Instant,
     /// 実行終了時刻
@@ -78,7 +78,7 @@ pub trait ExecutableTask: Send + Sync {
     async fn execute(
         &self,
         progress_sender: Option<mpsc::UnboundedSender<TaskProgress>>,
-    ) -> TsrcResult<Self::Output>;
+    ) -> WmgrResult<Self::Output>;
 
     /// タスクの推定実行時間を取得（オプション）
     fn estimated_duration(&self) -> Option<Duration> {
@@ -159,7 +159,7 @@ impl TaskExecutor {
     pub async fn execute_task<T: ExecutableTask>(
         &self,
         task: T,
-    ) -> TsrcResult<TaskResult<T::Output>> {
+    ) -> WmgrResult<TaskResult<T::Output>> {
         let task_id = task.id().to_string();
         let started_at = Instant::now();
 
@@ -167,7 +167,7 @@ impl TaskExecutor {
 
         // セマフォを取得（同時実行数制御）
         let _permit = self.semaphore.acquire().await.map_err(|e| {
-            TsrcError::internal_error(format!("Failed to acquire semaphore: {}", e))
+            WmgrError::internal_error(format!("Failed to acquire semaphore: {}", e))
         })?;
 
         // キャンセル用チャンネル
@@ -193,8 +193,8 @@ impl TaskExecutor {
 
         let status = match &execute_result {
             Ok(_) => TaskStatus::Success,
-            Err(TsrcError::Timeout { .. }) => TaskStatus::Timeout,
-            Err(TsrcError::Cancelled) => TaskStatus::Cancelled,
+            Err(WmgrError::Timeout { .. }) => TaskStatus::Timeout,
+            Err(WmgrError::Cancelled) => TaskStatus::Cancelled,
             Err(_) => TaskStatus::Failed,
         };
 
@@ -255,7 +255,7 @@ impl TaskExecutor {
     pub async fn execute_with_dependencies<T: ExecutableTask + Clone + 'static>(
         &self,
         tasks: Vec<T>,
-    ) -> TsrcResult<Vec<TaskResult<T::Output>>> {
+    ) -> WmgrResult<Vec<TaskResult<T::Output>>> {
         // 依存関係グラフを構築
         let dependency_graph = self.build_dependency_graph(&tasks)?;
 
@@ -314,7 +314,7 @@ impl TaskExecutor {
         &self,
         task: T,
         mut cancel_rx: oneshot::Receiver<()>,
-    ) -> TsrcResult<T::Output> {
+    ) -> WmgrResult<T::Output> {
         let mut attempt = 0;
         let max_attempts = self.config.retry_count + 1;
 
@@ -338,12 +338,12 @@ impl TaskExecutor {
                     result = timeout(task_timeout, task_future) => {
                         match result {
                             Ok(task_result) => task_result,
-                            Err(_) => Err(TsrcError::timeout(task_timeout.as_secs())),
+                            Err(_) => Err(WmgrError::timeout(task_timeout.as_secs())),
                         }
                     }
                     _ = &mut cancel_rx => {
                         warn!("Task {} was cancelled", task.id());
-                        Err(TsrcError::Cancelled)
+                        Err(WmgrError::Cancelled)
                     }
                 }
             } else {
@@ -351,15 +351,15 @@ impl TaskExecutor {
                     result = task_future => result,
                     _ = &mut cancel_rx => {
                         warn!("Task {} was cancelled", task.id());
-                        Err(TsrcError::Cancelled)
+                        Err(WmgrError::Cancelled)
                     }
                 }
             };
 
             match result {
                 Ok(output) => return Ok(output),
-                Err(TsrcError::Cancelled) => return Err(TsrcError::Cancelled),
-                Err(TsrcError::Timeout { .. }) => {
+                Err(WmgrError::Cancelled) => return Err(WmgrError::Cancelled),
+                Err(WmgrError::Timeout { .. }) => {
                     if let Err(e) = result {
                         return Err(e);
                     }
@@ -389,7 +389,7 @@ impl TaskExecutor {
     fn build_dependency_graph<T: ExecutableTask>(
         &self,
         tasks: &[T],
-    ) -> TsrcResult<HashMap<String, Vec<String>>> {
+    ) -> WmgrResult<HashMap<String, Vec<String>>> {
         let mut graph = HashMap::new();
 
         for task in tasks {
@@ -402,14 +402,14 @@ impl TaskExecutor {
         Ok(graph)
     }
 
-    fn check_circular_dependencies(&self, graph: &HashMap<String, Vec<String>>) -> TsrcResult<()> {
+    fn check_circular_dependencies(&self, graph: &HashMap<String, Vec<String>>) -> WmgrResult<()> {
         let mut visited = std::collections::HashSet::new();
         let mut rec_stack = std::collections::HashSet::new();
 
         for node in graph.keys() {
             if !visited.contains(node) {
                 if self.has_cycle(node, graph, &mut visited, &mut rec_stack) {
-                    return Err(TsrcError::validation_error(
+                    return Err(WmgrError::validation_error(
                         "dependencies",
                         "Circular dependency detected",
                         Some(node.clone()),
@@ -447,7 +447,7 @@ impl TaskExecutor {
         false
     }
 
-    fn topological_sort(&self, graph: &HashMap<String, Vec<String>>) -> TsrcResult<Vec<String>> {
+    fn topological_sort(&self, graph: &HashMap<String, Vec<String>>) -> WmgrResult<Vec<String>> {
         let mut in_degree = HashMap::new();
         let mut adj_list = HashMap::new();
 
@@ -461,7 +461,7 @@ impl TaskExecutor {
         for (node, dependencies) in graph {
             for dep in dependencies {
                 if !graph.contains_key(dep) {
-                    return Err(TsrcError::validation_error(
+                    return Err(WmgrError::validation_error(
                         "dependencies",
                         "Unknown dependency",
                         Some(dep.clone()),
@@ -496,7 +496,7 @@ impl TaskExecutor {
         }
 
         if result.len() != graph.len() {
-            return Err(TsrcError::internal_error("Failed to resolve dependencies"));
+            return Err(WmgrError::internal_error("Failed to resolve dependencies"));
         }
 
         Ok(result)
@@ -506,7 +506,7 @@ impl TaskExecutor {
         &self,
         task: &T,
         completed_tasks: &std::collections::HashSet<String>,
-    ) -> TsrcResult<()> {
+    ) -> WmgrResult<()> {
         let dependencies = task.dependencies();
 
         if dependencies.is_empty() {
@@ -523,7 +523,7 @@ impl TaskExecutor {
             }
 
             if start_time.elapsed() > self.config.dependency_timeout {
-                return Err(TsrcError::timeout(self.config.dependency_timeout.as_secs()));
+                return Err(WmgrError::timeout(self.config.dependency_timeout.as_secs()));
             }
 
             tokio::time::sleep(Duration::from_millis(100)).await;
@@ -581,11 +581,11 @@ mod tests {
         async fn execute(
             &self,
             _progress_sender: Option<mpsc::UnboundedSender<TaskProgress>>,
-        ) -> TsrcResult<Self::Output> {
+        ) -> WmgrResult<Self::Output> {
             tokio::time::sleep(self.duration).await;
 
             if self.should_fail {
-                return Err(TsrcError::internal_error("Test task failed"));
+                return Err(WmgrError::internal_error("Test task failed"));
             }
 
             let count = self.counter.fetch_add(1, Ordering::SeqCst);
