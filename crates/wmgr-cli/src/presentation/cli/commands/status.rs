@@ -2,10 +2,10 @@ use anyhow::Result;
 use colored::Colorize;
 use std::env;
 
-use crate::application::use_cases::status_check::{
+use wmgr::application::use_cases::status_check::{
     RepositoryState, StatusCheckConfig, StatusCheckError, StatusCheckUseCase,
 };
-use crate::domain::entities::workspace::Workspace;
+use wmgr::domain::entities::workspace::Workspace;
 
 /// Handler for the status command
 pub struct StatusCommand {
@@ -66,7 +66,7 @@ impl StatusCommand {
 
     fn print_compact_status(
         &self,
-        status: &crate::application::use_cases::status_check::StatusResult,
+        status: &wmgr::application::use_cases::status_check::StatusResult,
     ) {
         for repo_status in &status.repositories {
             let state_char = match repo_status.state {
@@ -83,7 +83,7 @@ impl StatusCommand {
 
     fn print_detailed_status(
         &self,
-        status: &crate::application::use_cases::status_check::StatusResult,
+        status: &wmgr::application::use_cases::status_check::StatusResult,
     ) {
         for repo_status in &status.repositories {
             let state_text = match repo_status.state {
@@ -137,8 +137,8 @@ impl StatusCommand {
         }
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
         let processed_manifest = manifest_store
             .read_manifest(&manifest_file)

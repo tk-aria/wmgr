@@ -2,10 +2,10 @@ use anyhow::Result;
 use colored::Colorize;
 use std::env;
 
-use crate::application::use_cases::sync_repositories::{
+use wmgr::application::use_cases::sync_repositories::{
     SyncRepositoriesConfig, SyncRepositoriesError, SyncRepositoriesUseCase,
 };
-use crate::domain::entities::workspace::Workspace;
+use wmgr::domain::entities::workspace::Workspace;
 
 /// Handler for the sync command
 pub struct SyncCommand {
@@ -119,8 +119,8 @@ impl SyncCommand {
         let manifest_file = workspace.manifest_file_path();
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
         let processed_manifest = manifest_store
             .read_manifest(&manifest_file)

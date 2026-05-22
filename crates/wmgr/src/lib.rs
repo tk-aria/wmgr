@@ -142,7 +142,6 @@ pub mod application;
 pub mod common;
 pub mod domain;
 pub mod infrastructure;
-pub mod presentation;
 
 // Re-export commonly used types for convenience
 pub use crate::common::error::WmgrError;

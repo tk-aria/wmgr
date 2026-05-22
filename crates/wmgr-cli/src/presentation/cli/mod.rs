@@ -6,15 +6,15 @@ use colored::Colorize;
 use std::env;
 use std::process::exit;
 
-use crate::application::use_cases::{
+use wmgr::application::use_cases::{
     foreach_command::{ForeachCommandConfig, ForeachCommandError, ForeachCommandUseCase},
     status_check::{StatusCheckConfig, StatusCheckError, StatusCheckUseCase},
     sync_repositories::{SyncRepositoriesConfig, SyncRepositoriesError, SyncRepositoriesUseCase},
 };
 
-use crate::domain::entities::workspace::Workspace;
+use wmgr::domain::entities::workspace::Workspace;
 
-use crate::domain::value_objects::{file_path::FilePath, git_url::GitUrl};
+use wmgr::domain::value_objects::{file_path::FilePath, git_url::GitUrl};
 
 /// Output format options for status command
 #[derive(Debug, Clone, ValueEnum)]
@@ -639,8 +639,8 @@ impl CliApp {
         let manifest_file = workspace.manifest_file_path();
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
         let processed_manifest = manifest_store
             .read_manifest(&manifest_file)
@@ -658,20 +658,20 @@ impl CliApp {
 
     fn print_compact_status(
         &self,
-        status: &crate::application::use_cases::status_check::StatusResult,
+        status: &wmgr::application::use_cases::status_check::StatusResult,
     ) {
         for repo_status in &status.repositories {
             let state_char = match repo_status.state {
-                crate::application::use_cases::status_check::RepositoryState::Clean => "✓".green(),
-                crate::application::use_cases::status_check::RepositoryState::Dirty => "M".yellow(),
-                crate::application::use_cases::status_check::RepositoryState::Missing => "?".red(),
-                crate::application::use_cases::status_check::RepositoryState::WrongBranch => {
+                wmgr::application::use_cases::status_check::RepositoryState::Clean => "✓".green(),
+                wmgr::application::use_cases::status_check::RepositoryState::Dirty => "M".yellow(),
+                wmgr::application::use_cases::status_check::RepositoryState::Missing => "?".red(),
+                wmgr::application::use_cases::status_check::RepositoryState::WrongBranch => {
                     "B".cyan()
                 }
-                crate::application::use_cases::status_check::RepositoryState::OutOfSync => {
+                wmgr::application::use_cases::status_check::RepositoryState::OutOfSync => {
                     "S".magenta()
                 }
-                crate::application::use_cases::status_check::RepositoryState::Error => "E".red(),
+                wmgr::application::use_cases::status_check::RepositoryState::Error => "E".red(),
             };
             println!("{} {}", state_char, repo_status.dest);
         }
@@ -679,27 +679,27 @@ impl CliApp {
 
     fn print_detailed_status(
         &self,
-        status: &crate::application::use_cases::status_check::StatusResult,
+        status: &wmgr::application::use_cases::status_check::StatusResult,
         show_branch: bool,
     ) {
         for repo_status in &status.repositories {
             let state_text = match repo_status.state {
-                crate::application::use_cases::status_check::RepositoryState::Clean => {
+                wmgr::application::use_cases::status_check::RepositoryState::Clean => {
                     "clean".green()
                 }
-                crate::application::use_cases::status_check::RepositoryState::Dirty => {
+                wmgr::application::use_cases::status_check::RepositoryState::Dirty => {
                     "dirty".yellow()
                 }
-                crate::application::use_cases::status_check::RepositoryState::Missing => {
+                wmgr::application::use_cases::status_check::RepositoryState::Missing => {
                     "missing".red()
                 }
-                crate::application::use_cases::status_check::RepositoryState::WrongBranch => {
+                wmgr::application::use_cases::status_check::RepositoryState::WrongBranch => {
                     "wrong branch".cyan()
                 }
-                crate::application::use_cases::status_check::RepositoryState::OutOfSync => {
+                wmgr::application::use_cases::status_check::RepositoryState::OutOfSync => {
                     "out of sync".magenta()
                 }
-                crate::application::use_cases::status_check::RepositoryState::Error => {
+                wmgr::application::use_cases::status_check::RepositoryState::Error => {
                     "error".red()
                 }
             };
@@ -713,7 +713,7 @@ impl CliApp {
             }
 
             if repo_status.state
-                == crate::application::use_cases::status_check::RepositoryState::Dirty
+                == wmgr::application::use_cases::status_check::RepositoryState::Dirty
             {
                 let mut changes = Vec::new();
                 if repo_status.modified_files > 0 {
@@ -736,7 +736,7 @@ impl CliApp {
 
     fn print_json_status(
         &self,
-        status: &crate::application::use_cases::status_check::StatusResult,
+        status: &wmgr::application::use_cases::status_check::StatusResult,
     ) -> anyhow::Result<()> {
         let json = serde_json::to_string_pretty(status)?;
         println!("{}", json);
@@ -745,7 +745,7 @@ impl CliApp {
 
     fn print_yaml_status(
         &self,
-        status: &crate::application::use_cases::status_check::StatusResult,
+        status: &wmgr::application::use_cases::status_check::StatusResult,
     ) -> anyhow::Result<()> {
         let yaml = serde_yaml::to_string(status)?;
         print!("{}", yaml);

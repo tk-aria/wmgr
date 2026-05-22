@@ -1,7 +1,7 @@
-use crate::application::use_cases::security_audit::{
+use wmgr::application::use_cases::security_audit::{
     SecurityAuditConfig, SecurityAuditError, SecurityAuditUseCase,
 };
-use crate::domain::entities::workspace::Workspace;
+use wmgr::domain::entities::workspace::Workspace;
 use crate::presentation::ui::display::DisplayHelper;
 use clap::Args;
 use std::path::PathBuf;
@@ -109,8 +109,8 @@ impl AuditCommand {
         }
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
 
         let processed_manifest = manifest_store
@@ -138,7 +138,7 @@ impl AuditCommand {
     /// Display audit results
     fn display_audit_result(
         &self,
-        result: &crate::application::use_cases::security_audit::WorkspaceAuditResult,
+        result: &wmgr::application::use_cases::security_audit::WorkspaceAuditResult,
         verbose: bool,
     ) {
         // Summary

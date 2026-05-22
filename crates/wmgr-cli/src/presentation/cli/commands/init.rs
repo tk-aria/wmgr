@@ -1,4 +1,4 @@
-use crate::common::templates::TemplateProcessor;
+use wmgr::common::templates::TemplateProcessor;
 use anyhow::Result;
 use std::env;
 use std::fs;

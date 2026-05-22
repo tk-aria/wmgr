@@ -2,8 +2,8 @@ use anyhow::Result;
 use colored::Colorize;
 use std::env;
 
-use crate::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
-use crate::domain::entities::workspace::Workspace;
+use wmgr::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
+use wmgr::domain::entities::workspace::Workspace;
 
 /// Handler for the dump-manifest command
 pub struct DumpManifestCommand {
@@ -129,8 +129,8 @@ impl DumpManifestCommand {
         }
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
         let processed_manifest = manifest_store
             .read_manifest(&manifest_file)

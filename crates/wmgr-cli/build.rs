@@ -16,8 +16,8 @@ fn main() {
     );
 
     // Rerun if git state changes
-    println!("cargo:rerun-if-changed=.git/HEAD");
-    println!("cargo:rerun-if-changed=.git/refs/");
+    println!("cargo:rerun-if-changed=../../.git/HEAD");
+    println!("cargo:rerun-if-changed=../../.git/refs/");
 
     // Generate completion files if needed
     generate_shell_completions();

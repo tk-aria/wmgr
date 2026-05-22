@@ -2,7 +2,7 @@ use anyhow::Result;
 use colored::Colorize;
 use std::env;
 
-use crate::domain::entities::workspace::Workspace;
+use wmgr::domain::entities::workspace::Workspace;
 
 /// Handler for the log command
 pub struct LogCommand {
@@ -61,7 +61,7 @@ impl LogCommand {
 
     async fn show_repository_log(
         &self,
-        repo: &crate::domain::entities::repository::Repository,
+        repo: &wmgr::domain::entities::repository::Repository,
         workspace: &Workspace,
     ) -> Result<()> {
         let repo_path = workspace.root_path.join(&repo.dest);
@@ -188,7 +188,7 @@ impl LogCommand {
     fn get_repositories_to_check(
         &self,
         workspace: &Workspace,
-    ) -> Result<Vec<crate::domain::entities::repository::Repository>> {
+    ) -> Result<Vec<wmgr::domain::entities::repository::Repository>> {
         // For now, return a sample repository
         // In a real implementation, this would load from the workspace manifest
         let mut repositories = Vec::new();
@@ -220,8 +220,8 @@ impl LogCommand {
         }
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
 
         let processed_manifest = manifest_store

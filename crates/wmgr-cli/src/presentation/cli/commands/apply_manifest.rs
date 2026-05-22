@@ -3,9 +3,9 @@ use colored::Colorize;
 use std::env;
 use std::path::Path;
 
-use crate::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
-use crate::domain::entities::workspace::Workspace;
-use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+use wmgr::application::services::manifest_service::{ManifestProcessingOptions, ManifestService};
+use wmgr::domain::entities::workspace::Workspace;
+use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
 
 /// Handler for the apply-manifest command
 pub struct ApplyManifestCommand {
@@ -157,8 +157,8 @@ impl ApplyManifestCommand {
 
     fn analyze_manifest_changes(
         &self,
-        current: Option<&crate::domain::entities::manifest::Manifest>,
-        new: &crate::domain::entities::manifest::Manifest,
+        current: Option<&wmgr::domain::entities::manifest::Manifest>,
+        new: &wmgr::domain::entities::manifest::Manifest,
     ) -> ManifestChanges {
         let mut changes = ManifestChanges {
             added: Vec::new(),
@@ -216,8 +216,8 @@ impl ApplyManifestCommand {
 
     fn repo_differs(
         &self,
-        current: &crate::domain::entities::manifest::ManifestRepo,
-        new: &crate::domain::entities::manifest::ManifestRepo,
+        current: &wmgr::domain::entities::manifest::ManifestRepo,
+        new: &wmgr::domain::entities::manifest::ManifestRepo,
     ) -> bool {
         current.url != new.url
             || current.branch != new.branch
@@ -317,8 +317,8 @@ impl ApplyManifestCommand {
         }
 
         // Load manifest file
-        use crate::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
-        use crate::infrastructure::filesystem::manifest_store::ManifestStore;
+        use wmgr::domain::entities::workspace::{WorkspaceConfig, WorkspaceStatus};
+        use wmgr::infrastructure::filesystem::manifest_store::ManifestStore;
         let mut manifest_store = ManifestStore::new();
 
         let processed_manifest = manifest_store
@@ -346,16 +346,16 @@ impl ApplyManifestCommand {
 
 #[derive(Debug, Clone)]
 struct ManifestChanges {
-    added: Vec<crate::domain::entities::manifest::ManifestRepo>,
+    added: Vec<wmgr::domain::entities::manifest::ManifestRepo>,
     modified: Vec<ChangeDetail>,
-    removed: Vec<crate::domain::entities::manifest::ManifestRepo>,
+    removed: Vec<wmgr::domain::entities::manifest::ManifestRepo>,
 }
 
 #[derive(Debug, Clone)]
 struct ChangeDetail {
     dest: String,
-    old_repo: Option<crate::domain::entities::manifest::ManifestRepo>,
-    new_repo: crate::domain::entities::manifest::ManifestRepo,
+    old_repo: Option<wmgr::domain::entities::manifest::ManifestRepo>,
+    new_repo: wmgr::domain::entities::manifest::ManifestRepo,
 }
 
 impl ManifestChanges {
