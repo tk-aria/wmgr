@@ -3,7 +3,7 @@
 **Workspace Manager** — 複数リポジトリのワークスペースを管理する高速CLIツール
 
 [![CI](https://github.com/tk-aria/wmgr/actions/workflows/ci.yml/badge.svg)](https://github.com/tk-aria/wmgr/actions/workflows/ci.yml)
-[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > [English README](README.md)
 
@@ -291,7 +291,7 @@ cargo fmt              # フォーマット
 
 ## 📄 ライセンス
 
-[BSD-3-Clause](LICENSE)
+[MIT](LICENSE)
 
 ## 🙏 謝辞
 

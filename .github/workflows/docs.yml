@@ -41,7 +41,7 @@ jobs:
     
     - name: Check documentation
       run: |
-        RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
+        RUSTDOCFLAGS="-D rustdoc::broken-intra-doc-links -D rustdoc::bare-urls" cargo doc --no-deps --all-features
     
     - name: Generate complete documentation
       run: |

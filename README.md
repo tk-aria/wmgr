@@ -3,7 +3,7 @@
 **Workspace Manager** — A fast CLI tool for managing multi-repository workspaces.
 
 [![CI](https://github.com/tk-aria/wmgr/actions/workflows/ci.yml/badge.svg)](https://github.com/tk-aria/wmgr/actions/workflows/ci.yml)
-[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > [日本語版 README はこちら](README_ja.md)
 
@@ -291,7 +291,7 @@ cargo fmt              # Format
 
 ## 📄 License
 
-[BSD-3-Clause](LICENSE)
+[MIT](LICENSE)
 
 ## 🙏 Acknowledgments
 

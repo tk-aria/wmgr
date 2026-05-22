@@ -6,7 +6,7 @@ rust-version = "1.78.0"
 authors = ["wmgr contributors"]
 description = "CLI for wmgr - manage groups of git repositories"
 repository = "https://github.com/tk-aria/wmgr"
-license = "BSD-3-Clause"
+license = "MIT"
 
 [[bin]]
 name = "wmgr"
